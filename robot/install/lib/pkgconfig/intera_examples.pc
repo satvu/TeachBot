@@ -1,8 +1,0 @@
-prefix=/home/nick/GitHub/teachbot/robot/install
-
-Name: intera_examples
-Description: Description of intera_examples
-Version: 5.3.0
-Cflags: -I/home/nick/GitHub/teachbot/robot/install/include
-Libs: -L/home/nick/GitHub/teachbot/robot/install/lib 
-Requires: rospy actionlib sensor_msgs control_msgs trajectory_msgs cv_bridge dynamic_reconfigure intera_core_msgs intera_motion_msgs intera_interface

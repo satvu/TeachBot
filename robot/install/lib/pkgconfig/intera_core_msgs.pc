@@ -1,8 +1,0 @@
-prefix=/home/nick/GitHub/teachbot/robot/install
-
-Name: intera_core_msgs
-Description: Description of intera_core_msgs
-Version: 5.3.0
-Cflags: -I/home/nick/GitHub/teachbot/robot/install/include
-Libs: -L/home/nick/GitHub/teachbot/robot/install/lib 
-Requires: message_runtime std_msgs geometry_msgs sensor_msgs actionlib_msgs

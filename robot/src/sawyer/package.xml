@@ -3,18 +3,18 @@
   <name>sawyer</name>
   <version>1.0.0</version>
   <description>
-    ROS package for use of Sawyer and peripherals for Teachbot
+    ROS package for use of Sawyer and peripherals for TeachBot
   </description>
 
   <maintainer email="nselby@mit.edu">
     Nicholas S. Selby
   </maintainer>
-  <license>Apache 2.0</license>
-  <url type="website">mit.edu</url>
+  <license>BSD</license>
+  <url type="website">http://www.mit.edu/~nselby/teachbot.html</url>
   <url type="repository">
-    https://github.mit.edu/nselby/teachbot
+    https://github.com/Darbeloff/TeachBot
   </url>
-  <author>Nicholas S. Selby</author>
+  <author email="nselby@mit.edu">Nicholas S. Selby</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cv_bridge</build_depend>
