@@ -939,8 +939,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'drawBin':
 				checkInstruction(instr, ['number'], instructionAddr);
-				var binW = 17*cw;
-				var binH = 13*ch;
+				var binW = 17*this.cw;
+				var binH = 13*this.ch;
 				switch (instr.number) {
 					case 1:
 						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);

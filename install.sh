@@ -20,6 +20,8 @@ pip install gTTS --upgrade
 pip install gTTS-token --upgrade --user
 pip install pexpect
 pip install playsound
+pip install pygame
+pip install pyttsx3
 
 # Merge intera resources
 cd robot/src
