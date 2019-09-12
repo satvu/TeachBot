@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>teachbot</name>
+  <version>0.0.0</version>
+  <description>The teachbot package</description>
+
+  <maintainer email="jerryng@mit.edu">Jerry Ng</maintainer>
+  <maintainer email="nselby@mit.edu">Nicholas S. Selby</maintainer>
+  <license>MIT</license>
+  <author email="jerryng@mit.edu">Jerry Ng</author>
+  <author email="nselby@mit.edu">Nicholas S. Selby</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>std_msgs</run_depend>
+
+</package>

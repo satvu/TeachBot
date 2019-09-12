@@ -1,0 +1,14 @@
+pretest 
+31.498814106
+correct
+57.7863409519
+correct
+correct
+47.8077049255
+incorrect
+50.103689909
+incorrect
+44.0555779934
+incorrect
+52.356128931
+correct

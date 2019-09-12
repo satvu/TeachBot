@@ -1,0 +1,12 @@
+pretest 
+47.9504458904
+correct
+61.7382030487
+incorrect
+32.2817060947
+incorrect
+26.8807981014
+correct
+incorrect
+31.357637167
+correct

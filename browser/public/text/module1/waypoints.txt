@@ -1,0 +1,16 @@
+The final lesson of the day is about waypoints. Just like how your phone or computer can save pictures and music in its memory, I use my memory to remember different arm positions. Specifically, whenever you move my arm, I read all of my encoders so that, if I want to, I can return to this exact position. I call that remembered position a "waypoint." Please stand back so I can reset my position.
+Let's try an example. I'm going to show you a series of arm positions. After each one, I'll unlock my arm and ask you to move it to that position and press the scroll wheel button.
+Start by pulling my arm so it's extended all the way and matches the image on the projector. When it's in the right position, press the scroll wheel button and I'll record the position as a waypoint.
+Good! Now, push my arm in so it's close to my torso. When it's in the right position, press the scroll wheel button.
+Now pull my arm back out and press the scroll wheel button.
+Now rotate my torso this way and press the scroll wheel button.
+Finally, rotate my torso that way and press the scroll wheel button.
+Great job! Now, I'll play back each waypoint. As I move from one waypoint to another, do the same motion with your arm.
+First, you put my arm in.
+You put my arm out.
+You put my arm in,
+And you learned all about, how to set up waypoints and make my motors turn around,
+And that's what it's all about! High two!
+I only have two fingers, so instead of a high five I can only give high two's. High two!
+Okay,
+As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!

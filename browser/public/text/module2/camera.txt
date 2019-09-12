@@ -1,0 +1,4 @@
+Now that we are able to put the boxes into the bins, how do I know that I successfully put the box inside the bin?
+If you look at my wrist, I have a camera. I can use this camera to determine the location of the box with respect to the location of the bin. 
+This is what I see. 
+The green box traces the perimeter of the bin and the blue dot indicates the center of the bin.
