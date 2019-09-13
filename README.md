@@ -7,7 +7,7 @@ The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_
 If you change the directory, make sure you adjust all following commands.
 ```
 $ cd
-$ git clone git@github.mit.edu:nselby/teachbot.git
+$ git clone https://github.com/Darbeloff/TeachBot.git
 ```
 
 ### Install Apt Dependencies
@@ -39,7 +39,7 @@ $ pip install playsound
 
 ### Merge Intera Resources
 ```
-$ cd ~/teachbot/robot/src
+$ cd ~/TeachBot/robot/src
 $ wstool init .
 $ git clone https://github.com/RethinkRobotics/sawyer_robot.git
 $ wstool merge sawyer_robot/sawyer_robot.rosinstall
@@ -51,7 +51,7 @@ $ catkin_make
 
 ### NPM Installs
 ```
-$ cd ~/teachbot/browser
+$ cd ~/TeachBot/browser
 $ npm install .
 ```
 
@@ -70,7 +70,7 @@ You will not be able to use that ethernet port to access the internet until you 
 ### Set Up Intera
 Copy the `intera.sh` file into your ros workspace
 ```
-$ cp ~/teachbot/robot/src/intera_sdk/intera.sh ~/teachbot/robot
+$ cp ~/TeachBot/robot/src/intera_sdk/intera.sh ~/TeachBot/robot
 ```
 
 Now you'll need to edit three lines of `intera.sh` specific to your system.
@@ -102,7 +102,7 @@ Save and close `intera.sh` script.
 
 ### Verify Environment
 ```
-$ cd ~/teachbot/robot
+$ cd ~/TeachBot/robot
 $ ./intera.sh
 ```
 
@@ -157,7 +157,7 @@ You should see a the rostopic list from the command line output similar as follo
 ```
 
 ## To Launch
-Navigate to the `teachbot/robot` directory.
+Navigate to the `TeachBot/robot` directory.
 ```
 $ cd ~/TeachBot/robot
 ```
