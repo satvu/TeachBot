@@ -238,7 +238,6 @@ You have successfully launched the teaching module!
 |
 +-- robot                               Python ROS library responsible for communicating with the robot.
 |   +-- src                             Source code.
-|       +-- arduino_files/              Scripts for running peripheral devices on Arduino.
 |       +-- sawyer                      TeachBot ROS package for the RethinkRobotics Sawyer.
 |           +-- Learner_Responses/      Data collected from user subject tests.
 |           +-- msg/                    Custom message files for information transfer to and from the browser.
