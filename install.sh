@@ -16,12 +16,7 @@ sudo apt-get update
 sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-melodic-control-msgs ros-melodic-joystick-drivers ros-melodic-xacro ros-melodic-tf2-ros ros-melodic-rviz ros-melodic-cv-bridge ros-melodic-actionlib ros-melodic-actionlib-msgs ros-melodic-dynamic-reconfigure ros-melodic-trajectory-msgs ros-melodic-rospy-message-converter ros-melodic-rosbridge-suite nodejs
 
 # pip dependencies
-pip install gTTS --upgrade
-pip install gTTS-token --upgrade --user
-pip install pexpect
-pip install playsound
-pip install pygame
-pip install pyttsx3
+pip install --upgrade --user gTTS gTTS-token pexpect playsound pyttsx3 pygame
 
 # Merge intera resources
 cd robot/src
