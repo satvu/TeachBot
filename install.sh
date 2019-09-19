@@ -7,6 +7,7 @@ sudo apt update
 sudo apt install -y ros-melodic-desktop-full python-rosinstall python-rosinstall-generator python-wstool build-essential python-pip
 sudo rosdep init
 rosdep update
+source /opt/ros/melodic/setup.bash
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 
@@ -31,7 +32,7 @@ cp src/intera_sdk/intera.sh intera.sh
 
 # NPM Installs
 cd ../browser
-npm install .
+sudo npm install .
 
 cd ../robot
 echo "To finish the installation, please refer to the README.md"
