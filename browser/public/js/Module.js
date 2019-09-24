@@ -857,7 +857,29 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					self.start(self.getNextAddress(instructionAddr));
 				});
 
-				break
+				break;
+
+			case 'camerabw_graphic':
+				var cv_image = new Image();
+				cv_image.onload = function() {
+		            self.ctx.drawImage(cv_image, 0, 0)
+
+		            self.start(self.getNextAddress(instructionAddr));
+				};
+				cv_image.src = DIR + 'images/cv_1.png';
+
+				break;
+
+			case 'camera_color_graphic':
+				var cv_image = new Image();
+				cv_image.onload = function() {
+		            self.ctx.drawImage(cv_image, 0, 0)
+
+		            self.start(self.getNextAddress(instructionAddr));
+				};
+				cv_image.src = DIR + 'images/cv_2.png';
+
+				break;
 
 			case 'check_pickup':
 				var req = new ROSLIB.Message({
@@ -1382,6 +1404,18 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				animator.play();
 
 				this.start(this.getNextAddress(instructionAddr));
+				break;
+
+			case 'pos_orient':
+				var orient_bw_url = DIR + 'images/orientation_bw.png';
+				var orient_color_url = DIR + 'images/orientation_color.png';
+				var position_bw_url = DIR + 'images/position_bw.png';
+				var position_color_url = DIR + 'images/position_color.png';
+
+				draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+
+				this.start(this.getNextAddress(instructionAddr));
+
 				break;
 
 			case 'pressed_button':

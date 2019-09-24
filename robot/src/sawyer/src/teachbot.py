@@ -375,8 +375,10 @@ class Module():
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
 		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
+		ret2, thresh2 = cv2.threshold(blurred, 40, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+		im3, contours3, hierarchy3 = cv2.findContours(thresh2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
 		cnt = contours[0]
 		max_area = cv2.contourArea(cnt)
@@ -392,14 +394,32 @@ class Module():
 
 		cv2.drawContours(cv_image, [box], -1, (0,255,0), 3)
 
+		cnt2 = contours3[0]
+		max_area2 = cv2.contourArea(cnt2)
+
+		for contour in contours3:
+			if cv2.contourArea(contour) > max_area2:
+				cnt2 = contour
+				max_area2 = cv2.contourArea(contour)
+
+		rect2 = cv2.minAreaRect(cnt2)
+		box2 = cv2.boxPoints(rect2)
+		box2 = numpy.int0(box2)
+
+		cv2.drawContours(cv_image, [box2], -1, (255,255,51), 3)
+
 		a = sum(map(lambda x: x[0], box))/4
 		b = sum(map(lambda x: x[1], box))/4
 
-		cv2.circle(cv_image, (a,b), 8, (255,0,0), -1)
+		c = sum(map(lambda x: x[0], box2))/4
+		d = sum(map(lambda x: x[1], box2))/4
+
+		cv2.circle(cv_image, (a,b), 4, (0,255,0), -1)
+		cv2.circle(cv_image, (c,d), 4, (255,255,51), -1)
 
 		#img = cv_image
 		# rospy.loginfo('Creating image')
-		cv2.imwrite('/home/albertgo/teachbot/browser/public/images/cv_image.png', cv_image)
+		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 		self.command_complete_topic.publish()
 
 
