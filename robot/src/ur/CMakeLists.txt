@@ -152,7 +152,6 @@ catkin_package(
 	actionlib 
 	actionlib_msgs 
 	geometry_msgs 
-	message_generation 
 	rospy 
 	cv_bridge
 	trajectory_msgs
@@ -177,7 +176,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
