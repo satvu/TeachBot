@@ -1,0 +1,2 @@
+string terminatingCondition
+bool ways
