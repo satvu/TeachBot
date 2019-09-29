@@ -7,7 +7,7 @@ from pygame import mixer
 from playsound import playsound
 import pyttsx3
 import cv2
-
+import apriltag
 # Intera
 import intera_interface
 from std_msgs.msg import (
@@ -372,14 +372,22 @@ class Module():
 		except CvBridgeError, err:
 			rospy.logerr(err)
 
+		img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+		detector = apriltag.Detector()
+		detections = detector.detect(img)
+		# rospy.loginfo(detections[0].corners)
+
+		cv2.line(cv_image, (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (255,255,51), 3)
+
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
-		ret2, thresh2 = cv2.threshold(blurred, 40, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-		im3, contours3, hierarchy3 = cv2.findContours(thresh2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
+		
 		cnt = contours[0]
 		max_area = cv2.contourArea(cnt)
 
@@ -394,28 +402,8 @@ class Module():
 
 		cv2.drawContours(cv_image, [box], -1, (0,255,0), 3)
 
-		cnt2 = contours3[0]
-		max_area2 = cv2.contourArea(cnt2)
-
-		for contour in contours3:
-			if cv2.contourArea(contour) > max_area2:
-				cnt2 = contour
-				max_area2 = cv2.contourArea(contour)
-
-		rect2 = cv2.minAreaRect(cnt2)
-		box2 = cv2.boxPoints(rect2)
-		box2 = numpy.int0(box2)
-
-		cv2.drawContours(cv_image, [box2], -1, (255,255,51), 3)
-
-		a = sum(map(lambda x: x[0], box))/4
-		b = sum(map(lambda x: x[1], box))/4
-
-		c = sum(map(lambda x: x[0], box2))/4
-		d = sum(map(lambda x: x[1], box2))/4
-
-		cv2.circle(cv_image, (a,b), 4, (0,255,0), -1)
-		cv2.circle(cv_image, (c,d), 4, (255,255,51), -1)
+		# a = sum(map(lambda x: x[0], box))/4
+		# b = sum(map(lambda x: x[1], box))/4
 
 		#img = cv_image
 		# rospy.loginfo('Creating image')

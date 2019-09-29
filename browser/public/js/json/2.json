@@ -621,6 +621,12 @@
 		"id": "camera",
 		"instructions":[
 			{
+				"type":"reset"
+			},
+			{
+				"type":"image"
+			},
+			{
 				"type":"goToJointAngles",
 				"joint_angles":"camera_pos"
 			},

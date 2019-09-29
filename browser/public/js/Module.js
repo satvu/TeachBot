@@ -860,24 +860,21 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'camerabw_graphic':
-				var cv_image = new Image();
-				cv_image.onload = function() {
-		            self.ctx.drawImage(cv_image, 0, 0)
 
-		            self.start(self.getNextAddress(instructionAddr));
-				};
-				cv_image.src = DIR + 'images/cv_1.png';
+				var cv_image_url = DIR + 'images/cv_1.png';
+
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
 
 				break;
 
 			case 'camera_color_graphic':
-				var cv_image = new Image();
-				cv_image.onload = function() {
-		            self.ctx.drawImage(cv_image, 0, 0)
+				var cv_image_url = DIR + 'images/cv_2.png';
 
-		            self.start(self.getNextAddress(instructionAddr));
-				};
-				cv_image.src = DIR + 'images/cv_2.png';
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
 
 				break;
 
@@ -913,8 +910,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'clearRect':
 				this.ctx.clearRect(0,0,100*m.cw,100*m.ch);
-
+				
 				this.start(this.getNextAddress(instructionAddr));
+
 				break;
 
 			case 'closeGripper':
@@ -991,22 +989,22 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 77*this.ch;
 						// x = 77*this.cw;
 						// y = 73*this.ch;
-						x = 77*this.cw;
-						y = 90*this.ch;
+						x = 79*this.cw;
+						y = 88*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 					case 2:
 						// x = 70*this.cw;
 						// y = 74*this.ch;
-						x = 62*this.cw;
-						y = 75*this.ch;
+						x = 65*this.cw;
+						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 3:
 						// x = 47*this.cw;
 						// y = 82*this.ch;
-						x = 47*this.cw;
-						y = 75*this.ch;
+						x = 50*this.cw;
+						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 4:
@@ -1015,7 +1013,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// x = 39*this.cw;
 						// y = 40*this.ch;
 						x = 62*this.cw;
-						y = 16*this.ch;
+						y = 14*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 				}
@@ -1531,15 +1529,22 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'show_camera':
+				// this.displayOff();
+				// var cv_image = new Image();
 
-				var cv_image = new Image();
-				cv_image.onload = function() {
-					console.log('Displaying camera')
-		            self.ctx.drawImage(cv_image, 20, 70)
+				// cv_image.onload = function() {
+				// 	console.log('Displaying camera')
+		  //           self.ctx.drawImage(cv_image, 20, 70)
 
-		            self.start(self.getNextAddress(instructionAddr));
-				};
-				cv_image.src = DIR + 'images/cv_image.png';
+		  //           self.start(self.getNextAddress(instructionAddr));
+				// };
+				// cv_image.src = DIR + 'images/cv_image.png';
+
+				var cv_image_url = DIR + 'images/cv_image.png';
+
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
 
 				break;
 
