@@ -38,6 +38,7 @@ class Module():
 
     # Subscribing Topics
     rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles)
+	rospy.Subscriber('position_result', PositionResult, self.cb_position_complete)
 
     # Global Vars
     self.audio_duration = 0
@@ -68,9 +69,14 @@ class Module():
         if req.name is '':
 			goal = Position(base=req.j0pos, shoulder=req.j1pos, elbow=req.j2pos, wrist1=req.j3pos, wrist2=req.j4pos, wrist3=req.j5pos)
 			self.pub_goal.publish(goal)
-            self.command_complete_topic.publish()
 		else:
             if req.wait == True:
 				startTime = rospy.get_time()
                 goal = Position()
 				goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+
+    def cb_position_complete(self, pos_res):
+        if pos_res.completed:
+            self.command_complete_topic.publish()
+    
+    

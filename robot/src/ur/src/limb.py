@@ -43,6 +43,9 @@ class Limb:
         self.initialized = False
         self.completed = False
 
+        #used by UR to change control/check mode + make sure robot is connected and ready
+        self.robot_ready = False 
+        
         self.current_pos = [0,0,0,0,0,0]
         self.req = []
         self.command_mode = 0
@@ -93,6 +96,7 @@ class Limb:
         # Subscriptions
 		rospy.Subscriber('position', Position, self.command)
 		rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
+        self.sub_robot_ready  = rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
 
         # Publishes to
 		self.pub_setpoint   = rospy.Publisher('setpoint', Setpoint, queue_size= 1)
@@ -100,6 +104,15 @@ class Limb:
 		self.pub_posresult = rospy.Publisher('position_result', PositionResult, queue_size=1)
 
 		rospy.Timer(rospy.Duration(0.0008), self.cb_publish)    
+
+    def cb_robot_ready(self, robot_ready_msg):
+        '''
+        Discovers whether or not if the robot is ready.
+        If it is not ready, it states that the robot is on standby
+        '''
+        self.robot_ready = robot_ready_msg.data
+        if not self.robot_ready:
+            print "STANDBY mode engaged from program halt"
 
 	def cb_joint_states(self, data):
 
@@ -222,8 +235,6 @@ class Limb:
 		if cur_pos == req_pos:
 			self.success[0] = 1
 
-		#print self.base_final
-
 		self.base_error_prev = error
 
 	def move_shoulder(self, cur_pos, req_pos):
@@ -249,8 +260,6 @@ class Limb:
 		if cur_pos == req_pos:
 			self.success[1] = 1
 
-		#print self.shoulder_final
-
 		self.shoulder_error_prev = error
 
 	def move_elbow(self, cur_pos, req_pos):
@@ -275,8 +284,6 @@ class Limb:
 
 		if cur_pos == req_pos:
 			self.success[2] = 1
-
-		#print self.self.elbow_final
 
 		self.elbow_error_prev = error
 
@@ -330,8 +337,6 @@ class Limb:
 		if cur_pos == req_pos:
 			self.success[4] = 1
 
-		#print self.wrist2_final
-
 		self.wrist2_error_prev = error
 
 	def move_wrist3(self, cur_pos, req_pos):
@@ -356,9 +361,6 @@ class Limb:
 
 		if cur_pos == req_pos:
 			self.success[5] = 1
-
-		#print cur_pos, req_pos
-
 		self.wrist3_error_prev = error
 
 	def cb_publish(self, event):
