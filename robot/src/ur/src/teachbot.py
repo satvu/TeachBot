@@ -33,7 +33,8 @@ class Module():
     intera_interface.HeadDisplay().display_image('logo.png')
 
     # Publishing Topics
-	self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
+	self.pub_goal = rospy.Publisher('position', Position, queue_size=1) #this is to communicate with the limb
+	self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
 
     # Subscribing Topics
     rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles)
@@ -67,4 +68,9 @@ class Module():
         if req.name is '':
 			goal = Position(base=req.j0pos, shoulder=req.j1pos, elbow=req.j2pos, wrist1=req.j3pos, wrist2=req.j4pos, wrist3=req.j5pos)
 			self.pub_goal.publish(goal)
-			return
+            self.command_complete_topic.publish()
+		else:
+            if req.wait == True:
+				startTime = rospy.get_time()
+                goal = Position()
+				goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
