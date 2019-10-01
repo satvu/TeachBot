@@ -670,13 +670,60 @@
 				"type":"camera"
 			},
 			{
-				"//":"6: Putting this into practice, this is what I see.",
+				"type":"show_camera"
+			},
+			{
+				"type":"camera_off"
+			},
+			{
+				"//":"6: Putting this into practice, this is what I see...",
 				"type":"play",
 				"audio_index":5,
 				"delay":true
 			},
 			{
-				"type":"show_camera"
+				"type":"proceed",
+				"to_section":"coding"
+			}
+		]
+	},
+	{
+		"id":"coding",
+		"instructions":[
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
+			},
+			{
+				"type":"reset"
+			},
+			{
+				"type":"drawBox",
+				"number":3
+			},
+			{
+				"//":"0: Please put box 3 back to it's original position and put bin 1 on the stand. Press the scroll wheel when done.",
+				"type":"play",
+				"audio_index":0,
+				"delay": true
+			},
+			{
+				"type":"pressed_button"
+			},
+			{
+				"//":"1: Now that you've mastered putting boxes into bins, you are now going to code me yourself to put the box in the bin.",
+				"type":"play",
+				"audio_index":1,
+				"delay": true
+			},
+			{
+				"type":"programming_choices"
+			},
+			{
+				"//":"2: Displayed on my screen is a series of options you can choose from to put the box into the bin. Use the scroll wheel button to move up and down the list and press the scroll wheel button to select the task you want to do.",
+				"type":"play",
+				"audio_index":2,
+				"delay": true
 			}
 		]
 	}

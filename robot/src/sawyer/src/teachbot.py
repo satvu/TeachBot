@@ -409,6 +409,7 @@ class Module():
 		# rospy.loginfo('Creating image')
 		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 		self.command_complete_topic.publish()
+	
 
 
 	def addSeq(self, seq):
@@ -573,14 +574,21 @@ class Module():
 		self.command_complete_topic.publish()
 
 	def cb_camera(self, data):
-		if self.VERBOSE: rospy.loginfo('Accessing camera')
+		if data.data == True:
+			if self.VERBOSE: rospy.loginfo('Accessing camera')
 
-		rp = intera_interface.RobotParams()
-		valid_cameras = rp.get_camera_names()
-		camera = intera_interface.Cameras()
-		camera.start_streaming('right_hand_camera')
-		rectify_image = False
-		camera.set_callback('right_hand_camera', self.display_camera_callback)
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.start_streaming('right_hand_camera')
+			rectify_image = False
+			camera.set_callback('right_hand_camera', self.display_camera_callback)
+		else:
+			if self.VERBOSE: rospy.loginfo('Shutting down camera')
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.stop_streaming('right_hand_camera')
 
 	def cb_check_pickup(self, req):
 		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')

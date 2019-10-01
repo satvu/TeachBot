@@ -878,6 +878,23 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
+			case 'camera_off':
+				var req = new ROSLIB.Message({
+					data: false
+				});
+
+				console.log('Shutting down camera')
+
+				this.camera.publish(req);
+
+				this.command_complete.subscribe(function(message) {
+					self.command_complete.unsubscribe();
+					self.command_complete.removeAllListeners();
+					self.start(self.getNextAddress(instructionAddr));
+				});
+
+				break;
+
 			case 'check_pickup':
 				var req = new ROSLIB.Message({
 					data: true
@@ -1003,7 +1020,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					case 3:
 						// x = 47*this.cw;
 						// y = 82*this.ch;
-						x = 50*this.cw;
+						x = 49*this.cw;
 						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
@@ -1012,8 +1029,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 40*this.ch;
 						// x = 39*this.cw;
 						// y = 40*this.ch;
-						x = 62*this.cw;
-						y = 14*this.ch;
+						x = 63*this.cw;
+						y = 13*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 				}
@@ -1411,6 +1428,15 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				var position_color_url = DIR + 'images/position_color.png';
 
 				draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+
+				this.start(this.getNextAddress(instructionAddr));
+
+				break;
+
+			case 'programming_choices':
+				this.ctx.font = "60px Arial";
+				this.ctx.fillText("Close Gripper", 10, 50);
+
 
 				this.start(this.getNextAddress(instructionAddr));
 
