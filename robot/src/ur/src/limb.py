@@ -34,10 +34,6 @@ import rospy
 import sensor_msgs.msg as smsg
 from std_msgs.msg import Bool
 
-# Position CONSTANTS
-SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
-ZERO = [0, -1.57, 0, -1.57, 0, 0]
-
 class Limb:
     def __init__(self):
         self.initialized = False
@@ -45,7 +41,7 @@ class Limb:
 
         #used by UR to change control/check mode + make sure robot is connected and ready
         self.robot_ready = False 
-        
+
         self.current_pos = [0,0,0,0,0,0]
         self.req = []
         self.command_mode = 0
@@ -125,12 +121,6 @@ class Limb:
 			print 'Completing request'
 
 		try:
-
-			if self.req[6] == 'scara':
-				print 'scara'
-				self.command_mode = 1
-			elif self.req[6] == 'zero':
-				self.command_mode = 2
 
 			base = self.current_pos[0]
 			base_req = self.req[0]
@@ -214,11 +204,6 @@ class Limb:
 
 	def move_base(self, cur_pos, req_pos):
 
-		if self.command_mode == 1:
-			req_pos = 0
-		if self.command_mode == 2:
-			req_pos = 0
-
 		error = req_pos-cur_pos
 		derivative = error-self.base_error_prev
 		self.base_final = error+derivative
@@ -238,12 +223,6 @@ class Limb:
 		self.base_error_prev = error
 
 	def move_shoulder(self, cur_pos, req_pos):
-
-		if self.command_mode == 1:
-			req_pos = -3.14
-		if self.command_mode == 2:
-			req_pos = -1.57
-
 		error = req_pos-cur_pos
 		derivative = error-self.shoulder_error_prev
 		self.shoulder_final = error+derivative
@@ -263,11 +242,6 @@ class Limb:
 		self.shoulder_error_prev = error
 
 	def move_elbow(self, cur_pos, req_pos):
-
-		if self.command_mode == 1:
-			req_pos = 0
-		if self.command_mode == 2:
-			req_pos = 0 
 
 		error = req_pos-cur_pos
 		derivative = error-self.elbow_error_prev
@@ -289,11 +263,6 @@ class Limb:
 
 	def move_wrist1(self, cur_pos, req_pos):
 
-		if self.command_mode == 1:
-			req_pos =  -3.14
-		if self.command_mode == 2:
-			req_pos = -1.57
-
 		error = req_pos-cur_pos
 		derivative = error-self.wrist1_error_prev
 		self.wrist1_final = error+derivative
@@ -310,16 +279,9 @@ class Limb:
 		if cur_pos == req_pos:
 			self.success[3] = 1
 
-		#print self.wrist1_final
-
 		self.wrist1_error_prev = error
 
 	def move_wrist2(self, cur_pos, req_pos):
-
-		if self.command_mode == 1:
-			req_pos =  -1.57
-		if self.command_mode == 2:
-			req_pos = 0
 
 		error = req_pos-cur_pos
 		derivative = error-self.wrist2_error_prev
@@ -340,11 +302,6 @@ class Limb:
 		self.wrist2_error_prev = error
 
 	def move_wrist3(self, cur_pos, req_pos):
-
-		if self.command_mode == 1:
-			req_pos = 0
-		if self.command_mode == 2:
-			req_pos = 0
 
 		error = req_pos-cur_pos
 		derivative = error-self.wrist3_error_prev
