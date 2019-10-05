@@ -87,8 +87,8 @@ class LimbManager:
         '''
         if not self.robot_ready:
             self.initialized = robot_ready_msg.data
-            print self.initialized
             if self.initialized:
+                self.robot_ready = True
                 self.completed = True
                 print "Robot initialized"
                 self.success = [1, 1, 1, 1, 1, 1]
