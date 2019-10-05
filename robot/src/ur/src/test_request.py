@@ -10,47 +10,60 @@ from ur.msg import Position, PositionFeedback, PositionResult
 from std_msgs.msg import Bool
 
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
+ROTATE_WRIST = [0, -3.14, 0, -3.14, -1.57, -1]
+ROTATE_WRIST_BACK = [0, -3.14, 0, -3.14, -1.57, 0]
 ZERO = [0, -1.57, 0, -1.57, 0, 0]
 
 counter = 0
 
 class PositionClient:
 
-	def __init__(self):
-		
-		self.progress = []
-		self.completed = False
+    def __init__(self):
 
-		rospy.Subscriber('position_feedback', PositionFeedback, self.feedback_cb)
-		rospy.Subscriber('position_result', PositionResult, self.send_positions)
+        self.progress = []
+        self.completed = False
 
-		self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
+        rospy.Subscriber('position_feedback', PositionFeedback, self.feedback_cb)
+        rospy.Subscriber('position_result', PositionResult, self.send_positions)
 
-	def send_positions(self, data):
-		if data.initialized == True and data.completed == True:
-			goal = Position(base=0, shoulder=-2.19, elbow=0, wrist1=-2.31, wrist2=-1.57, wrist3=0)
-			print(goal)
-			self.pub_goal.publish(goal)
-			return
-		elif data.initialized == True and data.completed != True:
-			print 'Awaiting completion. Progress:', self.progress
-		else:
-			print 'Waiting for robot to initialize.'
+        self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
 
-	def feedback_cb(self, data):
-		#print data.progress
-		self.progress = data.progress
+    def send_positions(self, data):
+        if data.initialized == True and data.completed == True:
+            target = SCARA
+            print 'Enter a request, if no specific request, type and enter "none"'
+            user = raw_input()
+            print 'Sending Goal'
+            if user == '0':
+                target = ZERO 
+            elif user == '1':
+                target = ROTATE_WRIST 
+            elif user == '2':
+                target = ROTATE_WRIST_BACK
+
+            goal = Position(base=target[0], shoulder=target[1], elbow=target[2], wrist1=target[3], wrist2=target[4], wrist3=target[5])
+            print(goal)
+            self.pub_goal.publish(goal)
+            return
+        elif data.initialized == True and data.completed != True:
+            print 'Awaiting completion. Progress:', self.progress
+        else:
+            print 'Waiting for robot to initialize.'
+
+    def feedback_cb(self, data):
+        #print data.progress
+        self.progress = data.progress
 
 
 if __name__ == '__main__':
-	rospy.init_node('request')
-	pc = PositionClient()
+    rospy.init_node('request')
+    pc = PositionClient()
 
-	try:              
-		rospy.spin()
+    try:              
+        rospy.spin()
 
-	except rospy.ROSInterruptException:
-		pass
+    except rospy.ROSInterruptException:
+        pass
 
 
 
