@@ -73,10 +73,15 @@ class Module():
             if req.wait == True:
 				startTime = rospy.get_time()
                 goal = Position()
+                #this is from TeachBot, UR doesn't actually take in speed ratio and ways. you go to joint position like the above
 				goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
 
     def cb_position_complete(self, pos_res):
         if pos_res.completed:
             self.command_complete_topic.publish()
     
-    
+## DEFINE IMPORTANT CONSTANTS ##
+if __name__ == '__main__':
+    # Position CONSTANTS
+    SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
+    ZERO = [0, -1.57, 0, -1.57, 0, 0]
