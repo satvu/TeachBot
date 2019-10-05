@@ -1,50 +1,29 @@
-# Imports from TeachBot
-from std_msgs.msg import String
-from geometry_msgs.msg import (
-	PoseStamped,
-	Pose
-)
-
-# Intera (Imports from TeachBot)
-import intera_interface
-from intera_interface import (
-	Limb,
-	Lights,
-	CHECK_VERSION
-)
-from intera_motion_msgs.msg import (
-	TrajectoryOptions
-)
-from intera_core_msgs.msg import InteractionControlCommand
-from intera_motion_interface import (
-	MotionTrajectory,
-	MotionWaypoint,
-	MotionWaypointOptions,
-	InteractionOptions
-)
-from intera_motion_interface.utility_functions import (int2bool, bool2int, boolToggle)
-from intera_core_msgs.srv import (
-	SolvePositionFK,
-	SolvePositionFKRequest
-)
-from sensor_msgs.msg import JointState
-
-# ur_rtde imports
+#!/usr/bin/env python
+'''
+Created on July 1, 2019
+Author: Albert Go (albertgo@mit.edu)
+'''
 import rospy
 import sensor_msgs.msg as smsg
+from ur.msg import Mode, Setpoint, Trajectory, Position, PositionFeedback, PositionResult
 from std_msgs.msg import Bool
+from sensor_msgs.msg import JointState
+from geometry_msgs.msg import WrenchStamped
+import helper as hp
+import math
+import numpy as np
+import threading
 
-class Limb:
+
+class LimbManager:
+
     def __init__(self):
-        self.initialized = False
         self.completed = False
-
-        #used by UR to change control/check mode + make sure robot is connected and ready
-        self.robot_ready = False 
+        self.initialized = False
+        self.robot_ready = False
 
         self.current_pos = [0,0,0,0,0,0]
         self.req = []
-        self.command_mode = 0
         self.success = [0,0,0,0,0,0]
 
         ########################
@@ -89,263 +68,260 @@ class Limb:
         self.wrist3_final = 0
         self.wrist3_success = False
 
-        # Subscriptions
-		rospy.Subscriber('position', Position, self.command)
-		rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
-        self.sub_robot_ready  = rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
+        #Subscribers
+        rospy.Subscriber('position', Position, self.command)
+        rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
+        rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
 
-        # Publishes to
-		self.pub_setpoint   = rospy.Publisher('setpoint', Setpoint, queue_size= 1)
-		self.pub_posfeedback = rospy.Publisher('position_feedback', PositionFeedback, queue_size=1)
-		self.pub_posresult = rospy.Publisher('position_result', PositionResult, queue_size=1)
+        #Publishers
+        self.pub_setpoint   = rospy.Publisher('setpoint', Setpoint, queue_size= 1)
+        self.pub_posfeedback = rospy.Publisher('position_feedback', PositionFeedback, queue_size=1)
+        self.pub_posresult = rospy.Publisher('position_result', PositionResult, queue_size=1)
 
-		rospy.Timer(rospy.Duration(0.0008), self.cb_publish)    
+        rospy.Timer(rospy.Duration(0.0008), self.cb_publish)
 
     def cb_robot_ready(self, robot_ready_msg):
         '''
         Discovers whether or not if the robot is ready.
-        If it is not ready, it states that the robot is on standby
+        If it is not ready, it staes that the robot is on standby
         '''
-        self.robot_ready = robot_ready_msg.data
         if not self.robot_ready:
-            print "STANDBY mode engaged from program halt"
-
-	def cb_joint_states(self, data):
-
-		self.current_pos  = data.position
-
-		if self.initialized == False:
-			print 'Initializing...'
-			self.req = [0, -3.14, 0, -3.14, -1.57, 0, 'none']
-		elif len(self.req) > 0: 
-			print 'Completing request'
-
-		try:
-
-			base = self.current_pos[0]
-			base_req = self.req[0]
-			self.move_base(base, base_req)
-
-			shoulder = self.current_pos[1]
-			shoulder_req = self.req[1]
-			self.move_shoulder(shoulder, shoulder_req)
-
-			elbow = self.current_pos[2]
-			elbow_req = self.req[2]
-			self.move_elbow(elbow, elbow_req)
-
-			wrist1 = self.current_pos[3]
-			wrist1_req = self.req[3]
-			self.move_wrist1(wrist1, wrist1_req)
-
-			wrist2 = self.current_pos[4]
-			wrist2_req = self.req[4]
-			self.move_wrist2(wrist2, wrist2_req)
-
-			wrist3 = self.current_pos[5]
-			wrist3_req = self.req[5]
-			self.move_wrist3(wrist3, wrist3_req)
-
-		except:
-			pass
-
-		if sum(self.success) == 6:
-			self.command_mode = 0
-			self.completed = True
-			result = PositionResult()
-
-			if self.initialized == False:
-				print 'Initialized, ready to comply'
-				self.initialized = True
-				result.initialized = self.initialized
-				result.completed = self.completed
-				self.pub_posresult.publish(result)
-				self.success = [0,0,0,0,0,0]
-				self.req = []
-			else:
-				print 'Task Completed'
-				result.final = self.current_pos
-				result.completed = self.completed
-				result.initialized = self.initialized
-				self.pub_posresult.publish(result)
-				self.success = [0,0,0,0,0,0]
-				self.req = []
-		else:
-
-			self.completed = False
-
-			feedback = PositionFeedback()
-			feedback.progress = self.current_pos
-			self.pub_posfeedback.publish(feedback)
-
-			result = PositionResult()
-			result.initialized = self.initialized
-			result.completed = self.completed
-			self.pub_posresult.publish(result)
+            self.initialized = robot_ready_msg.data
+            print self.initialized
+            if self.initialized:
+                self.completed = True
+                print "Robot initialized"
+                self.success = [1, 1, 1, 1, 1, 1]
+        else:
+            if not robot_ready_msg.data:
+                print "STANDBY mode engaged from program halt"
 
 
+    def cb_joint_states(self, data):
 
-	def command(self, req):
+        self.current_pos  = data.position
 
-		self.completed = False
-		self.success = [0,0,0,0,0,0]
+        if len(self.req) > 0: 
+            print 'Completing request'
 
-		try:
-			self.req.append(req.base)
-			self.req.append(req.shoulder)
-			self.req.append(req.elbow)
-			self.req.append(req.wrist1)
-			self.req.append(req.wrist2)
-			self.req.append(req.wrist3)
-			self.req.append(req.head)
-		except:
+        try:
 
-			pass
+            base = self.current_pos[0]
+            base_req = self.req[0]
+            self.move_base(base, base_req)
 
-	def move_base(self, cur_pos, req_pos):
+            shoulder = self.current_pos[1]
+            shoulder_req = self.req[1]
+            self.move_shoulder(shoulder, shoulder_req)
 
-		error = req_pos-cur_pos
-		derivative = error-self.base_error_prev
-		self.base_final = error+derivative
+            elbow = self.current_pos[2]
+            elbow_req = self.req[2]
+            self.move_elbow(elbow, elbow_req)
 
-		if self.base_final > 1:
-			self.base_final = 1
-		elif self.base_final < -1:
-			self.base_final = -1
-		elif self.base_final > 0 and self.base_final < 0.08:
-			self.base_final = 0.08
-		elif self.base_final < 0 and self.base_final > -0.08:
-			self.base_final = -0.08
+            wrist1 = self.current_pos[3]
+            wrist1_req = self.req[3]
+            self.move_wrist1(wrist1, wrist1_req)
 
-		if cur_pos == req_pos:
-			self.success[0] = 1
+            wrist2 = self.current_pos[4]
+            wrist2_req = self.req[4]
+            self.move_wrist2(wrist2, wrist2_req)
 
-		self.base_error_prev = error
+            wrist3 = self.current_pos[5]
+            wrist3_req = self.req[5]
+            self.move_wrist3(wrist3, wrist3_req)
 
-	def move_shoulder(self, cur_pos, req_pos):
-		error = req_pos-cur_pos
-		derivative = error-self.shoulder_error_prev
-		self.shoulder_final = error+derivative
+        except:
+            pass
 
-		if self.shoulder_final > 1:
-			self.shoulder_final = 1
-		elif self.shoulder_final < -1:
-			self.shoulder_final = -1
-		elif self.shoulder_final > 0 and self.shoulder_final < 0.08:
-			self.shoulder_final = 0.08
-		elif self.shoulder_final < 0 and self.shoulder_final > -0.08:
-			self.shoulder_final = -0.08
+        if sum(self.success) == 6:
+            self.command_mode = 0
+            self.completed = True
+            result = PositionResult()
 
-		if cur_pos == req_pos:
-			self.success[1] = 1
+            print 'Task Completed'
+            result.final = self.current_pos
+            result.completed = self.completed
+            result.initialized = self.initialized
+            self.pub_posresult.publish(result)
+            self.success = [0,0,0,0,0,0]
+            self.req = []
 
-		self.shoulder_error_prev = error
+        else:
 
-	def move_elbow(self, cur_pos, req_pos):
+            self.completed = False
 
-		error = req_pos-cur_pos
-		derivative = error-self.elbow_error_prev
-		self.elbow_final = error+derivative
+            feedback = PositionFeedback()
+            feedback.progress = self.current_pos
+            self.pub_posfeedback.publish(feedback)
 
-		if self.elbow_final > 1:
-			self.elbow_final = 1
-		elif self.elbow_final < -1:
-			self.elbow_final = -1
-		elif self.elbow_final > 0 and self.elbow_final < 0.08:
-			self.elbow_final = 0.08
-		elif self.elbow_final < 0 and self.elbow_final > -0.08:
-			self.elbow_final = -0.08
+            result = PositionResult()
+            result.completed = self.completed
+            self.pub_posresult.publish(result)
 
-		if cur_pos == req_pos:
-			self.success[2] = 1
 
-		self.elbow_error_prev = error
+    def command(self, req):
 
-	def move_wrist1(self, cur_pos, req_pos):
+        self.completed = False
+        self.success = [0,0,0,0,0,0]
 
-		error = req_pos-cur_pos
-		derivative = error-self.wrist1_error_prev
-		self.wrist1_final = error+derivative
+        try:
+            self.req.append(req.base)
+            self.req.append(req.shoulder)
+            self.req.append(req.elbow)
+            self.req.append(req.wrist1)
+            self.req.append(req.wrist2)
+            self.req.append(req.wrist3)
+            self.req.append(req.head)
+        except:
 
-		if self.wrist1_final > 1:
-			self.wrist1_final = 1
-		elif self.wrist1_final < -1:
-			self.wrist1_final = -1
-		elif self.wrist1_final > 0 and self.wrist1_final < 0.08:
-			self.wrist1_final = 0.08
-		elif self.wrist1_final < 0 and self.wrist1_final > -0.08:
-			self.wrist1_final = -0.08
+            pass
 
-		if cur_pos == req_pos:
-			self.success[3] = 1
+    def move_base(self, cur_pos, req_pos):
 
-		self.wrist1_error_prev = error
+        error = req_pos-cur_pos
+        derivative = error-self.base_error_prev
+        self.base_final = error+derivative
 
-	def move_wrist2(self, cur_pos, req_pos):
+        if self.base_final > 1:
+            self.base_final = 1
+        elif self.base_final < -1:
+            self.base_final = -1
+        elif self.base_final > 0 and self.base_final < 0.08:
+            self.base_final = 0.08
+        elif self.base_final < 0 and self.base_final > -0.08:
+            self.base_final = -0.08
 
-		error = req_pos-cur_pos
-		derivative = error-self.wrist2_error_prev
-		self.wrist2_final = error+derivative
+        if cur_pos == req_pos:
+            self.success[0] = 1
 
-		if self.wrist2_final > 1:
-			self.wrist2_final = 1
-		elif self.wrist2_final < -1:
-			self.wrist2_final = -1
-		elif self.wrist2_final > 0 and self.wrist2_final < 0.08:
-			self.wrist2_final = 0.08
-		elif self.wrist2_final < 0 and self.wrist2_final > -0.08:
-			self.wrist2_final = -0.08
+        self.base_error_prev = error
 
-		if cur_pos == req_pos:
-			self.success[4] = 1
+    def move_shoulder(self, cur_pos, req_pos):
 
-		self.wrist2_error_prev = error
+        error = req_pos-cur_pos
+        derivative = error-self.shoulder_error_prev
+        self.shoulder_final = error+derivative
 
-	def move_wrist3(self, cur_pos, req_pos):
+        if self.shoulder_final > 1:
+            self.shoulder_final = 1
+        elif self.shoulder_final < -1:
+            self.shoulder_final = -1
+        elif self.shoulder_final > 0 and self.shoulder_final < 0.08:
+            self.shoulder_final = 0.08
+        elif self.shoulder_final < 0 and self.shoulder_final > -0.08:
+            self.shoulder_final = -0.08
 
-		error = req_pos-cur_pos
-		derivative = error-self.wrist3_error_prev
-		self.wrist3_final = error+derivative
+        if cur_pos == req_pos:
+            self.success[1] = 1
 
-		if self.wrist3_final > 1:
-			self.wrist3_final = 1
-		elif self.wrist3_final < -1:
-			self.wrist3_final = -1
-		elif self.wrist3_final > 0 and self.wrist3_final < 0.08:
-			self.wrist3_final = 0.08
-		elif self.wrist3_final < 0 and self.wrist3_final > -0.08:
-			self.wrist3_final = -0.08
+        self.shoulder_error_prev = error
 
-		if cur_pos == req_pos:
-			self.success[5] = 1
-		self.wrist3_error_prev = error
+    def move_elbow(self, cur_pos, req_pos):
 
-	def cb_publish(self, event):
-		if len(self.req) == 0:
-			setpoint = [0.0]*6
-			setp_msg = Setpoint()
-			setp_msg.setpoint = setpoint
-			setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
-			self.pub_setpoint.publish(setp_msg)
-		else:
-			setpoint = [0.0]*6
-			setpoint[0] = self.base_final*0.35
-			setpoint[1] = self.shoulder_final*0.35
-			setpoint[2] = self.elbow_final*0.35
-			setpoint[3] = self.wrist1_final*0.35
-			setpoint[4] = self.wrist2_final*0.35
-			setpoint[5] = self.wrist3_final*0.35
-			setp_msg = Setpoint()
-			setp_msg.setpoint = setpoint
-			setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
-			self.pub_setpoint.publish(setp_msg)
+        error = req_pos-cur_pos
+        derivative = error-self.elbow_error_prev
+        self.elbow_final = error+derivative
+
+        if self.elbow_final > 1:
+            self.elbow_final = 1
+        elif self.elbow_final < -1:
+            self.elbow_final = -1
+        elif self.elbow_final > 0 and self.elbow_final < 0.08:
+            self.elbow_final = 0.08
+        elif self.elbow_final < 0 and self.elbow_final > -0.08:
+            self.elbow_final = -0.08
+
+        if cur_pos == req_pos:
+            self.success[2] = 1
+
+        self.elbow_error_prev = error
+
+    def move_wrist1(self, cur_pos, req_pos):
+
+        error = req_pos-cur_pos
+        derivative = error-self.wrist1_error_prev
+        self.wrist1_final = error+derivative
+
+        if self.wrist1_final > 1:
+            self.wrist1_final = 1
+        elif self.wrist1_final < -1:
+            self.wrist1_final = -1
+        elif self.wrist1_final > 0 and self.wrist1_final < 0.08:
+            self.wrist1_final = 0.08
+        elif self.wrist1_final < 0 and self.wrist1_final > -0.08:
+            self.wrist1_final = -0.08
+
+        if cur_pos == req_pos:
+            self.success[3] = 1
+
+        self.wrist1_error_prev = error
+
+    def move_wrist2(self, cur_pos, req_pos):
+
+        error = req_pos-cur_pos
+        derivative = error-self.wrist2_error_prev
+        self.wrist2_final = error+derivative
+
+        if self.wrist2_final > 1:
+            self.wrist2_final = 1
+        elif self.wrist2_final < -1:
+            self.wrist2_final = -1
+        elif self.wrist2_final > 0 and self.wrist2_final < 0.08:
+            self.wrist2_final = 0.08
+        elif self.wrist2_final < 0 and self.wrist2_final > -0.08:
+            self.wrist2_final = -0.08
+
+        if cur_pos == req_pos:
+            self.success[4] = 1
+
+        self.wrist2_error_prev = error
+
+    def move_wrist3(self, cur_pos, req_pos):
+
+        error = req_pos-cur_pos
+        derivative = error-self.wrist3_error_prev
+        self.wrist3_final = error+derivative
+
+        if self.wrist3_final > 1:
+            self.wrist3_final = 1
+        elif self.wrist3_final < -1:
+            self.wrist3_final = -1
+        elif self.wrist3_final > 0 and self.wrist3_final < 0.08:
+            self.wrist3_final = 0.08
+        elif self.wrist3_final < 0 and self.wrist3_final > -0.08:
+            self.wrist3_final = -0.08
+
+        if cur_pos == req_pos:
+            self.success[5] = 1
+
+        self.wrist3_error_prev = error
+
+    def cb_publish(self, event):
+        if len(self.req) == 0:
+            setpoint = [0.0]*6
+            setp_msg = Setpoint()
+            setp_msg.setpoint = setpoint
+            setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
+            self.pub_setpoint.publish(setp_msg)
+        else:
+            setpoint = [0.0]*6
+            setpoint[0] = self.base_final*0.35
+            setpoint[1] = self.shoulder_final*0.35
+            setpoint[2] = self.elbow_final*0.35
+            setpoint[3] = self.wrist1_final*0.35
+            setpoint[4] = self.wrist2_final*0.35
+            setpoint[5] = self.wrist3_final*0.35
+            setp_msg = Setpoint()
+            setp_msg.setpoint = setpoint
+            setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
+            self.pub_setpoint.publish(setp_msg)
 
 if __name__ == '__main__':
-	rospy.init_node('limb_manager')
-	limb = Limb()
+    rospy.init_node('limb_manager')
+    lm = LimbManager()
 
-	try:              
-		rospy.spin()
+    try:              
+        rospy.spin()
 
-	except rospy.ROSInterruptException:
-		pass
+    except rospy.ROSInterruptException:
+        pass
