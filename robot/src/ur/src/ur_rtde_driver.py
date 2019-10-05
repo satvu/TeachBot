@@ -30,7 +30,7 @@ from std_msgs.msg import UInt32
 from std_msgs.msg import UInt8
 from std_msgs.msg import Bool
 
-#logging.basicConfig(level=logging.INFO)
+from ur.msg import *
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
@@ -38,7 +38,6 @@ JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
 ROBOT_PORT = 30004
 ROBOT_HOST = '169.254.157.0'
 GRIPPER_PORT = 63352
-#ROBOT_HOST = '127.0.0.1'
 
 #Driver Class
 class UrRtdeDriver:
@@ -100,7 +99,7 @@ class UrRtdeDriver:
     def connect_rtde(self):
 
         # Config file relative path so that it works on either computer. Requires node to be run from specific directory.
-        self.config_filename = 'src/ur_rtde/src/control_loop_configuration.xml' # recipe configuration
+        self.config_filename = 'src/ur/src/control_loop_configuration.xml' # recipe configuration
 
         self.logger = logging.getLogger().setLevel(logging.INFO)
 

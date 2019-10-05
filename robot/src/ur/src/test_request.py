@@ -6,8 +6,13 @@ Author: Albert Go (albertgo@mit.edu)
 
 import rospy
 import sensor_msgs.msg as smsg
-from ur_rtde.msg import Position, PositionFeedback, PositionResult
+from ur.msg import Position, PositionFeedback, PositionResult
 from std_msgs.msg import Bool
+
+SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
+ZERO = [0, -1.57, 0, -1.57, 0, 0]
+
+counter = 0
 
 class PositionClient:
 
@@ -22,12 +27,8 @@ class PositionClient:
 		self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
 
 	def send_positions(self, data):
-
 		if data.initialized == True and data.completed == True:
-			print 'Enter a request, if no specific request, type and enter "none"'
-			user = raw_input()
-			print 'Sending Goal'
-			goal = Position(base=0, shoulder=-2.19, elbow=0, wrist1=-2.31, wrist2=-1.57, wrist3=0, head =user)
+			goal = Position(base=0, shoulder=-2.19, elbow=0, wrist1=-2.31, wrist2=-1.57, wrist3=0)
 			print(goal)
 			self.pub_goal.publish(goal)
 			return

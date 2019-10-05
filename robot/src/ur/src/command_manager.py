@@ -14,7 +14,7 @@ import math
 import numpy as np
 import threading
 import tf
-
+from ur.msg import *
 class CommandManager:
     def __init__(self):
         rospy.init_node('command_manager', anonymous=True)
