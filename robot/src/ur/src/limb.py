@@ -15,6 +15,7 @@ import numpy as np
 import threading
 
 JOINT_MOVE = 0
+ADMITTANCE = 1
 
 class LimbManager:
 
@@ -31,13 +32,26 @@ class LimbManager:
         ########################
         #####BASE VARIABLES#####
         ########################
+
+        #These are for GoToJointAngles
         self.base_error_prev = 0
         self.base_final = 0
         self.base_success = False
 
+        #These are for admittance
+        self.base = []
+        self.base_most = [0,0]
+        self.admit_base_final =[]
+        self.base_push = 0
+        self.base_base = 0
+        self.base_prev_base = 0
+        self.base_last_diff = 0
+
         ########################
         ###SHOULDER VARIABLES###
         ########################
+        
+        #These are for GoToJointAngles
         self.shoulder_error_prev = 0
         self.shoulder_final = 0
         self.shoulder_success = False
@@ -45,6 +59,8 @@ class LimbManager:
         ########################
         ####ELBOW VARIABLES#####
         ########################
+
+        #These are for GoToJointAngles
         self.elbow_error_prev = 0
         self.elbow_final = 0
         self.elbow_success = False
@@ -52,6 +68,8 @@ class LimbManager:
         ########################
         ####WRIST1 VARIABLES####
         ########################
+        
+        #These are for GoToJointAngles
         self.wrist1_error_prev = 0
         self.wrist1_final = 0
         self.wrist1_success = False
@@ -59,13 +77,26 @@ class LimbManager:
         ########################
         ####WRIST2 VARIABLES####
         ########################
+
+        #These are for GoToJointAngles
         self.wrist2_error_prev = 0
         self.wrist2_final = 0
         self.wrist2_success = False
 
+        #These are for Admittance
+        self.wrist2 = []
+        self.wrist2_most = [0,0]
+        self.admit_wrist2_final =[]
+        self.wrist2_push = 0
+        self.wrist2_base = 0
+        self.wrist2_prev_base = 0
+        self.wrist2_last_diff = 0
+
         ########################
         ####WRIST3 VARIABLES####
         ########################
+
+        #These are for GoToJointAngles
         self.wrist3_error_prev = 0
         self.wrist3_final = 0
         self.wrist3_success = False
@@ -74,6 +105,8 @@ class LimbManager:
         rospy.Subscriber('position', Position, self.command)
         rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
         rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
+        rospy.Subscriber('wrench', WrenchStamped, self.cb_force_control)
+
 
         #Publishers
         self.pub_setpoint   = rospy.Publisher('setpoint', Setpoint, queue_size= 1)
@@ -304,6 +337,150 @@ class LimbManager:
             self.success[5] = 1
 
         self.wrist3_error_prev = error
+    
+    def cb_force_control(self, data):
+        '''
+        Detects a change in force, as if someone is pushing on it, and assigns
+        a corresponding velocity to specific joints
+        '''
+        base_force = data.wrench.force.y
+        wrist2_torque = data.wrench.torque.z
+
+        self.admittance_move_base(base_force)
+        self.admittance_move_wrist2(wrist2_torque)
+
+    def admittance_move_base(self, forces):
+        '''
+        Focuses on creating a controller purely for the base joint
+        If this starts messing up, switch back to the baseline being zero and 
+        remove the updating baseling part
+        '''
+        if len(self.base) < 100:
+            self.base.append(forces)
+        else:
+            del self.base[0]
+            self.base.append(forces)
+
+        #print(self.base)
+
+        try:
+            if len(self.base_most) < 2:
+                self.base_most.append(mode(self.base))
+            else:
+                del self.base_most[0]
+                self.base_most.append(mode(self.base))
+        except:
+            pass
+
+        average = round(mean(self.base), 4)
+        #print("AVERAGE:", mean(self.base))
+        #print("Diff:", average-self.base_most[0])
+
+        a = True
+        if abs(average-self.base_most[0]) > 0.1:
+            a = False
+
+        if a == True:
+            if self.base_prev_base == 0:
+                self.base_base = forces
+                self.base_prev_base = self.base_base
+            else:
+                if abs(forces-self.base_prev_base) < 2:
+                    self.base_base = forces
+        
+        #print "BASE:", self.base_base
+
+        diff = round((average-self.base_base), 3)
+        #derivative = diff-self.base_last_diff
+        #v = diff-(derivative*10)
+        if abs(diff) < 0.5:
+            diff = 0
+
+        # self.base_push = round(diff, 2)
+
+        if len(self.admit_base_final) < 50:
+            self.admit_base_final.append(diff)
+        else:
+            del self.admit_base_final[0]
+            self.admit_base_final.append(diff)
+
+        derivative = (mean(self.admit_base_final)-self.admit_base_last_diff)*2
+
+        #print derivative
+
+        self.base_push = round(mean(self.admit_base_final), 2)+derivative
+
+        if abs(self.base_push) < 0.9:
+            self.base_push = 0
+
+        #print self.base_push
+        
+
+        self.base_last_diff = mean(self.admit_base_final)
+
+
+    def admittance_move_wrist2(self, forces):
+        '''
+        Focuses on creating a controller purely for the wrist2 joint
+        '''
+        if len(self.wrist2) < 100:
+            self.wrist2.append(forces)
+        else:
+            del self.wrist2[0]
+            self.wrist2.append(forces)
+
+        try:
+            #print(mode(self.elbow))
+            if len(self.wrist2_most) < 2:
+                self.wrist2_most.append(mode(self.wrist2))
+            else:
+                del self.wrist2_most[0]
+                self.wrist2_most.append(mode(self.wrist2))
+        except:
+            pass
+
+        average = mean(self.wrist2)
+        
+        a = True
+        new_diff = 0
+        if abs(self.wrist2_most[0]-average) > 0.01:
+            a = False
+
+        if a == True:
+            #print('here')
+            if self.wrist2_prev_base == 0:
+                #print ("HELLO")
+                self.wrist2_base = forces
+                self.wrist2_prev_base = self.wrist2_base
+            else:
+                if abs(forces-self.wrist2_prev_base) < 0.16:
+                    self.wrist2_base = forces
+
+        #print("BASES:", self.wrist2_base)
+        #print("PREVIOUS:", self.elbow_prev_base)
+        #print('DIFF:', abs(average-self.wrist2_most[0]))
+ 
+        new_diff = average-self.wrist2_base
+
+        if abs(new_diff) < 0.08:
+            new_diff = 0
+
+        #print('DIFF', new_diff)
+
+        if len(self.admit_wrist2_final) < 100:
+            self.admit_wrist2_final.append(new_diff)
+        else:
+            del self.wrist2_final[0]
+            self.admit_wrist2_final.append(new_diff)
+
+        derivative = (mean(self.admit_wrist2_final)-self.admit_wrist2_last_diff)*2
+
+        self.wrist2_push = round(mean(self.admit_wrist2_final), 2)+derivative
+
+        if abs(self.wrist2_push) < 0.08:
+            self.wrist2_push = 0
+
+        self.wrist2_last_diff = mean(self.admit_wrist2_final)
 
     def cb_publish(self, event):
         if self.command_mode == JOINT_MOVE:
@@ -325,6 +502,9 @@ class LimbManager:
                 setp_msg.setpoint = setpoint
                 setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
                 self.pub_setpoint.publish(setp_msg)
+        
+        if self.command_mode == ADMITTANCE:
+            pass
 
 if __name__ == '__main__':
     rospy.init_node('limb_manager')
