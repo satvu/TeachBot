@@ -1,0 +1,31 @@
+{"sections": [
+	{
+		"id": "motors",
+		"instructions": [
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"SCARA"
+            },
+            {
+				"type":"goToJointAngles",
+				"joint_angles":"WRIST_3_FWD"
+            },
+            {
+				"type":"goToJointAngles",
+				"joint_angles":"SCARA"
+            },
+            {
+				"type":"goToJointAngles",
+				"joint_angles":"WRIST_1_FWD"
+            },
+            {
+				"type":"goToJointAngles",
+				"joint_angles":"SCARA"
+            },
+            {
+				"type":"goToJointAngles",
+                "joint_angles":"ZERO"
+            }
+		]
+	}
+]}
