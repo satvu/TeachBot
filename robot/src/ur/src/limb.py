@@ -12,6 +12,8 @@ from geometry_msgs.msg import WrenchStamped
 import helper as hp
 import math
 import numpy as np
+from statistics import mode, mean
+
 import threading
 
 JOINT_MOVE = 0
@@ -131,10 +133,13 @@ class LimbManager:
         else:
             if not robot_ready_msg.data:
                 print "STANDBY mode engaged from program halt"
+            else:
+                self.robot_ready = True 
+                self.completed = True 
 
 
     def cb_switch_mode(self, mode):
-        self.command_mode = mode
+        self.command_mode = mode.data
         return
 
     def cb_joint_states(self, data):
@@ -349,6 +354,7 @@ class LimbManager:
         a corresponding velocity to specific joints
         '''
         if self.command_mode == ADMITTANCE:
+            print 'inside force control for admittance'
             self.completed = False
             base_force = data.wrench.force.y
             wrist2_torque = data.wrench.torque.z
@@ -413,7 +419,7 @@ class LimbManager:
             del self.admit_base_final[0]
             self.admit_base_final.append(diff)
 
-        derivative = (mean(self.admit_base_final)-self.admit_base_last_diff)*2
+        derivative = (mean(self.admit_base_final)-self.base_last_diff)*2
 
         #print derivative
 
@@ -479,10 +485,10 @@ class LimbManager:
         if len(self.admit_wrist2_final) < 100:
             self.admit_wrist2_final.append(new_diff)
         else:
-            del self.wrist2_final[0]
+            del self.admit_wrist2_final[0]
             self.admit_wrist2_final.append(new_diff)
 
-        derivative = (mean(self.admit_wrist2_final)-self.admit_wrist2_last_diff)*2
+        derivative = (mean(self.admit_wrist2_final)-self.wrist2_last_diff)*2
 
         self.wrist2_push = round(mean(self.admit_wrist2_final), 2)+derivative
 
@@ -513,6 +519,7 @@ class LimbManager:
                 self.pub_setpoint.publish(setp_msg)
         
         if self.command_mode == ADMITTANCE:
+            print 'in admittance publishing'
             setpoint = [0.0]*6
 
             if self.buttons[2] == 1:
