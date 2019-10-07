@@ -354,7 +354,6 @@ class LimbManager:
         a corresponding velocity to specific joints
         '''
         if self.command_mode == ADMITTANCE:
-            print 'inside force control for admittance'
             self.completed = False
             base_force = data.wrench.force.y
             wrist2_torque = data.wrench.torque.z
@@ -518,20 +517,17 @@ class LimbManager:
                 setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
                 self.pub_setpoint.publish(setp_msg)
         
-        if self.command_mode == ADMITTANCE:
+        elif self.command_mode == ADMITTANCE:
             print 'in admittance publishing'
             setpoint = [0.0]*6
 
-            if self.buttons[2] == 1:
-                setpoint[0] = self.base_push*(0.02)
+            setpoint[0] = self.base_push*(0.02)
 
-            setpoint[1] = self.current_pos[1] #shoulder
-            setpoint[2] = self.current_pos[2] #elbow
-            setpoint[3] = self.current_pos[3] #wrist1
-
-            setpoint[4] = -self.wrist2_push*0.8 #wrist 2
-
-            setpoint[5] = self.current_pos[5] #wrist3
+            setpoint[1] = 0 #shoulder
+            setpoint[2] = 0 #elbow
+            setpoint[3] = 0 #wrist1
+            setpoint[4] = 0 #wrist 2
+            setpoint[5] = 0 #wrist3
             setp_msg = Setpoint()
             setp_msg.setpoint = setpoint
             setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
