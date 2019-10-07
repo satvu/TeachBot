@@ -14,6 +14,7 @@ import math
 import numpy as np
 import threading
 
+JOINT_MOVE = 0
 
 class LimbManager:
 
@@ -21,6 +22,7 @@ class LimbManager:
         self.completed = False
         self.initialized = False
         self.robot_ready = False
+        self.command_mode = JOINT_MOVE
 
         self.current_pos = [0,0,0,0,0,0]
         self.req = []
@@ -134,18 +136,25 @@ class LimbManager:
             pass
 
         if sum(self.success) == 6:
-            self.command_mode = 0
             self.completed = True
             result = PositionResult()
 
-            print 'Task Completed'
             result.final = self.current_pos
             result.completed = self.completed
             result.initialized = self.initialized
             self.pub_posresult.publish(result)
             self.success = [0,0,0,0,0,0]
-            self.req = []
+            self.req = [] 
 
+        elif self.initialized and len(self.req) == 0:
+            self.completed = True
+            result = PositionResult()
+
+            result.final = self.current_pos
+            result.completed = self.completed
+            result.initialized = self.initialized
+            self.pub_posresult.publish(result)
+            
         else:
 
             self.completed = False
@@ -297,24 +306,25 @@ class LimbManager:
         self.wrist3_error_prev = error
 
     def cb_publish(self, event):
-        if len(self.req) == 0:
-            setpoint = [0.0]*6
-            setp_msg = Setpoint()
-            setp_msg.setpoint = setpoint
-            setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
-            self.pub_setpoint.publish(setp_msg)
-        else:
-            setpoint = [0.0]*6
-            setpoint[0] = self.base_final*0.35
-            setpoint[1] = self.shoulder_final*0.35
-            setpoint[2] = self.elbow_final*0.35
-            setpoint[3] = self.wrist1_final*0.35
-            setpoint[4] = self.wrist2_final*0.35
-            setpoint[5] = self.wrist3_final*0.35
-            setp_msg = Setpoint()
-            setp_msg.setpoint = setpoint
-            setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
-            self.pub_setpoint.publish(setp_msg)
+        if self.command_mode == JOINT_MOVE:
+            if len(self.req) == 0:
+                setpoint = [0.0]*6
+                setp_msg = Setpoint()
+                setp_msg.setpoint = setpoint
+                setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
+                self.pub_setpoint.publish(setp_msg)
+            else:
+                setpoint = [0.0]*6
+                setpoint[0] = self.base_final*0.35
+                setpoint[1] = self.shoulder_final*0.35
+                setpoint[2] = self.elbow_final*0.35
+                setpoint[3] = self.wrist1_final*0.35
+                setpoint[4] = self.wrist2_final*0.35
+                setpoint[5] = self.wrist3_final*0.35
+                setp_msg = Setpoint()
+                setp_msg.setpoint = setpoint
+                setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
+                self.pub_setpoint.publish(setp_msg)
 
 if __name__ == '__main__':
     rospy.init_node('limb_manager')
