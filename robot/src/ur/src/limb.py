@@ -6,7 +6,7 @@ Author: Albert Go (albertgo@mit.edu)
 import rospy
 import sensor_msgs.msg as smsg
 from ur.msg import Mode, Setpoint, Trajectory, Position, PositionFeedback, PositionResult
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import WrenchStamped
 import helper as hp
@@ -106,6 +106,7 @@ class LimbManager:
         rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
         rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
         rospy.Subscriber('wrench', WrenchStamped, self.cb_force_control)
+        rospy.Subscriber('ur_mode', Int32, self.cb_switch_mode)
 
 
         #Publishers
@@ -131,6 +132,10 @@ class LimbManager:
             if not robot_ready_msg.data:
                 print "STANDBY mode engaged from program halt"
 
+
+    def cb_switch_mode(self, mode):
+        self.command_mode = mode
+        return
 
     def cb_joint_states(self, data):
 
@@ -343,13 +348,15 @@ class LimbManager:
         Detects a change in force, as if someone is pushing on it, and assigns
         a corresponding velocity to specific joints
         '''
-        self.command_mode = ADMITTANCE
-        self.completed = False
-        base_force = data.wrench.force.y
-        wrist2_torque = data.wrench.torque.z
+        if self.command_mode == ADMITTANCE:
+            self.completed = False
+            base_force = data.wrench.force.y
+            wrist2_torque = data.wrench.torque.z
 
-        self.admittance_move_base(base_force)
-        self.admittance_move_wrist2(wrist2_torque)
+            self.admittance_move_base(base_force)
+            self.admittance_move_wrist2(wrist2_torque)
+        else: 
+            pass
 
     def admittance_move_base(self, forces):
         '''

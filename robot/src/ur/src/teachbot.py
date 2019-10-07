@@ -19,19 +19,27 @@ from statistics import mode, mean
 from geometry_msgs.msg import WrenchStamped
 import helper as hp
 
+# corresponding modes for the UR limb
+JOINT_MOVE = 0
+ADMITTANCE = 1
+
 class Module:
 
     def __init__(self):
-        #Initialize robot
+        #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
+        self.limb_finished = False #whether or not the limb is ready, whether or not it can take a command rn
 
         # Publishing Topics
         self.pub_goal = rospy.Publisher('position', Position, queue_size=1) #this is to communicate with the limb
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
+        self.limb_mode_command = rospy.Publisher('/ur_mode', Int32, queue_size=1) #this is for changing the mode
 
         # Subscribing Topics
-        rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles)
-        rospy.Subscriber('position_result', PositionResult, self.cb_position_complete)
+        rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles) #get info from browser
+        rospy.Subscriber('position_result', PositionResult, self.cb_position_complete) #get info from limb
+        rospy.Subscriber('/joint_move', joint_move, self.cb_joint_move) #admittance command from browser
+
 
         # Global Vars
         self.audio_duration = 0
@@ -41,21 +49,36 @@ class Module:
         self.seqArr = []
 
     def cb_GoToJointAngles(self, req):
-        if self.VERBOSE: rospy.loginfo('Going to joint angles')
+        if self.limb_finished is True:
+            self.limb_finished = False 
+            if self.VERBOSE: rospy.loginfo('Going to joint angles')
 
-        if req.name is '':
-			goal = Position(base=req.j0pos, shoulder=req.j1pos, elbow=req.j2pos, wrist1=req.j3pos, wrist2=req.j4pos, wrist3=req.j5pos)
-			self.pub_goal.publish(goal)
-        else:
-            if req.wait == True:
-                startTime = rospy.get_time()
-                goal = Position()
-                #this is from TeachBot, UR doesn't actually take in speed ratio and ways. you go to joint position like the above
-                goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+            if req.name is '':
+                goal = Position(base=req.j0pos, shoulder=req.j1pos, elbow=req.j2pos, wrist1=req.j3pos, wrist2=req.j4pos, wrist3=req.j5pos)
+                self.pub_goal.publish(goal)
+            else:
+                if req.wait == True:
+                    startTime = rospy.get_time()
+                    goal = Position()
+                    #this is from TeachBot, UR doesn't actually take in speed ratio and ways. you go to joint position like the above
+                    goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+        else: 
+            rospy.loginfo('limb is busy')
+
+    def cb_joint_move(self, req):
+        if self.limb_finished is True:
+            self.limb_finished = False 
+            if self.VERBOSE: rospy.loginfo('joint able to be moved')
+            self.limb_mode_command.publish(ADMITTANCE)
+            
+        else: 
+            rospy.loginfo('limb is busy')
+
 
     def cb_position_complete(self, pos_res):
         if pos_res.completed and pos_res.initialized:
             self.command_complete_topic.publish()
+            self.limb_finished = True
     
 ## DEFINE IMPORTANT CONSTANTS ##
 if __name__ == '__main__':
@@ -63,7 +86,11 @@ if __name__ == '__main__':
     SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
     WRIST_3_FWD = [0, -3.14, 0, -3.14, -1.57, -1]
+    WRIST_2_FWD = [0, -3.14, 0, -3.14, -.57, 0]
     WRIST_1_FWD = [0, -3.14, 0, -2.14, -1.57, 0]
+    ELBOW_FWD = [0, -3.14, 1, -3.14, -1.57, 0]
+    SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
+    BASE_FWD = [0.60, -3.14, 0, -3.14, -1.57, 0]
 
     Module()
 
