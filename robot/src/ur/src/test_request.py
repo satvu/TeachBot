@@ -56,8 +56,9 @@ class PositionClient:
     #for admittance
     def send_positions(self, data):
         if data.initialized == True and data.completed == True:
+            print 'press enter to send to admittance mode'
             user = raw_input()
-            self.pub_mode.publish(JOINT_MOVE)
+            self.pub_mode.publish(ADMITTANCE)
 
     def feedback_cb(self, data):
         #print data.progress
