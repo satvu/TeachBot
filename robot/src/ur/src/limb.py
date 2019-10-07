@@ -102,7 +102,7 @@ class LimbManager:
         self.wrist3_success = False
 
         #Subscribers
-        rospy.Subscriber('position', Position, self.command)
+        rospy.Subscriber('position', Position, self.cb_command)
         rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
         rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
         rospy.Subscriber('wrench', WrenchStamped, self.cb_force_control)
@@ -168,41 +168,41 @@ class LimbManager:
         except:
             pass
 
-        if sum(self.success) == 6:
-            self.completed = True
-            result = PositionResult()
+        if(self.command_mode == JOINT_MOVE):
+            if sum(self.success) == 6:
+                self.completed = True
+                result = PositionResult()
 
-            result.final = self.current_pos
-            result.completed = self.completed
-            result.initialized = self.initialized
-            self.pub_posresult.publish(result)
-            self.success = [0,0,0,0,0,0]
-            self.req = [] 
+                result.final = self.current_pos
+                result.completed = self.completed
+                result.initialized = self.initialized
+                self.pub_posresult.publish(result)
+                self.success = [0,0,0,0,0,0]
+                self.req = [] 
 
-        elif self.initialized and len(self.req) == 0:
-            self.completed = True
-            result = PositionResult()
+            elif self.initialized and len(self.req) == 0:
+                self.completed = True
+                result = PositionResult()
 
-            result.final = self.current_pos
-            result.completed = self.completed
-            result.initialized = self.initialized
-            self.pub_posresult.publish(result)
-            
-        else:
+                result.final = self.current_pos
+                result.completed = self.completed
+                result.initialized = self.initialized
+                self.pub_posresult.publish(result)
 
-            self.completed = False
+            else:
+                self.completed = False
 
-            feedback = PositionFeedback()
-            feedback.progress = self.current_pos
-            self.pub_posfeedback.publish(feedback)
+                feedback = PositionFeedback()
+                feedback.progress = self.current_pos
+                self.pub_posfeedback.publish(feedback)
 
-            result = PositionResult()
-            result.completed = self.completed
-            self.pub_posresult.publish(result)
+                result = PositionResult()
+                result.completed = self.completed
+                self.pub_posresult.publish(result)
 
 
-    def command(self, req):
-
+    def cb_command(self, req):
+        self.command_mode = JOINT_MOVE
         self.completed = False
         self.success = [0,0,0,0,0,0]
 
@@ -343,6 +343,8 @@ class LimbManager:
         Detects a change in force, as if someone is pushing on it, and assigns
         a corresponding velocity to specific joints
         '''
+        self.command_mode = ADMITTANCE
+        self.completed = False
         base_force = data.wrench.force.y
         wrist2_torque = data.wrench.torque.z
 
@@ -504,7 +506,22 @@ class LimbManager:
                 self.pub_setpoint.publish(setp_msg)
         
         if self.command_mode == ADMITTANCE:
-            pass
+            setpoint = [0.0]*6
+
+            if self.buttons[2] == 1:
+                setpoint[0] = self.base_push*(0.02)
+
+            setpoint[1] = self.current_pos[1] #shoulder
+            setpoint[2] = self.current_pos[2] #elbow
+            setpoint[3] = self.current_pos[3] #wrist1
+
+            setpoint[4] = -self.wrist2_push*0.8 #wrist 2
+
+            setpoint[5] = self.current_pos[5] #wrist3
+            setp_msg = Setpoint()
+            setp_msg.setpoint = setpoint
+            setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
+            self.pub_setpoint.publish(setp_msg)
 
 if __name__ == '__main__':
     rospy.init_node('limb_manager')
