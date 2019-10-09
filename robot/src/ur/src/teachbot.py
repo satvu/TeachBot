@@ -28,7 +28,8 @@ class Module:
     def __init__(self):
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
-        self.limb_finished = False #whether or not the limb is ready, whether or not it can take a command rn
+        self.limb_finished = True #whether or not the limb is ready, whether or not it can take a command rn
+        self.VERBOSE = True 
 
         # Publishing Topics
         self.pub_goal = rospy.Publisher('position', Position, queue_size=1) #this is to communicate with the limb
@@ -49,26 +50,26 @@ class Module:
         self.seqArr = []
 
     def cb_GoToJointAngles(self, req):
+        self.command_complete = False 
         if self.limb_finished is True:
             self.limb_finished = False 
-            if self.VERBOSE: rospy.loginfo('Going to joint angles')
+            if self.VERBOSE: rospy.loginfo('going to joint angles')
 
-            if req.name is '':
-                goal = Position(base=req.j0pos, shoulder=req.j1pos, elbow=req.j2pos, wrist1=req.j3pos, wrist2=req.j4pos, wrist3=req.j5pos)
-                self.pub_goal.publish(goal)
-            else:
-                if req.wait == True:
-                    startTime = rospy.get_time()
-                    goal = Position()
-                    #this is from TeachBot, UR doesn't actually take in speed ratio and ways. you go to joint position like the above
-                    goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+            startTime = rospy.get_time()
+            goal = Position()
+            target = eval(req.name)
+            print target
+            goal = Position(base=target[0], shoulder=target[1], elbow=target[2], wrist1=target[3], wrist2=target[4], wrist3=target[5])
+            self.pub_goal.publish(goal)
+
         else: 
-            rospy.loginfo('limb is busy')
+            rospy.loginfo('limb is busy for go to joint angles')
 
     def cb_joint_move(self, req):
+        self.command_complete = False 
         if self.limb_finished is True:
             self.limb_finished = False 
-            if self.VERBOSE: rospy.loginfo('joint able to be moved')
+            if self.VERBOSE: rospy.loginfo('admittance mode')
             self.limb_mode_command.publish(ADMITTANCE)
             
         else: 
@@ -76,7 +77,7 @@ class Module:
 
 
     def cb_position_complete(self, pos_res):
-        if pos_res.completed and pos_res.initialized:
+        if pos_res.completed == True and pos_res.initialized == True:
             self.command_complete_topic.publish()
             self.limb_finished = True
     
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
     BASE_FWD = [0.60, -3.14, 0, -3.14, -1.57, 0]
 
-    Module()
+    m = Module()
 
     try:              
         rospy.spin()

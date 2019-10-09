@@ -16,8 +16,21 @@ from statistics import mode, mean
 
 import threading
 
+###########################
+####### CONSTANTS #########
+###########################
+
+#command modes/movement types
 JOINT_MOVE = 0
 ADMITTANCE = 1
+
+#joints and their setpoint array index
+BASE_INDEX = 0
+SHOULDER_INDEX = 1
+ELBOW_INDEX = 2
+WRIST1_INDEX = 3
+WRIST2_INDEX = 4
+WRIST3_INDEX = 5
 
 class LimbManager:
 
@@ -30,6 +43,8 @@ class LimbManager:
         self.current_pos = [0,0,0,0,0,0]
         self.req = []
         self.success = [0,0,0,0,0,0]
+
+        self.admittance_lock = 4
 
         ########################
         #####BASE VARIABLES#####
@@ -136,6 +151,7 @@ class LimbManager:
             else:
                 self.robot_ready = True 
                 self.completed = True 
+                self.initialized = True
 
 
     def cb_switch_mode(self, mode):
@@ -148,31 +164,33 @@ class LimbManager:
 
         if len(self.req) > 0: 
             print 'Completing request'
+        else:
+            print 'finished request'
 
         try:
 
-            base = self.current_pos[0]
-            base_req = self.req[0]
+            base = self.current_pos[BASE_INDEX]
+            base_req = self.req[BASE_INDEX]
             self.move_base(base, base_req)
 
-            shoulder = self.current_pos[1]
-            shoulder_req = self.req[1]
+            shoulder = self.current_pos[SHOULDER_INDEX]
+            shoulder_req = self.req[SHOULDER_INDEX]
             self.move_shoulder(shoulder, shoulder_req)
 
-            elbow = self.current_pos[2]
-            elbow_req = self.req[2]
+            elbow = self.current_pos[ELBOW_INDEX]
+            elbow_req = self.req[ELBOW_INDEX]
             self.move_elbow(elbow, elbow_req)
 
-            wrist1 = self.current_pos[3]
-            wrist1_req = self.req[3]
+            wrist1 = self.current_pos[WRIST1_INDEX]
+            wrist1_req = self.req[WRIST1_INDEX]
             self.move_wrist1(wrist1, wrist1_req)
 
-            wrist2 = self.current_pos[4]
-            wrist2_req = self.req[4]
+            wrist2 = self.current_pos[WRIST2_INDEX]
+            wrist2_req = self.req[WRIST2_INDEX]
             self.move_wrist2(wrist2, wrist2_req)
 
-            wrist3 = self.current_pos[5]
-            wrist3_req = self.req[5]
+            wrist3 = self.current_pos[WRIST3_INDEX]
+            wrist3_req = self.req[WRIST3_INDEX]
             self.move_wrist3(wrist3, wrist3_req)
 
         except:
@@ -244,7 +262,7 @@ class LimbManager:
             self.base_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[0] = 1
+            self.success[BASE_INDEX] = 1
 
         self.base_error_prev = error
 
@@ -264,7 +282,7 @@ class LimbManager:
             self.shoulder_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[1] = 1
+            self.success[SHOULDER_INDEX] = 1
 
         self.shoulder_error_prev = error
 
@@ -284,7 +302,7 @@ class LimbManager:
             self.elbow_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[2] = 1
+            self.success[ELBOW_INDEX] = 1
 
         self.elbow_error_prev = error
 
@@ -304,7 +322,7 @@ class LimbManager:
             self.wrist1_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[3] = 1
+            self.success[WRIST1_INDEX] = 1
 
         self.wrist1_error_prev = error
 
@@ -324,7 +342,7 @@ class LimbManager:
             self.wrist2_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[4] = 1
+            self.success[WRIST2_INDEX] = 1
 
         self.wrist2_error_prev = error
 
@@ -344,7 +362,7 @@ class LimbManager:
             self.wrist3_final = -0.08
 
         if cur_pos == req_pos:
-            self.success[5] = 1
+            self.success[WRIST3_INDEX] = 1
 
         self.wrist3_error_prev = error
     
@@ -469,10 +487,6 @@ class LimbManager:
             else:
                 if abs(forces-self.wrist2_prev_base) < 0.16:
                     self.wrist2_base = forces
-
-        #print("BASES:", self.wrist2_base)
-        #print("PREVIOUS:", self.elbow_prev_base)
-        #print('DIFF:', abs(average-self.wrist2_most[0]))
  
         new_diff = average-self.wrist2_base
 
@@ -506,28 +520,33 @@ class LimbManager:
                 self.pub_setpoint.publish(setp_msg)
             else:
                 setpoint = [0.0]*6
-                setpoint[0] = self.base_final*0.35
-                setpoint[1] = self.shoulder_final*0.35
-                setpoint[2] = self.elbow_final*0.35
-                setpoint[3] = self.wrist1_final*0.35
-                setpoint[4] = self.wrist2_final*0.35
-                setpoint[5] = self.wrist3_final*0.35
+                setpoint[BASE_INDEX] = self.base_final*0.35
+                setpoint[SHOULDER_INDEX] = self.shoulder_final*0.35
+                setpoint[ELBOW_INDEX] = self.elbow_final*0.35
+                setpoint[WRIST1_INDEX] = self.wrist1_final*0.35
+                setpoint[WRIST2_INDEX] = self.wrist2_final*0.35
+                setpoint[WRIST3_INDEX] = self.wrist3_final*0.35
                 setp_msg = Setpoint()
                 setp_msg.setpoint = setpoint
                 setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY
                 self.pub_setpoint.publish(setp_msg)
         
         elif self.command_mode == ADMITTANCE:
-            print 'in admittance publishing'
             setpoint = [0.0]*6
+            
+            if self.admittance_lock == WRIST2_INDEX:
+                setpoint[WRIST2_INDEX] = 0
+                setpoint[BASE_INDEX] = self.base_push*(0.02)
+            elif self.admittance_lock == BASE_INDEX:
+                setpoint[BASE_INDEX] = 0 
+                setpoint[WRIST2_INDEX] = self.wrist2_push*(0.9)
 
-            setpoint[0] = self.base_push*(0.02)
-
+            setpoint[0] = 0
             setpoint[1] = 0 #shoulder
             setpoint[2] = 0 #elbow
             setpoint[3] = 0 #wrist1
-            setpoint[4] = 0 #wrist 2
             setpoint[5] = 0 #wrist3
+
             setp_msg = Setpoint()
             setp_msg.setpoint = setpoint
             setp_msg.type = Setpoint.TYPE_JOINT_VELOCITY

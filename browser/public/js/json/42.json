@@ -1,6 +1,6 @@
 {"sections": [
 	{
-		"id": "motors",
+		"id": "intro",
 		"instructions": [
 			{
 				"type":"goToJointAngles",
@@ -17,15 +17,29 @@
             {
 				"type":"goToJointAngles",
 				"joint_angles":"WRIST_1_FWD"
-            },
+			},
+			{
+				"type": "goToJointAngles",
+				"joint_angles": "SCARA"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles": "ELBOW_FWD"
+
+			},
             {
 				"type":"goToJointAngles",
 				"joint_angles":"SCARA"
             },
-            {
-				"type":"goToJointAngles",
-                "joint_angles":"ZERO"
-            }
+			{
+				"type":"joint_move",
+				"joints":"shoulder",
+				"terminatingCondition":"lambda self: self.finished",
+				"resetPOS":"joint_dof_start",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":false
+			}
 		]
 	}
 ]}

@@ -5,7 +5,7 @@ const module_num = 42;         //The module number
 /*******************************
  *       Construct Module      *
  *******************************/
-var m = new Module(module_num, main, []);
+var m = new Module(module_num, main, [image,canvas_container]);
 
 /**************************
  *   Main Functionality   *
