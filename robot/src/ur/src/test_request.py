@@ -26,6 +26,7 @@ class PositionClient:
 
         rospy.Subscriber('position_feedback', PositionFeedback, self.feedback_cb)
         rospy.Subscriber('position_result', PositionResult, self.send_positions)
+        
 
         self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
         self.pub_mode = rospy.Publisher('ur_mode', Int32, queue_size=1)

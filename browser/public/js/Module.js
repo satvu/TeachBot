@@ -3,8 +3,8 @@ const DIR = 'https://localhost:8000/';    // Directory containing resources
 const JOINTS = 7;                         // Numer of joints in Sawyer arm
 const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
-const ROBOT = 'sawyer';
-
+// const ROBOT = 'sawyer';
+const ROBOT = 'ur';
 /**
  * A learning module for TeachBot.
  *
@@ -217,6 +217,7 @@ function Module(module_num, main, content_elements) {
 		self.loaded['json'] = true;
 		if (self.allLoaded()) { self.main(); }
 	});
+	console.log("completed initializing");
 }
 
 /**
@@ -224,7 +225,8 @@ function Module(module_num, main, content_elements) {
  */
 Module.prototype.loadTextAndAudio = function() {
 	// Base of directory containing text
-	this.text_dir = DIR + 'text/module' + this.module_num + '/';
+	// this.text_dir = DIR + 'text/module' + this.module_num + '/';
+	this.text_dir = DIR + 'text/module' + 1 + '/'
 	
 	// For each section
 	for (let s=0; s<this.sections.length; s++) {
@@ -243,7 +245,6 @@ Module.prototype.loadTextAndAudio = function() {
 			if (audioCount==0) {
 				self.sections[s]._textLoaded = true;
 				self.sections[s]._audioLoaded = true;
-
 			// Otherwise, load them.
 			} else {
 				self.sections[s]._audiofiles_mp3 = new Array(audioCount);
@@ -251,7 +252,8 @@ Module.prototype.loadTextAndAudio = function() {
 				self.sections[s]._audio_duration_copy = new Array(audioCount);
 				self.sections[s]._num_loaded = 0;
 				for (let a=0; a<audioCount; a++) {
-					self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + self.module_num + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
+					// self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + self.module_num + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
+					self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + 1 + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
 					let audio = new Audio();
 					audio.addEventListener('canplaythrough', function() {
 						self.sections[s]._audio_duration[a] = audio.duration*1000;
@@ -285,6 +287,7 @@ Module.prototype.loadTextAndAudio = function() {
 			if (self.allLoaded()) { self.main(); }
 		});
 	}
+	console.log("done audio loading");
 }
 
 /**
@@ -506,7 +509,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 	if (this.thisSection === undefined) {
 		throw `There is no section with id ${instructionAddr[0]}`;
 	}
-
+	console.log("starting section");
 	var instructions = this.thisSection.instructions;
 	this.instructionSets = [JSONcopy(instructions)];
 
