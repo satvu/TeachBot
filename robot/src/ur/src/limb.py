@@ -37,7 +37,6 @@ class LimbManager:
     def __init__(self):
         self.completed = False
         self.initialized = False
-        self.robot_ready = False
         self.command_mode = JOINT_MOVE
 
         self.current_pos = [0,0,0,0,0,0]
@@ -138,20 +137,12 @@ class LimbManager:
         Discovers whether or not if the robot is ready.
         If it is not ready, it staes that the robot is on standby
         '''
-        if not self.robot_ready:
-            self.initialized = robot_ready_msg.data
-            if self.initialized:
-                self.robot_ready = True
-                self.completed = True
-                print "Robot initialized"
-                self.success = [1, 1, 1, 1, 1, 1]
+        if not robot_ready_msg.data:
+            print "STANDBY mode engaged from program halt"
+            self.initialized = False 
         else:
-            if not robot_ready_msg.data:
-                print "STANDBY mode engaged from program halt"
-            else:
-                self.robot_ready = True 
-                self.completed = True 
-                self.initialized = True
+            self.completed = True 
+            self.initialized = True
 
 
     def cb_switch_mode(self, mode):
@@ -161,11 +152,6 @@ class LimbManager:
     def cb_joint_states(self, data):
 
         self.current_pos  = data.position
-
-        if len(self.req) > 0: 
-            print 'Completing request'
-        else:
-            print 'finished request'
 
         try:
 
