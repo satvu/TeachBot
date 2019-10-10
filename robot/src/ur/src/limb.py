@@ -122,7 +122,7 @@ class LimbManager:
         rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
         rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
         rospy.Subscriber('wrench', WrenchStamped, self.cb_force_control)
-        rospy.Subscriber('ur_mode', Int32, self.cb_switch_mode)
+        rospy.Subscriber('/ur_admittance', joint-move, self.cb_admittance_mode) #this is for changing the mode
 
 
         #Publishers
@@ -143,11 +143,6 @@ class LimbManager:
         else:
             self.completed = True 
             self.initialized = True
-
-
-    def cb_switch_mode(self, mode):
-        self.command_mode = mode.data
-        return
 
     def cb_joint_states(self, data):
 
@@ -351,6 +346,12 @@ class LimbManager:
             self.success[WRIST3_INDEX] = 1
 
         self.wrist3_error_prev = error
+
+    def cb_admittance_mode(self, req):
+        '''
+        Takes in a joint-move message to put the robot into admittance mode
+        '''
+        self.command_mode = ADMITTANCE
     
     def cb_force_control(self, data):
         '''
@@ -358,6 +359,7 @@ class LimbManager:
         a corresponding velocity to specific joints
         '''
         if self.command_mode == ADMITTANCE:
+            print "admittance request"
             self.completed = False
             base_force = data.wrench.force.y
             wrist2_torque = data.wrench.torque.z
