@@ -30,16 +30,7 @@
             {
 				"type":"goToJointAngles",
 				"joint_angles":"SCARA"
-            },
-			{
-				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"1.0",
-				"bias":"BIAS_SHOULDER",
-				"listen":false
-			}
+            }
 		]
 	}
 ]}
