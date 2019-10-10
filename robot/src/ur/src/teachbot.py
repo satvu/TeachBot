@@ -28,8 +28,9 @@ class Module:
     def __init__(self):
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
-        self.limb_finished = True #whether or not the limb is ready, whether or not it can take a command rn
+        self.limb_finished = False #whether or not the limb is ready, whether or not it can take a command rn
         self.VERBOSE = True 
+        self.request_in_progress = False 
 
         # Publishing Topics
         self.pub_goal = rospy.Publisher('position', Position, queue_size=1) #this is to communicate with the limb
@@ -50,7 +51,6 @@ class Module:
         self.seqArr = []
 
     def cb_GoToJointAngles(self, req):
-        self.command_complete = False 
         if self.limb_finished is True:
             self.limb_finished = False 
             if self.VERBOSE: rospy.loginfo('going to joint angles')
