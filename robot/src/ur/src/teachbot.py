@@ -35,7 +35,7 @@ class Module:
         # Publishing Topics
         self.pub_goal = rospy.Publisher('position', Position, queue_size=1) #this is to communicate with the limb
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
-        self.limb_mode_command = rospy.Publisher('/ur_admittance', joint-move, queue_size=1) #this is for changing the mode
+        # self.limb_mode_command = rospy.Publisher('/ur_admittance', joint-move, queue_size=1) #this is for changing the mode
 
         # Subscribing Topics
         rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles) #get info from browser
