@@ -122,7 +122,7 @@ class LimbManager:
         rospy.Subscriber('joint_states', JointState, self.cb_joint_states)
         rospy.Subscriber('robot_ready', Bool, self.cb_robot_ready)
         rospy.Subscriber('wrench', WrenchStamped, self.cb_force_control)
-        rospy.Subscriber('/ur_admittance', joint-move, self.cb_admittance_mode) #this is for changing the mode
+        # rospy.Subscriber('/ur_admittance', joint-move, self.cb_admittance_mode) #this is for changing the mode
 
 
         #Publishers
