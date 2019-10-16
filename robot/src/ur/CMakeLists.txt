@@ -162,7 +162,6 @@ catkin_package(
 	intera_core_msgs
 	intera_interface
 	message_runtime
-  trajectory_msgs
 	tf
 	std_msgs
 
