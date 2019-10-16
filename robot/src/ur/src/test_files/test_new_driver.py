@@ -3,12 +3,12 @@
 import rospy
 import numpy as np
 import sensor_msgs.msg as smsg
-from std_msgs.msg import Bool, Int32
+from std_msgs.msg import Bool, Int32, Float64
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+import ur_msgs
 import actionlib
-
 
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
 ROTATE_WRIST = [0, -3.14, 0, -3.14, -1.57, -1]
@@ -20,11 +20,21 @@ JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
 class PositionClient:
 
     def __init__(self):
+        self.initialized = False 
 
-        # self.pub_command = rospy.Publisher('/scaled_pos_traj_controller/follow_joint_trajectory', JointTrajectory, queue_size=1)
-        rospy.Subscriber('joint_states', JointState, self.send_command)
+        rospy.Subscriber('/ur_hardware_interface/robot_program_running', Bool, self.cb_robot_ready)
+        rospy.Subscriber('/joint_states', JointState, self.send_command)
+
+        self.set_speed = rospy.Publisher('/ur_hardware_interface/set_speed_slider', Float64, queue_size=1)
         self.client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 
+    def cb_robot_ready(self, res):
+        if not self.initialized:
+            self.initialized = res.data
+            if self.initialized:
+                self.set_speed.publish(0.5)
+                print 'published'
+                
 
     def send_command(self, joints):
         print 'press enter'
@@ -38,7 +48,7 @@ class PositionClient:
         traj_msg.joint_names = JOINT_NAMES
 
         jointPositions_msg = JointTrajectoryPoint()
-        jointPositions_msg.positions = [0, -1.57, -1, -1.57, 0, 0]
+        jointPositions_msg.positions = ZERO
         jointPositions_msg.time_from_start = rospy.Duration(3)
 
         traj_msg.points = [jointPositions_msg,]

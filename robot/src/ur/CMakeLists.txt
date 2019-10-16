@@ -117,6 +117,7 @@ generate_messages(
    geometry_msgs  
    trajectory_msgs 
    std_msgs
+   ur_msgs
  )
 
 ################################################
@@ -156,6 +157,7 @@ catkin_package(
 	rospy 
 	cv_bridge
 	trajectory_msgs
+  ur_msgs
 	control_msgs
 	sensor_msgs
 	dynamic_reconfigure
