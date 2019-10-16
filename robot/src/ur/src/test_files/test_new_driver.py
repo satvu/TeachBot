@@ -39,6 +39,7 @@ class PositionClient:
 
         jointPositions_msg = JointTrajectoryPoint()
         jointPositions_msg.positions = [0, -1.57, -1, -1.57, 0, 0]
+        jointPositions_msg.time_from_start = rospy.Duration(3)
 
         traj_msg.points = [jointPositions_msg,]
         followJoint_msg.trajectory = traj_msg
