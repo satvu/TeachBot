@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   intera_core_msgs
   intera_motion_msgs
   intera_interface
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -113,7 +114,8 @@ add_action_files(
 generate_messages(
    DEPENDENCIES
    actionlib_msgs
-   geometry_msgs   
+   geometry_msgs  
+   trajectory_msgs 
    std_msgs
  )
 
@@ -160,6 +162,7 @@ catkin_package(
 	intera_core_msgs
 	intera_interface
 	message_runtime
+  trajectory_msgs
 	tf
 	std_msgs
 
