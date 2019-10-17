@@ -7,7 +7,6 @@ from std_msgs.msg import Bool, Int32, Float64
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
-import ur_msgs
 import actionlib
 
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
@@ -25,15 +24,22 @@ class PositionClient:
         rospy.Subscriber('/ur_hardware_interface/robot_program_running', Bool, self.cb_robot_ready)
         rospy.Subscriber('/joint_states', JointState, self.send_command)
 
-        self.set_speed = rospy.Publisher('/ur_hardware_interface/set_speed_slider', Float64, queue_size=1)
         self.client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-
+        
     def cb_robot_ready(self, res):
         if not self.initialized:
             self.initialized = res.data
             if self.initialized:
-                self.set_speed.publish(0.5)
-                print 'published'
+                print "inside ready and initialized"
+                rospy.wait_for_service("set_speed_slider")
+                print "connected to service"
+                try:
+                    send_speed = rospy.ServiceProxy("set_speed_slider", Float64)
+                    send_speed(0.5)
+                    print send_speed.success
+                
+                except:
+                    print "could not connect to service"
                 
 
     def send_command(self, joints):
