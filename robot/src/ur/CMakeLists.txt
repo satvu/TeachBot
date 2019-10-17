@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   intera_core_msgs
   intera_motion_msgs
   intera_interface
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -113,8 +114,10 @@ add_action_files(
 generate_messages(
    DEPENDENCIES
    actionlib_msgs
-   geometry_msgs   
+   geometry_msgs  
+   trajectory_msgs 
    std_msgs
+   ur_msgs
  )
 
 ################################################
@@ -154,6 +157,7 @@ catkin_package(
 	rospy 
 	cv_bridge
 	trajectory_msgs
+  ur_msgs
 	control_msgs
 	sensor_msgs
 	dynamic_reconfigure
