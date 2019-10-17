@@ -26,6 +26,7 @@ class Module:
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True 
+        self.last_pos = None 
 
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
 
@@ -51,9 +52,22 @@ class Module:
             traj_msg = JointTrajectory()
             traj_msg.joint_names = JOINT_NAMES
 
+            target = eval(req.name)
+
             jointPositions_msg = JointTrajectoryPoint()
-            jointPositions_msg.positions = eval(req.name)
+            jointPositions_msg.positions = target
             jointPositions_msg.time_from_start = rospy.Duration(3)
+
+            # Attempt at slowing down the robot when moving, but it did not work. 
+            # Make velocity of positions that have not changed 0 otherwise that joint will also move 
+
+            # if self.last_pos != None:
+            #     velocity_array = []
+            #     for i in range(len(JOINT_NAMES)):
+            #         if self.last_pos[i] - target[i] == 0:
+            #             velocity_array.append(0)
+            #         else:
+            #             velocity_array.append(0.001)
 
             traj_msg.points = [jointPositions_msg,]
             followJoint_msg.trajectory = traj_msg
@@ -61,6 +75,7 @@ class Module:
             self.joint_traj_client.send_goal(followJoint_msg)
             self.joint_traj_client.wait_for_result()
 
+            self.last_pos = target
             self.command_complete_topic.publish()
     
 ## DEFINE IMPORTANT CONSTANTS ##
