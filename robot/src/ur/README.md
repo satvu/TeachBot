@@ -1,27 +1,18 @@
 # TeachBot UR
 
-## Running the UR package
-From TeachBot/robot run the following commands (each in its own terminal)
+## Installing the new driver
+Inside ~/TeachBot/robot/src clone the repository and follow all of the instructions for https://github.com/UniversalRobots/Universal_Robots_ROS_Driver
 
-$ roslaunch ../browser/websocket.launch & node ../browser/www.js &
+## Running Teachbot
+Start the browser as normal 
 
-$ rosrun ur ur_rtde_driver.py
+Start the driver as instructed in the Universal_Robots_ROS_Driver repository
 
-$ rosrun ur command_manager.py
+Run Teachbot.py 
 
-$ rosrun ur limb.py
-
-$ rosrun ur teachbot.py
+Refresh the browser page at localhost:8000/urTest to run 42.json (test file Sarah is using)
 
 
-Currently testing using the JSON file "42.json" - go to the link localhost:8000/urTests to run this file's commands. 
-
-## Potential Issues 
-If you cannot seem to connect the robot, press pause and then press play again to reconnect the robot. You might have accidentally disconnected when pausing or stopping in the middle of a running module/program. If this does not work still, refresh the "/urTests" link. 
-
-## Testing directly 
-
-If you want to avoid using the browser module, test the ur directly using test_requests.py. 
 
 
 
