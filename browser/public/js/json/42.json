@@ -30,7 +30,11 @@
             {
 				"type":"goToJointAngles",
 				"joint_angles":"SCARA"
-            }
+			},
+			{
+				"type": "goToJointAngles",
+				"joint_angles": "ZERO"
+			}
 		]
 	}
 ]}
