@@ -11,9 +11,14 @@ import actionlib
 import sensor_msgs
 import threading
 
+from ur.msg import *
+
 from scipy.fftpack import fft 
 from statistics import mode, mean
 from geometry_msgs.msg import WrenchStamped
+
+JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
+               'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
 class Module:
 
@@ -26,7 +31,7 @@ class Module:
 
         # Subscribing Topics
         rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles) #get info from browser
-        rospy.Subscriber('/joint_move', joint_move, self.cb_joint_move) #admittance command from browser
+        # rospy.Subscriber('/joint_move', joint_move, self.cb_joint_move) #admittance command from browser
 
         # Action Clients
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -57,9 +62,6 @@ class Module:
             self.joint_traj_client.wait_for_result()
 
             self.command_complete_topic.publish()
-
-        else: 
-            rospy.loginfo('limb is busy for go to joint angles')
     
 ## DEFINE IMPORTANT CONSTANTS ##
 if __name__ == '__main__':
