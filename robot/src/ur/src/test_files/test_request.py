@@ -5,9 +5,12 @@ Author: Albert Go (albertgo@mit.edu)
 '''
 
 import rospy
+import sys
+import roslib
 import sensor_msgs.msg as smsg
-from ur.msg import Position, PositionFeedback, PositionResult
+from ur.msg import Position, PositionFeedback, PositionResult, GoToCartesianPose
 from std_msgs.msg import Bool, Int32
+from ur_kin_py import forward, reverse
 
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
 ROTATE_WRIST = [0, -3.14, 0, -3.14, -1.57, -1]
@@ -23,47 +26,22 @@ class PositionClient:
 
         self.progress = []
         self.completed = False
-
-        rospy.Subscriber('position_feedback', PositionFeedback, self.feedback_cb)
-        rospy.Subscriber('position_result', PositionResult, self.send_positions)
         
+        self.pub_goal = rospy.Publisher('/GoToCartesianPose', GoToCartesianPose, queue_size = 1)
 
-        self.pub_goal = rospy.Publisher('position', Position, queue_size=1)
-        self.pub_mode = rospy.Publisher('ur_mode', Int32, queue_size=1)
+        print 'press enter to send to test forward kinematics'
+        converted_joint_angles1 = ur_kin.forward(np.array(SCARA))
+        print converted_joint_angles1
 
-    #for GoToJointAngles
-    # def send_positions(self, data):
-    #     if data.initialized == True and data.completed == True:
-    #         target = SCARA
-    #         print 'Enter a request, if no specific request, type and enter "none"'
-    #         user = raw_input()
-    #         print 'Sending Goal'
-    #         if user == '0':
-    #             target = ZERO 
-    #         elif user == '1':
-    #             target = ROTATE_WRIST 
-    #         elif user == '2':
-    #             target = ROTATE_WRIST_BACK
+        print 'press enter to send to test inverse kinematics'
+        converted_joint_angles2 = ur_kinematics.ur_kin_py.inverse(np.array(converted_joint_angles1))
+        print converted_joint_angles2
 
-    #         goal = Position(base=target[0], shoulder=target[1], elbow=target[2], wrist1=target[3], wrist2=target[4], wrist3=target[5])
-    #         print(goal)
-    #         self.pub_goal.publish(goal)
-    #         return
-    #     elif data.initialized == True and data.completed != True:
-    #         print 'Awaiting completion. Progress:', self.progress
-    #     else:
-    #         print 'Waiting for robot to initialize.'
-
-    #for admittance
-    def send_positions(self, data):
-        if data.initialized == True and data.completed == True:
-            print 'press enter to send to admittance mode'
-            user = raw_input()
-            self.pub_mode.publish(ADMITTANCE)
-
-    def feedback_cb(self, data):
-        #print data.progress
-        self.progress = data.progress
+        print 'prese enter to test with robot'
+        user = raw_input()
+        pose = GoToCartesianPose()
+        pose.endpoint_pose = 'test_cartesian_pose'
+        self.pub_goal(pose)
 
 
 if __name__ == '__main__':

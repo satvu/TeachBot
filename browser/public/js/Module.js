@@ -5,6 +5,7 @@ const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
 // const ROBOT = 'sawyer';
 const ROBOT = 'ur';
+
 /**
  * A learning module for TeachBot.
  *
@@ -250,8 +251,7 @@ function Module(module_num, main, content_elements) {
  */
 Module.prototype.loadTextAndAudio = function() {
 	// Base of directory containing text
-	// this.text_dir = DIR + 'text/module' + this.module_num + '/';
-	this.text_dir = DIR + 'text/module' + 1 + '/'
+	this.text_dir = DIR + 'text/module' + this.module_num + '/';
 	
 	// For each section
 	for (let s=0; s<this.sections.length; s++) {
@@ -276,8 +276,7 @@ Module.prototype.loadTextAndAudio = function() {
 				self.sections[s]._audio_duration_copy = new Array(audioCount);
 				self.sections[s]._num_loaded = 0;
 				for (let a=0; a<audioCount; a++) {
-					// self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + self.module_num + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
-					self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + 1 + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
+					self.sections[s]._audiofiles_mp3[a] = DIR + 'audio/module' + self.module_num + '/' + self.sections[s].id + '/line' + a.toString() + '.mp3';
 					let audio = new Audio();
 					audio.addEventListener('canplaythrough', function() {
 						self.sections[s]._audio_duration[a] = audio.duration*1000;
@@ -311,7 +310,6 @@ Module.prototype.loadTextAndAudio = function() {
 			if (self.allLoaded()) { self.main(); }
 		});
 	}
-	console.log("done audio loading");
 }
 
 /**
