@@ -20,6 +20,7 @@ from geometry_msgs.msg import WrenchStamped
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+NUM_JOINTS = 6
 
 class Module:
 
@@ -52,35 +53,18 @@ class Module:
     to let the browser know that it has finished its task.
     '''
     def cb_GoToJointAngles(self, req):
-            self.joint_traj_client.wait_for_server()
+        self.joint_traj_client.wait_for_server()
 
-            # Initialize goal
-            followJoint_msg = FollowJointTrajectoryGoal()
+        if req.name != '':
+            followJoint_msg = eval(req.name)
+        else:
+            followJoint_msg = create_traj_goal([req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos])
 
-            # Initialize JointTrajectory
-            traj_msg = JointTrajectory()
-            traj_msg.joint_names = JOINT_NAMES
+        # Send goal to action client and wait for completion of task
+        self.joint_traj_client.send_goal(followJoint_msg)
+        self.joint_traj_client.wait_for_result()
 
-            # Match the name of constant to the value defined in this file
-            # Check if you are given a name to evaluate or if you're given an array of points
-            if req.name != '': 
-                target = eval(req.name)
-            else: 
-                target = [req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos]
-
-            # Create JointTrajectoryPoint (points that respective joint_names that were set few lines above should go to)
-            jointPositions_msg = JointTrajectoryPoint()
-            jointPositions_msg.positions = target
-            jointPositions_msg.time_from_start = rospy.Duration(3) #use this to stall so that the first position does not get skipped
-
-            traj_msg.points = [jointPositions_msg,]
-            followJoint_msg.trajectory = traj_msg
-
-            # Send goal to action client and wait for completion of task
-            self.joint_traj_client.send_goal(followJoint_msg)
-            self.joint_traj_client.wait_for_result()
-
-            self.command_complete_topic.publish()
+        self.command_complete_topic.publish()
 
     '''
     Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
@@ -128,9 +112,32 @@ class Module:
 
             return None 
 
+    def create_traj_goal(self, array):
+        # Initialize goal
+        followJoint_msg = FollowJointTrajectoryGoal()
+
+        # Initialize JointTrajectory
+        traj_msg = JointTrajectory()
+        traj_msg.joint_names = JOINT_NAMES
+        traj_msg.points = []
+
+
+        # Create JointTrajectoryPoint (points that respective joint_names that were set few lines above should go to)
+        for i in range(len(array)):
+            jointPositions_msg = JointTrajectoryPoint()
+            jointPositions_msg.positions = array
+            if i == 0:
+                jointPositions_msg.time_from_start = rospy.Duration(3) #use this to stall so that the first position does not get skipped
+            traj_msg.points.append(jointPositions_msg)
+
+        followJoint_msg.trajectory = traj_msg
+
+        return followJoint_msg
+
+
 ## DEFINE IMPORTANT CONSTANTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
 if __name__ == '__main__':
-    # Position CONSTANTS
+    # POSITION CONSTANTS - ARRAYS THAT MATCH JOINT_NAMES
     SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
     WRIST_3_FWD = [0, -3.14, 0, -3.14, -1.57, -1]
@@ -139,6 +146,25 @@ if __name__ == '__main__':
     ELBOW_FWD = [0, -3.14, 1, -3.14, -1.57, 0]
     SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
     BASE_FWD = [0.60, -3.14, 0, -3.14, -1.57, 0]
+
+    # 1
+	joint_motor_animation_0 = SCARA
+	joint_motor_animation_1 = joint_motor_animation_0[:]
+    joint_motor_animation_1[3] = -2.90
+    joint_motor_animation_1[4] = -2.90
+
+    # 4
+    joint_test = [0]*NUM_JOINTS
+	for j in range(0,NUM_JOINTS):
+		joint_angle_arr = joint_motor_animation_0[:]
+		if (j==0):
+			joint_angle_arr[j] = 0.5+math.pi/2
+		elif (j==1 or j==3):
+			joint_angle_arr[j] = -1.0
+		else:
+			joint_angle_arr[j] = 1.0
+		joint_test[j] = joint_angle_arr
+
 
     m = Module()
 
