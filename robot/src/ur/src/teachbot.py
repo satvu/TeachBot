@@ -55,11 +55,14 @@ class Module:
     def cb_GoToJointAngles(self, req):
         self.joint_traj_client.wait_for_server()
 
-        if req.name != '':
-            followJoint_msg = eval(req.name)
-        else:
-            followJoint_msg = create_traj_goal([req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos])
+        followJoint_msg = FollowJointTrajectoryGoal()
 
+        if req.name != '':
+            print req.name
+            followJoint_msg.trajectory = self.create_traj_goal(eval(req.name))
+        else:
+            followJoint_msg.trajectory = self.create_traj_goal([req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos])
+        
         # Send goal to action client and wait for completion of task
         self.joint_traj_client.send_goal(followJoint_msg)
         self.joint_traj_client.wait_for_result()
@@ -113,30 +116,23 @@ class Module:
             return None 
 
     def create_traj_goal(self, array):
-        # Initialize goal
-        followJoint_msg = FollowJointTrajectoryGoal()
-
-        # Initialize JointTrajectory
         traj_msg = JointTrajectory()
         traj_msg.joint_names = JOINT_NAMES
-        traj_msg.points = []
+
+        jointPositions_msg = JointTrajectoryPoint()
+        jointPositions_msg.positions = array
+        jointPositions_msg.time_from_start = rospy.Duration(3)
+
+        traj_msg.points = [jointPositions_msg,]
+
+        return traj_msg
 
 
-        # Create JointTrajectoryPoint (points that respective joint_names that were set few lines above should go to)
-        for i in range(len(array)):
-            jointPositions_msg = JointTrajectoryPoint()
-            jointPositions_msg.positions = array
-            if i == 0:
-                jointPositions_msg.time_from_start = rospy.Duration(3) #use this to stall so that the first position does not get skipped
-            traj_msg.points.append(jointPositions_msg)
-
-        followJoint_msg.trajectory = traj_msg
-
-        return followJoint_msg
-
-
-## DEFINE IMPORTANT CONSTANTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
+## DEFINE IMPORTANT CONSTANpointsTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
 if __name__ == '__main__':
+    #RANDOM
+    joint_buttons = [-0.0393427734375+math.pi/2,-0.71621875,0.022359375,1.811921875,-0.116017578125,2.77036035156,-4.48708789063]
+
     # POSITION CONSTANTS - ARRAYS THAT MATCH JOINT_NAMES
     SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
@@ -148,23 +144,13 @@ if __name__ == '__main__':
     BASE_FWD = [0.60, -3.14, 0, -3.14, -1.57, 0]
 
     # 1
-	joint_motor_animation_0 = SCARA
-	joint_motor_animation_1 = joint_motor_animation_0[:]
+    joint_motor_animation_0 = SCARA
+    joint_motor_animation_1 = joint_motor_animation_0[:]
     joint_motor_animation_1[3] = -2.90
     joint_motor_animation_1[4] = -2.90
 
     # 4
-    joint_test = [0]*NUM_JOINTS
-	for j in range(0,NUM_JOINTS):
-		joint_angle_arr = joint_motor_animation_0[:]
-		if (j==0):
-			joint_angle_arr[j] = 0.5+math.pi/2
-		elif (j==1 or j==3):
-			joint_angle_arr[j] = -1.0
-		else:
-			joint_angle_arr[j] = 1.0
-		joint_test[j] = joint_angle_arr
-
+    joint_test = [WRIST_3_FWD, WRIST_2_FWD, WRIST_1_FWD, ELBOW_FWD, SHOULDER_FWD, BASE_FWD]
 
     m = Module()
 
