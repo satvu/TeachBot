@@ -20,9 +20,8 @@ from geometry_msgs.msg import WrenchStamped
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-NUM_JOINTS = 6
-
 class Module:
+    JOINTS = 6
 
     def __init__(self):
         #Initialize node
@@ -130,9 +129,6 @@ class Module:
 
 ## DEFINE IMPORTANT CONSTANpointsTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
 if __name__ == '__main__':
-    #RANDOM
-    joint_buttons = [-0.0393427734375+math.pi/2,-0.71621875,0.022359375,1.811921875,-0.116017578125,2.77036035156,-4.48708789063]
-
     # POSITION CONSTANTS - ARRAYS THAT MATCH JOINT_NAMES
     SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
@@ -146,7 +142,7 @@ if __name__ == '__main__':
     # 1
     joint_motor_animation_0 = SCARA
     joint_motor_animation_1 = joint_motor_animation_0[:]
-    joint_motor_animation_1[3] = -2.90
+    joint_motor_animation_1[1] = -2.90
     joint_motor_animation_1[4] = -2.90
 
     # 4
