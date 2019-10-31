@@ -7,7 +7,7 @@ from pygame import mixer
 from playsound import playsound
 import pyttsx3
 import cv2
-
+import apriltag
 # Intera
 import intera_interface
 from std_msgs.msg import (
@@ -372,12 +372,22 @@ class Module():
 		except CvBridgeError, err:
 			rospy.logerr(err)
 
+		img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+		detector = apriltag.Detector()
+		detections = detector.detect(img)
+		# rospy.loginfo(detections[0].corners)
+
+		cv2.line(cv_image, (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (255,255,51), 3)
+
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
+		
 		cnt = contours[0]
 		max_area = cv2.contourArea(cnt)
 
@@ -392,15 +402,14 @@ class Module():
 
 		cv2.drawContours(cv_image, [box], -1, (0,255,0), 3)
 
-		a = sum(map(lambda x: x[0], box))/4
-		b = sum(map(lambda x: x[1], box))/4
-
-		cv2.circle(cv_image, (a,b), 8, (255,0,0), -1)
+		# a = sum(map(lambda x: x[0], box))/4
+		# b = sum(map(lambda x: x[1], box))/4
 
 		#img = cv_image
 		# rospy.loginfo('Creating image')
-		cv2.imwrite('/home/albertgo/teachbot/browser/public/images/cv_image.png', cv_image)
+		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 		self.command_complete_topic.publish()
+	
 
 
 	def addSeq(self, seq):
@@ -565,14 +574,21 @@ class Module():
 		self.command_complete_topic.publish()
 
 	def cb_camera(self, data):
-		if self.VERBOSE: rospy.loginfo('Accessing camera')
+		if data.data == True:
+			if self.VERBOSE: rospy.loginfo('Accessing camera')
 
-		rp = intera_interface.RobotParams()
-		valid_cameras = rp.get_camera_names()
-		camera = intera_interface.Cameras()
-		camera.start_streaming('right_hand_camera')
-		rectify_image = False
-		camera.set_callback('right_hand_camera', self.display_camera_callback)
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.start_streaming('right_hand_camera')
+			rectify_image = False
+			camera.set_callback('right_hand_camera', self.display_camera_callback)
+		else:
+			if self.VERBOSE: rospy.loginfo('Shutting down camera')
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.stop_streaming('right_hand_camera')
 
 	def cb_check_pickup(self, req):
 		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')
