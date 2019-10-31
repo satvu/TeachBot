@@ -59,6 +59,7 @@ class Module():
 		self.interaction_control_topic = rospy.Publisher('/InteractionControl', InteractionControl, queue_size=10)
 		self.pickedup_topic = rospy.Publisher('/pickedup', Bool, queue_size=1)
 		self.pos_orient_topic = rospy.Publisher('/pos_orient', String, queue_size=1)
+		self.box_in_bin_topic = rospy.Publisher('/box_in_bin', Bool, queue_size=1)
 
 		# Subscribing topics
 		rospy.Subscriber('/audio_duration', Float64, self.rx_audio_duration)
@@ -369,25 +370,30 @@ class Module():
 		bridge = CvBridge()
 		try:
 			cv_image = bridge.imgmsg_to_cv2(img_data, 'bgr8')
+			# self.image_topic.publish(bridge.cv2_to_imgmsg(cv_image, 'bgr8'))
 		except CvBridgeError, err:
 			rospy.logerr(err)
 
-		img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-		detector = apriltag.Detector()
-		detections = detector.detect(img)
-		# rospy.loginfo(detections[0].corners)
+		try:
+			img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+			detector = apriltag.Detector()
+			detections = detector.detect(img)
+			centerApril = detections[0].center
 
-		cv2.line(cv_image, (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (255,255,51), 3)
-		cv2.line(cv_image, (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
-		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
-		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (255,255,51), 3)
+			cv2.line(cv_image, (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (255,255,51), 3)
+			cv2.line(cv_image, (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+			cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+			cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (255,255,51), 3)
+		except:
+			rospy.loginfo('No apriltag detected')
+			pass
 
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
 		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-		
+
 		cnt = contours[0]
 		max_area = cv2.contourArea(cnt)
 
@@ -402,15 +408,26 @@ class Module():
 
 		cv2.drawContours(cv_image, [box], -1, (0,255,0), 3)
 
-		# a = sum(map(lambda x: x[0], box))/4
-		# b = sum(map(lambda x: x[1], box))/4
+		a = sum(map(lambda x: x[0], box))/4
+		b = sum(map(lambda x: x[1], box))/4
+		centerBin = (a,b)
 
-		#img = cv_image
-		# rospy.loginfo('Creating image')
 		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
-		self.command_complete_topic.publish()
-	
 
+		try:
+			distance = ((centerBin[0]-centerApril[0])**2+(centerBin[1]-centerApril[1])**2)**0.5
+			if distance < 80:
+				self.box_in_bin_topic.publish(True)
+				self.command_complete_topic.publish()
+				rospy.loginfo('Box is in bin')
+			else:
+				self.box_in_bin_topic.publish(False)
+				rospy.loginfo('Box out of bin')
+				self.command_complete_topic.publish()
+		except:
+			self.box_in_bin_topic.publish(False)
+			self.command_complete_topic.publish()
+			rospy.loginfo('No apriltag detected')
 
 	def addSeq(self, seq):
 		self.seqArr.append(seq.asDict())
@@ -589,6 +606,7 @@ class Module():
 			valid_cameras = rp.get_camera_names()
 			camera = intera_interface.Cameras()
 			camera.stop_streaming('right_hand_camera')
+			self.command_complete_topic.publish()
 
 	def cb_check_pickup(self, req):
 		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')
@@ -940,6 +958,7 @@ if __name__ == '__main__':
 	above_fourth_box_joint_arg    = [0.109769530594,0.200036138296,-1.93925189972,1.00660443306,-1.18624413013,-1.72986137867,2.499067143]
 
 	camera_pos                    = [0.314609375, 0.19108984375, -1.9322587890625, 1.64379296875, 1.7396455078125, 0.37216796875, 0.183701171875]
+	camera_pos2                   = [0.070240234375, 0.4665498046875, -2.684875, 1.362388671875, 2.43615234375, 0.3864345703125, 3.3399619140625]
 	# fail_init_joint_arg           = [1.033235,-0.629208007812,-1.01547070313,1.05442871094,-2.38241699219,-1.48850390625,-1.18359277344]
 	# fail_pickup_cart_arg          = [1.08375488281,0.175158203125,-1.53774609375,1.02942480469,-1.45563085938,-1.45510351563,1.86297558594]
 	# fail_above_pickup_cart_arg    = [1.06155175781,-0.26884765625,-1.4501015625,0.838840820312,-1.88630175781,-1.62122851562,1.9701875]
