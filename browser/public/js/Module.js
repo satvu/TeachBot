@@ -51,6 +51,11 @@ function Module(module_num, main, content_elements) {
 	})
 
 	// Subscribing topics
+	this.box_bin = new ROSLIB.Topic({
+		ros: this.ros,
+		name: '/box_in_bin',
+		messageType: 'std_msgs/Bool'
+	});
 	this.command_complete = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/command_complete',
@@ -758,10 +763,25 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				this.camera.publish(req);
 
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
+				this.box_bin.subscribe(async function(message) {
+                	if (VERBOSE) console.log('Box success: ' + message.data);
+					if (message.data == true) {
+						wheel_val = 1
+						if (instr.hasOwnProperty('store_answer_in')) {
+							self.dictionary[instr.store_answer_in] = wheel_val;
+						}
+						self.box_bin.unsubscribe();
+						self.box_bin.removeAllListeners();
+						self.start(self.getNextAddress(instructionAddr));
+					} else{
+						wheel_val = 2
+						if (instr.hasOwnProperty('store_answer_in')) {
+							self.dictionary[instr.store_answer_in] = wheel_val;
+						}
+						self.box_bin.unsubscribe();
+						self.box_bin.removeAllListeners();
+						self.start(self.getNextAddress(instructionAddr));
+					}
 				});
 
 				break;
@@ -918,21 +938,21 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 77*this.ch;
 						// x = 77*this.cw;
 						// y = 73*this.ch;
-						x = 79*this.cw;
+						x = 80*this.cw;
 						y = 88*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 					case 2:
 						// x = 70*this.cw;
 						// y = 74*this.ch;
-						x = 65*this.cw;
+						x = 66*this.cw;
 						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 3:
 						// x = 47*this.cw;
 						// y = 82*this.ch;
-						x = 49*this.cw;
+						x = 50*this.cw;
 						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
@@ -941,8 +961,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 40*this.ch;
 						// x = 39*this.cw;
 						// y = 40*this.ch;
-						x = 63*this.cw;
-						y = 13*this.ch;
+						x = 64*this.cw;
+						y = 11*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 				}
@@ -966,6 +986,24 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(self.getNextAddress(instructionAddr));
 
 				break;
+
+			case 'drawRamp':
+				checkInstruction(instr, ['number'], instructionAddr);
+				console.log('Drawing ramp')
+				var binW = 21*this.cw;
+				var binH = 19*this.ch;
+				switch (instr.number) {
+					case 1:
+						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);
+						this.ctx.rotate(-0.48)
+						this.ctx.strokeRect(18*this.cw, 60*this.ch, binH, binW);
+						this.ctx.rotate(0.48)
+						break;
+				}
+
+				this.start(this.getNextAddress(instructionAddr));
+				break;
+
 
 			case 'encode':
 				self.displayOff();
@@ -1329,11 +1367,40 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'programming_choices':
-				this.ctx.font = "60px Arial";
-				this.ctx.fillText("Close Gripper", 10, 50);
+				this.displayOff();
+                canvas_container.style.display = 'initial';
+                var multi_choice_url = DIR + 'images/sized_cuff.png';
 
+                display_choices(m.ctx, ['Open Gripper','Close Gripper','Move'], multi_choice_url);
 
-				this.start(this.getNextAddress(instructionAddr));
+                var req = new ROSLIB.Message({
+					data: true
+				});
+
+                this.multiple_choice.publish(req);
+
+                this.wheel_delta_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Button pressed:' + message.data);
+					wheel_val = message.data
+					if (instr.hasOwnProperty('store_answer_in')) {
+						self.dictionary[instr.store_answer_in] = wheel_val;
+					}
+					
+				});
+
+				this.pressed.subscribe(async function(message) {
+                	if (VERBOSE) console.log('Pressed: ' + message.data);
+					if (message.data == true) {
+						self.wheel_delta_topic.unsubscribe();
+						self.wheel_delta_topic.removeAllListeners();
+						self.pressed.unsubscribe();
+						self.pressed.removeAllListeners();
+						self.displayOff(true);
+						self.start(self.getNextAddress(instructionAddr));
+					}
+				});
+
+				break;
 
 				break;
 
