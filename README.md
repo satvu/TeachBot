@@ -1,7 +1,7 @@
 # TeachBot
 
 ## First Setup Only
-The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and http://wiki.ros.org/melodic/Installation/Ubuntu for Ubuntu 18.04 and ROS Melodic.
+The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and https://wiki.ros.org/kinetic/Installation/Ubuntu for Ubuntu 16.04 and ROS Kinetic.
 
 ### Clone Development Workspace
 If you change the directory, make sure you adjust all following commands.
@@ -10,15 +10,20 @@ $ cd
 $ git clone https://github.com/Darbeloff/TeachBot.git
 ```
 
-### Install Apt Dependencies
+### Install Curl and Apt Dependencies
+Run the following commands in terminal:
 ```
+$ sudo apt-get update
+$ sudo apt-get -y install curl
 $ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 $ sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+$ curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | sudo apt-key add -
 $ sudo apt update
-$ sudo apt install -y ros-melodic-desktop-full python-rosinstall python-rosinstall-generator python-wstool build-essential python-pip
+$ sudo apt install -y ros-kinetic-desktop-full python-rosinstall python-rosinstall-generator python-wstool build-essential python-pip
 ```
 
 ### Initialize ROS and Update .bashrc
+If you have already initialized ROS, you do not need to run these commands. If you do, you will see warning messages.
 ```
 $ sudo rosdep init
 $ rosdep update
@@ -29,14 +34,14 @@ $ source ~/.bashrc
 ### Install Other Dependencies
 ```
 $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-$ sudo apt-get update
-$ sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-melodic-control-msgs ros-melodic-joystick-drivers ros-melodic-xacro ros-melodic-tf2-ros ros-melodic-rviz ros-melodic-cv-bridge ros-melodic-actionlib ros-melodic-actionlib-msgs ros-melodic-dynamic-reconfigure ros-melodic-trajectory-msgs ros-melodic-rospy-message-converter ros-melodic-rosbridge-suite nodejs
+$sudo apt-get update
+$ sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-kinetic-control-msgs ros-kinetic-joystick-drivers ros-kinetic-xacro ros-kinetic-tf2-ros ros-kinetic-rviz ros-kinetic-cv-bridge ros-kinetic-actionlib ros-kinetic-actionlib-msgs ros-kinetic-dynamic-reconfigure ros-kinetic-trajectory-msgs ros-kinetic-rospy-message-converter ros-kinetic-rosbridge-suite nodejs
 $ pip install --upgrade --user gTTS gTTS-token pexpect playsound pyttsx3 pygame
 ```
 
 ### Merge Intera Resources
 ```
-$ cd ~/TeachBot/robot/src
+$ cd robot/src
 $ wstool init .
 $ git clone https://github.com/RethinkRobotics/sawyer_robot.git
 $ wstool merge sawyer_robot/sawyer_robot.rosinstall
@@ -48,8 +53,8 @@ $ catkin_make
 
 ### NPM Installs
 ```
-$ cd ~/TeachBot/browser
-$ npm install .
+$ cd ../browser
+$ sudo npm install .
 ```
 
 ### Set Up Networking
@@ -92,7 +97,7 @@ your_hostname="$(uname -n).local"
 #### Edit `ros_version`
 Edit the `ros_version` field on line 30 to be the version of ROS you are running. Assuming you followed this README, that is:
 ```
-ros_version="melodic"
+ros_version="kinetic"
 ```
 
 Save and close `intera.sh` script.
