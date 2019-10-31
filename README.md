@@ -26,6 +26,7 @@ $ sudo apt install -y ros-kinetic-desktop-full python-rosinstall python-rosinsta
 If you have already initialized ROS, you do not need to run these commands. If you do, you will see warning messages.
 ```
 $ sudo rosdep init
+$ sudo rosdep fix-permissions
 $ rosdep update
 $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 $ source ~/.bashrc
@@ -34,7 +35,7 @@ $ source ~/.bashrc
 ### Install Other Dependencies
 ```
 $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-$sudo apt-get update
+$ sudo apt-get update
 $ sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-kinetic-control-msgs ros-kinetic-joystick-drivers ros-kinetic-xacro ros-kinetic-tf2-ros ros-kinetic-rviz ros-kinetic-cv-bridge ros-kinetic-actionlib ros-kinetic-actionlib-msgs ros-kinetic-dynamic-reconfigure ros-kinetic-trajectory-msgs ros-kinetic-rospy-message-converter ros-kinetic-rosbridge-suite nodejs
 $ pip install --upgrade --user gTTS gTTS-token pexpect playsound pyttsx3 pygame
 ```
