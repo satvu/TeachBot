@@ -4,8 +4,6 @@
 # Basic
 import rospy, numpy, math
 from pygame import mixer
-from playsound import playsound
-import pyttsx3
 import cv2
 import apriltag
 # Intera
