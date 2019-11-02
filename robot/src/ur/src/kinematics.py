@@ -109,36 +109,34 @@ class Kinematics:
                 q1[0] = arcsin
                 q1[1] = PI - arcsin
 
-        elif(fabs(B) < ZERO_THRESH) {
-            double div;
-            if(fabs(fabs(d4) - fabs(A)) < ZERO_THRESH)
-            div = SIGN(d4)*SIGN(A);
-            else
-            div = d4/A;
-            double arccos = acos(div);
-            q1[0] = arccos;
-            q1[1] = 2.0*PI - arccos;
-        }
-        else if(d4*d4 > R) {
-            return num_sols;
-        }
-        else {
-            double arccos = acos(d4 / sqrt(R)) ;
-            double arctan = atan2(-B, A);
-            double pos = arccos + arctan;
-            double neg = -arccos + arctan;
-            if(fabs(pos) < ZERO_THRESH)
-            pos = 0.0;
-            if(fabs(neg) < ZERO_THRESH)
-            neg = 0.0;
-            if(pos >= 0.0)
-            q1[0] = pos;
-            else
-            q1[0] = 2.0*PI + pos;
-            if(neg >= 0.0)
-            q1[1] = neg; 
-            else
-            q1[1] = 2.0*PI + neg;
-        }
-        }
+        elif fabs(B) < ZERO_THRESH:
+            div = 0.0
+            if fabs(fabs(d4) - fabs(A)) < ZERO_THRESH:
+                div = SIGN(d4)*SIGN(A)
+            else:
+                div = d4/A
+                double arccos = acos(div)
+                q1[0] = arccos
+                q1[1] = 2.0*PI - arccos
 
+        elif d4*d4 > R:
+            return 0
+
+        else:
+            arccos = acos(d4 / sqrt(R))
+            arctan = atan2(-B, A)
+            pos = arccos + arctan
+            neg = -arccos + arctan
+
+            if fabs(pos) < ZERO_THRESH:
+                pos = 0.0
+            if fabs(neg) < ZERO_THRESH:
+                neg = 0.0
+            if(pos >= 0.0)
+                q1[0] = pos
+            else
+                q1[0] = 2.0*PI + pos
+            if(neg >= 0.0)
+                q1[1] = neg
+            else
+                q1[1] = 2.0*PI + neg
