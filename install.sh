@@ -39,11 +39,13 @@ wstool update
 cd ..
 source ~/.bashrc
 catkin_make
-cp src/intera_sdk/intera.sh intera.sh
+cd ..
+python edit_intera.py
+chmod +x robot/intera.sh
 
 # NPM Installs
-cd ../browser
+cd browser
 sudo npm install .
 
 cd ../robot
-echo "To finish the installation, please refer to the README.md"
+echo "Installation complete. Don't forget to add Firefox certificates per README.md."
