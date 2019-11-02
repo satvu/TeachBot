@@ -99,7 +99,7 @@ class Kinematics:
                 div = -SIGN(d4)*SIGN(B)
             else: 
                 div = -d4/B
-            double arcsin = asin(div)
+            double arcsin = math.asin(div)
 
             if abs(arcsin) < ZERO_THRESH: 
                 arcsin = 0.0
@@ -109,34 +109,117 @@ class Kinematics:
                 q1[0] = arcsin
                 q1[1] = PI - arcsin
 
-        elif fabs(B) < ZERO_THRESH:
+        elif abs(B) < ZERO_THRESH:
             div = 0.0
-            if fabs(fabs(d4) - fabs(A)) < ZERO_THRESH:
+            if abs(abs(d4) - abs(A)) < ZERO_THRESH:
                 div = SIGN(d4)*SIGN(A)
             else:
                 div = d4/A
-                double arccos = acos(div)
+                arccos = math.acos(div)
                 q1[0] = arccos
                 q1[1] = 2.0*PI - arccos
-
         elif d4*d4 > R:
             return 0
 
         else:
-            arccos = acos(d4 / sqrt(R))
-            arctan = atan2(-B, A)
+            arccos = math.acos(d4 / sqrt(R))
+            arctan = math.atan2(-B, A)
             pos = arccos + arctan
             neg = -arccos + arctan
 
-            if fabs(pos) < ZERO_THRESH:
+            if abs(pos) < ZERO_THRESH:
                 pos = 0.0
-            if fabs(neg) < ZERO_THRESH:
+            if abs(neg) < ZERO_THRESH:
                 neg = 0.0
-            if(pos >= 0.0)
+            if pos >= 0.0:
                 q1[0] = pos
-            else
+            else:
                 q1[0] = 2.0*PI + pos
-            if(neg >= 0.0)
+            if neg >= 0.0:
                 q1[1] = neg
-            else
+            else:
                 q1[1] = 2.0*PI + neg
+
+        # wrist2 joint (q5)
+        q5 = [2][2]
+        for i in range(2):
+            numer = (T03*sin(q1[i]) - T13*cos(q1[i])-d4)
+            div = 0.0
+            if abs(abs(numer) - abs(d6)) < ZERO_THRESH:
+                div = SIGN(numer) * SIGN(d6)
+            else:
+                div = numer / d6
+                double arccos = math.acos(div)
+                q5[i][0] = arccos
+                q5[i][1] = 2.0*PI - arccos
+
+        for i in range(2):
+            for j in range(2):
+                c1 = math.cos(q1[i])
+                s1 = math.sin(q1[i])
+                c5 = math.cos(q5[i][j])
+                s5 = math.sin(q5[i][j])
+
+                q6 = 0.0
+                # wrist 3 joint (q6)
+                if abs(s5) < ZERO_THRESH:
+                    q6 = q6_des
+                else 
+                    q6 = math.atan2(SIGN(s5)*-(T01*s1 - T11*c1), SIGN(s5)*(T00*s1 - T10*c1))
+                    if abs(q6) < ZERO_THRESH:
+                       q6 = 0.0
+                    if q6 < 0.0:
+                       q6 += 2.0*PI
+                
+
+                double q2[2], q3[2], q4[2]
+                # RRR joints (q2,q3,q4)
+                c6 = math.cos(q6)
+                s6 = math.sin(q6)
+                x04x = -s5*(T02*c1 + T12*s1) - c5*(s6*(T01*c1 + T11*s1) - c6*(T00*c1 + T10*s1))
+                x04y = c5*(T20*c6 - T21*s6) - T22*s5
+                p13x = d5*(s6*(T00*c1 + T10*s1) + c6*(T01*c1 + T11*s1)) - d6*(T02*c1 + T12*s1) + T03*c1 + T13*s1
+                p13y = T23 - d1 - d6*T22 + d5*(T21*c6 + T20*s6)
+
+                c3 = (p13x*p13x + p13y*p13y - a2*a2 - a3*a3) / (2.0*a2*a3)
+                if abs(abs(c3) - 1.0) < ZERO_THRESH:
+                    c3 = SIGN(c3)
+                elif fabs(c3) > 1.0:
+                    #TODO NO SOLUTION
+                    continue
+
+                arccos = math.acos(c3)
+                q3[0] = arccos
+                q3[1] = 2.0*PI - arccos
+                denom = a2*a2 + a3*a3 + 2*a2*a3*c3
+                s3 = math.sin(arccos)
+                double A = (a2 + a3*c3), B = a3*s3
+
+                q2[0] = math.atan2((A*p13y - B*p13x) / denom, (A*p13x + B*p13y) / denom)
+                q2[1] = math.atan2((A*p13y + B*p13x) / denom, (A*p13x - B*p13y) / denom)
+                c23_0 = math.cos(q2[0]+q3[0])
+                s23_0 = math.sin(q2[0]+q3[0])
+                c23_1 = math.cos(q2[1]+q3[1])
+                s23_1 = math.sin(q2[1]+q3[1])
+                q4[0] = math.atan2(c23_0*x04y - s23_0*x04x, x04x*c23_0 + x04y*s23_0)
+                q4[1] = math.atan2(c23_1*x04y - s23_1*x04x, x04x*c23_1 + x04y*s23_1)
+                
+
+                for k in range(2):
+                    if abs(q2[k]) < ZERO_THRESH:
+                        q2[k] = 0.0
+                    elif q2[k] < 0.0:
+                        q2[k] += 2.0*PI
+                    if abs(q4[k]) < ZERO_THRESH:
+                        q4[k] = 0.0
+                    elif q4[k] < 0.0: 
+                        q4[k] += 2.0*PI
+                    q_sols[num_sols*6+0] = q1[i]   
+                    q_sols[num_sols*6+1] = q2[k] 
+                    q_sols[num_sols*6+2] = q3[k]
+                    q_sols[num_sols*6+3] = q4[k]
+                    q_sols[num_sols*6+4] = q5[i][j]
+                    q_sols[num_sols*6+5] = q6
+
+        return q_sols 
+
