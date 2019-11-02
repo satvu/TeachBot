@@ -69,10 +69,6 @@
 				"delay":false
 			},
 			{
-				"type":"scrollWheelInput",
-				"skippable":true
-			},
-			{
 				"//":"Step back and we'll count them together.",
 				"type":"play",
 				"audio_index":3,
@@ -119,92 +115,12 @@
 				"type":"play",
 				"audio_index":5,
 				"delay":false
-			},
+			},	
 			{
-				"type":"scrollWheelInput",
-				"store_answer_in":"wheelVal"
-			},
-			{
-				"type":"if",
-				"conditional":"#wheelVal==7",
-				"if_true":[
-					{
-						"//":"Good job! Now, please stand back so I can show you something else.",
-						"type":"play",
-						"audio_index":6,
-						"delay":true
-					}
-				],
-				"if_false":[
-					{
-						"type":"if",
-						"conditional":"#wheelVal==14",
-						"if_true":[
-							{
-								"//":"Not quite. Remember that each motor can move in two directions: clockwise and counterclockwise.",
-								"type":"play",
-								"audio_index":7,
-								"delay":true
-							}
-						],
-						"if_false":[
-							{
-								"//":"Not quite.",
-								"type":"play",
-								"audio_index":8,
-								"delay":true
-							}
-						]
-					},
-					{
-						"//":"Let's count them together. Please stand back.",
-						"type":"play",
-						"audio_index":9,
-						"delay":true
-					},
-					{
-						"type":"goToJointAngles",
-						"joint_angles":"joint_motor_animation_0"
-					},
-					{
-						"type":"set",
-						"key":"j",
-						"val":0
-					},
-					{
-						"type":"while",
-						"conditional":"#j<JOINTS",
-						"instructions":[
-							{
-								"//":"#<the number I'm on>",
-								"type":"play",
-								"audio_index":"#j+10",
-								"delay":false
-							},
-							{
-								"type":"goToJointAngles",
-								"joint_angles":"joint_test[#j]",
-								"skippable":true
-							},
-							{
-								"type":"goToJointAngles",
-								"joint_angles":"joint_motor_animation_0",
-								"skippable":true
-							},
-							{
-								"type":"set",
-								"key":"j",
-								"val":"#j+1"
-							}
-						]
-					},
-					{
-						"//":"I have seven motors. Now, please stand back so I can show you something else.",
-						"type":"play",
-						"audio_index":17,
-						"delay":true
-					}
-				]
+				"//":"I have seven motors. Now, please stand back so I can show you something else.",
+				"type":"play",
+				"audio_index":17,
+				"delay":true
 			},
 			{
 				"type":"proceed",
