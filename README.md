@@ -1,69 +1,29 @@
 # TeachBot
 
 ## First Setup Only
-The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and https://wiki.ros.org/kinetic/Installation/Ubuntu for Ubuntu 16.04 and ROS Kinetic.
+The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and https://wiki.ros.org/kinetic/Installation/Ubuntu. It runs exclusively on Ubuntu 16.04. If you run this on newer versions of Ubuntu, you will have to update `install.sh` for the latest ROS distro.
 
 ### Clone Development Workspace
 If you change the directory, make sure you adjust all following commands.
 ```
 $ cd
+$ sudo apt -y install git
 $ git clone https://github.com/Darbeloff/TeachBot.git
 ```
 
-### Install Curl and Apt Dependencies
+### Install Using the Installation Script
 Run the following commands in terminal:
 ```
-$ sudo apt-get update
-$ sudo apt-get -y install curl
-$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-$ sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-$ curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | sudo apt-key add -
-$ sudo apt update
-$ sudo apt install -y ros-kinetic-desktop-full python-rosinstall python-rosinstall-generator python-wstool build-essential
+$ cd ~/TeachBot
+$ ./install.sh
 ```
 
-### Initialize ROS and Update .bashrc
-If you have already initialized ROS, you do not need to run these commands. If you do, you will see warning messages.
+Alternatively, if you do not run `install.sh` because you already installed the dependencies previously, and now you just want to prepare a freshly cloned version of this repository to work, run the following commands in terminal:
 ```
-$ sudo rosdep init
-$ sudo rosdep fix-permissions
-$ rosdep update
-$ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
-$ source ~/.bashrc
+$ cd ~/TeachBot
+$ ./setup.sh
 ```
-
-### Install Apt-Get Dependencies
-```
-$ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-$ sudo apt-get update
-$ sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-kinetic-control-msgs ros-kinetic-joystick-drivers ros-kinetic-xacro ros-kinetic-tf2-ros ros-kinetic-rviz ros-kinetic-cv-bridge ros-kinetic-actionlib ros-kinetic-actionlib-msgs ros-kinetic-dynamic-reconfigure ros-kinetic-trajectory-msgs ros-kinetic-rospy-message-converter ros-kinetic-rosbridge-suite nodejs cmake
-```
-
-### Install Pip Dependencies
-```
-$ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-$ python get-pip.py --user
-$ rm get-pip.py
-$ pip install --upgrade --user gTTS gTTS-token pygame apriltag
-```
-
-### Merge Intera Resources
-```
-$ cd robot/src
-$ wstool init .
-$ git clone https://github.com/RethinkRobotics/sawyer_robot.git
-$ wstool merge sawyer_robot/sawyer_robot.rosinstall
-$ wstool update
-$ cd ..
-$ source ~/.bashrc
-$ catkin_make
-```
-
-### NPM Installs
-```
-$ cd ../browser
-$ sudo npm install .
-```
+That setup script only merges the Intera resources and installs NPM directories.
 
 ### Set Up Networking
 Connect to the robot via the ethernet port on the outside of the Controller.
@@ -76,39 +36,6 @@ Navigate to the IPv4 tab and select "Link-Local Only." Then, click "Apply."
 ![Enable Link-Local Only](/images/wired_settings.png?raw=true)
 
 You will not be able to use that ethernet port to access the internet until you revert the Method to "Automatic (DHCP)." You may now close the Settings window.
-
-### Set Up Intera
-Copy the `intera.sh` file into your ros workspace
-```
-$ cp ~/TeachBot/robot/src/intera_sdk/intera.sh ~/TeachBot/robot
-```
-
-Now you'll need to edit three lines of `intera.sh` specific to your system.
-```
-$ gedit intera.sh
-```
-
-#### Edit `robot_hostname`
-Edit the `robot_hostname` field on line 22 to be the name of your robot. For example:
-```
-robot_hostname="jerry.local"
-```
-where `jerry` is the name of your robot. This needs to match the name you gave it when you set it up.
-
-#### Replace `your_ip` with `your_hostname`
-Comment out the `your_ip` field on line 26 and edit the `your_hostname` field on line 27 as follows:
-```
-#your_ip="192.168.XXX.XXX"
-your_hostname="$(uname -n).local"
-```
-
-#### Edit `ros_version`
-Edit the `ros_version` field on line 30 to be the version of ROS you are running. Assuming you followed this README, that is:
-```
-ros_version="kinetic"
-```
-
-Save and close `intera.sh` script.
 
 ### Verify Environment
 ```
@@ -261,6 +188,12 @@ You have successfully launched the teaching module!
 |   +-- logo.png                        TeachBot logo to be displayed on Sawyer head display.
 |   +-- safety1.mp3                     Audio file to be played when TeachBot limb exits safety zone.
 |   +-- safety2.mp3                     Audio file to be played when TeachBot limb resets to within the safety zone.
+|
++-- edit_intera.py                      Used by install.sh. Copies and edits intera.sh into TeachBot/robot.
++-- install.sh                          Installation script.
++-- LICENSE                             BSD 3-Clause software license.
++-- README.md                           This document.
++-- setup.sh                            Used by install.sh. Merges Intera resources and installs NPM dependencies.
 ```
 The project is organized in two segments:
 1) JavaScript Node application, responsible for coordinating the module and displaying content in the browser, and
@@ -291,6 +224,3 @@ The main `teachbot.py` scripts are run using the command described above:
 $ # This is just the format of the command. Do not actually enter <name_of_cobot>.
 $ rosrun <name_of_cobot> teachbot.py
 ```
-
-### Block Diagram of Command Flow
-![](/images/software_overview.svg?raw=true)

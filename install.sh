@@ -30,22 +30,8 @@ python get-pip.py --user
 rm get-pip.py
 pip install --upgrade --user gTTS gTTS-token pyttsx3 pygame apriltag
 
-# Merge intera resources
-cd robot/src
-wstool init .
-git clone https://github.com/RethinkRobotics/sawyer_robot.git
-wstool merge sawyer_robot/sawyer_robot.rosinstall
-wstool update
-cd ..
-source ~/.bashrc
-catkin_make
-cd ..
-python edit_intera.py
-chmod +x robot/intera.sh
-
-# NPM Installs
-cd browser
-sudo npm install .
+# Setup Intera Resources and NPM Dependencies
+./setup.sh
 
 cd ../robot
 echo "Installation complete. Don't forget to add Firefox certificates per README.md."
