@@ -1,0 +1,5 @@
+- Fix JointMove. We can do better than strings.
+- Fix JS docstrings. Format correctly.
+- What is happening with toggle and command_complete in joint_move?
+- Rename joint_move to admittance control
+- Add spaces before open braces

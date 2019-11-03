@@ -10,4 +10,7 @@ bool in_end_point_frame
 #the following messages determine what type of while loop to engage
 bool PASS
 bool ways
-
+---
+bool done
+---
+bool feedback
