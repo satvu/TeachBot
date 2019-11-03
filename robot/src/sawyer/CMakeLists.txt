@@ -27,7 +27,6 @@ add_message_files(
   adjustPoseTo.msg
   JointInfo.msg
   joint_move.msg
-  InteractionControl.msg
   JointImpedance.msg
   EndpointInfo.msg
   GoToCartesianPose.msg

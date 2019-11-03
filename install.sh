@@ -33,5 +33,5 @@ pip install --upgrade --user gTTS gTTS-token pyttsx3 pygame apriltag
 # Setup Intera Resources and NPM Dependencies
 ./setup.sh
 
-cd ../robot
+cd robot
 echo "Installation complete. Don't forget to add Firefox certificates per README.md."
