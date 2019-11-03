@@ -26,6 +26,9 @@ from sawyer.msg import *
 from sawyer.srv import *
 from cv_bridge import CvBridge, CvBridgeError
 
+# Action messages
+import actionlib
+
 class Module():
 	FORCE2VELOCITY = {'right_j0': 0.06, 'right_j1': 0.06, 'right_j2': 0.4, 'right_j3': 0.2, 'right_j4': 1, 'right_j5': 0.9, 'right_j6': 2}
 	VERBOSE = True
@@ -65,9 +68,6 @@ class Module():
 		rospy.Subscriber('/teachbot/multiple_choice', Bool, self.cb_multiple_choice)
 		rospy.Subscriber('/teachbot/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
-		rospy.Subscriber('/teachbot/adjustPoseTo', adjustPoseTo, self.cb_adjustPoseTo)
-		rospy.Subscriber('/teachbot/closeGripper', Bool, self.cb_closeGripper)
-		rospy.Subscriber('/teachbot/openGripper', Bool, self.cb_openGripper)
 		rospy.Subscriber('/teachbot/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
 		rospy.Subscriber('/teachbot/cuffInteraction', cuffInteraction, self.cb_cuffInteraction)
 		rospy.Subscriber('/teachbot/check_pickup', Bool, self.cb_check_pickup)
@@ -84,6 +84,8 @@ class Module():
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
+		self.adjustPoseToAct = actionlib.SimpleActionServer('/teachbot/adjustPoseTo', adjustPoseToAction, execute_cb = self.cb_adjustPoseTo, auto_start=True)
+		self.gripperAct = actionlib.SimpleActionServer('/teachbot/gripper', gripperAction, execute_cb = self.cb_gripper, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -572,9 +574,45 @@ class Module():
 	def cb_adjustPoseTo(self, req):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
-		self.limb.adjustPoseTo(req.geometry, req.axis, eval(req.amount))
+		success = True
+		result_adjustPoseTo = adjustPoseToResult()
+		result_adjustPoseTo.is_done = False
 
-		self.command_complete_topic.publish()
+		if self.adjustPoseToAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.adjustPoseToAct.set_preempted()
+			success = False
+
+		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
+
+		if success:
+			self.result_adjustPoseTo.is_done = True
+			self.adjustPoseToAct.set_succeeded(self.result_adjustPoseTo)
+
+	def cb_gripper(self,goal):
+
+		success = True
+		result_gripper = gripperResult()
+		self.result_gripper.is_done = False
+
+		if self.gripperAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.gripperAct.set_preempted()
+			success = False
+
+		if (goal.todo=='open'):
+			if self.VERBOSE: rospy.loginfo('Opening gripper')
+			self.open_gripper()
+		elif (goal.todo=='close'):
+			if self.VERBOSE: rospy.loginfo('Closing gripper')
+			self.close_gripper()
+		else:
+			if self.VERBOSE: rospy.loginfo('Gripper doing nothing')
+			pass
+
+		if success:
+			self.result_gripper.is_done = True
+			self.gripperAct.set_succeeded(self.result_gripper)
 
 	def cb_camera(self, data):
 		if data.data == True:
@@ -601,13 +639,6 @@ class Module():
 		rospy.loginfo(box)
 
 		self.pickedup_topic.publish(box)
-
-	def cb_closeGripper(self, req):
-		if self.VERBOSE: rospy.loginfo('Closing gripper')
-
-		if req.data == True:
-			self.close_gripper()
-		self.command_complete_topic.publish()
 
 	def cb_cuffInteraction(self, req):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')
@@ -810,14 +841,6 @@ class Module():
 			self.subscribe_to_multi_choice()
 		else:
 			self.unsubscribe_from_multi_choice()
-
-	def cb_openGripper(self, req):
-		if self.VERBOSE: rospy.loginfo('Opening gripper')
-
-		if req.data == True:
-			self.open_gripper()
-		self.command_complete_topic.publish()
-		rospy.loginfo('Gripper opened')
 
 	def cb_WheelSubscription(self, req):
 		if req.subscribe:
