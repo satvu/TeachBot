@@ -12,7 +12,7 @@ var ch = m.ch;
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = '1Dof';
+var start_seq = 'bins';
 async function main() {
     m.displayOff();
     canvas_container.style.display = 'initial';

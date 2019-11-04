@@ -56,7 +56,6 @@ class Module():
 		self.clicked = rospy.Publisher('/teachbot/scroll_wheel_pressed', Bool, queue_size=10)
 		self.highTwo_success_topic = rospy.Publisher('/teachbot/highTwo_success', Bool, queue_size=1)
 		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
-		self.pickedup_topic = rospy.Publisher('/teachbot/pickedup', Bool, queue_size=1)
 		self.pos_orient_topic = rospy.Publisher('/teachbot/pos_orient', String, queue_size=1)
 
 		# Subscribing topics
@@ -67,7 +66,6 @@ class Module():
 		rospy.Subscriber('/teachbot/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/cuffInteraction', cuffInteraction, self.cb_cuffInteraction)
-		rospy.Subscriber('/teachbot/check_pickup', Bool, self.cb_check_pickup)
 		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
 		rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
@@ -353,32 +351,8 @@ class Module():
 			self.PickUpBoxAct.set_succeeded(result_PickUpBox)
 
 	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
-	def check_pickup(self, lift_position = Z_TABLE + BOX_HEIGHT + 0.1, effort_tol = 5):
-		# Leave the box and lift upward to measure no-load effort
-		self.limb.adjustPoseTo('position','z',lift_position)
-		rospy.sleep(1)
-		effort_nobox = sum(abs(effort) for effort in self.limb.joint_efforts().values())
 
-		# Grab and lift box to measure effort under load
-		self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
-		self.close_gripper()
-		rospy.sleep(2)
-		self.limb.adjustPoseTo('position','z',lift_position)
-		rospy.sleep(1)
-		effort_box = sum(abs(effort) for effort in self.limb.joint_efforts().values())
-		print('no box: ' + str(effort_nobox))
-		print('w/ box: ' + str(effort_box))
-
-		hasBox = effort_box-effort_nobox>effort_tol
-		if not hasBox:
-			self.open_gripper()
-			if self.VERBOSE: rospy.loginfo('Failed to pick up box.')
-		elif self.VERBOSE:
-			rospy.loginfo('Successfully picked up box.')
-			#self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
-			# self.open_gripper()
-			# self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT+0.1)
-		return hasBox
+	# Comments inside check_pickup 
 		'''
 		del self.effort[:]
 
@@ -404,6 +378,7 @@ class Module():
 		if(not self.compare_efforts(effort1 = self.effort[0], effort2 = self.effort[1])):
 			self.limb.go_to_cartesian_pose(joint_angles = self.newCartPose_arg)
 		'''
+		
 	def display_camera_callback(self, img_data):
 		bridge = CvBridge()
 		try:
@@ -660,15 +635,6 @@ class Module():
 			valid_cameras = rp.get_camera_names()
 			camera = intera_interface.Cameras()
 			camera.stop_streaming('right_hand_camera')
-
-	def cb_check_pickup(self, req):
-		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')
-
-		box = self.check_pickup()
-
-		rospy.loginfo(box)
-
-		self.pickedup_topic.publish(box)
 
 	def cb_cuffInteraction(self, req):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')

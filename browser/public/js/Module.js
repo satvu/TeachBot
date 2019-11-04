@@ -69,16 +69,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/cuffInteraction',
 		messageType: ROBOT + '/cuffInteraction'
 	});
-	this.check_pickup = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/check_pickup',
-		messageType: 'std_msgs/Bool'
-	})
-	this.adjustPoseBy = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/adjustPoseBy',
-		messageType: ROBOT + '/adjustPoseBy'
-	})
 	this.camera = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/camera',
@@ -130,11 +120,6 @@ function Module(module_num, main, content_elements) {
 		ros: ros,
 		name: '/teachbot/EndpointInfo',
 		messageType: ROBOT + '/EndpointInfo'
-	});
-	this.pickedup = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/pickedup',
-		messageType: 'std_msgs/Bool'
 	});
 	this.pos_orient = new ROSLIB.Topic({
 		ros: ros,
@@ -197,6 +182,11 @@ function Module(module_num, main, content_elements) {
 		ros: ros,
 		serverName: '/teachbot/PickUpBox',
 		actionName: ROBOT + '/PickUpBoxAction'
+	});
+	this.AdjustPoseByAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/AdjustPoseBy',
+		actionName: ROBOT + '/AdjustPoseByAction'
 	});
 
 
@@ -431,16 +421,6 @@ Module.prototype.pub_cuff = function(terminatingCondition, ways) {
 
 }
 
-Module.prototype.pub_adjustPoseBy = function(geometry,axis,amount){
-	var req = new ROSLIB.Message({
-		geometry: this.hashTokeyVal(geometry),
-		axis: this.hashTokeyVal(axis),
-		amount: this.hashTokeyVal(amount),
-	});
-
-	this.adjustPoseBy.publish(req)
-}
-
 Module.prototype.getEndpoint = function(){
 	this.endpoint.subscribe(function(message) { 
 		self.dictionary['position_x'] = message.position.x;
@@ -616,13 +596,18 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'adjustPoseBy':
 				checkInstruction(instr, ['geometry', 'axis', 'amount'], instructionAddr);
 
-				this.pub_adjustPoseBy(instr.geometry, instr.axis, instr.amount)
-
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
+				var goal_AdjustPoseBy = ROSLIB.Goal({
+					actionClient: this.AdjustPoseByAct,
+					goalMessage: {
+						geometry: this.hashTokeyVal(instr.geometry),
+						axis: this.hashTokeyVal(instr.axis),
+						amount: this.hashTokeyVal(instr.amount)
+					}
+				});
+				goal_AdjustPoseBy.on('result', function(result){
 					self.start(self.getNextAddress(instructionAddr));
 				});
+				goal_AdjustPoseBy.send()
 
 				break;
 
