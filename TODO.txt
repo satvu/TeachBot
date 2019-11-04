@@ -3,3 +3,5 @@
 - What is happening with toggle and command_complete in joint_move?
 - Rename joint_move to admittance control
 - Add spaces before open braces
+- Fix high_two. Generalize.
+- Don't hard set the position above box 3

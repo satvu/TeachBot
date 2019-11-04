@@ -116,11 +116,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/wheel_delta',
 		messageType: 'std_msgs/Int32'
 	})
-	this.dev_receiver = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/dev_topic',
-		messageType: 'std_msgs/Int32'
-	})
 	this.scroll_wheel_button_receiver = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/scroll_wheel_button_topic',
@@ -167,7 +162,15 @@ function Module(module_num, main, content_elements) {
 		messageType: 'std_msgs/String'
 	});
 
-	// Services
+	// Service Servers
+	var DevModeSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/dev_mode',
+		serviceType: ROBOT + '/DevMode'
+	});
+	DevModeSrv.advertise(this.devRxCallback);
+
+	// Service Clients
 	this.UpdateAudioDurationSrv = new ROSLIB.Service({
 		ros: ros,
 		name: '/teachbot/audio_duration',
@@ -218,11 +221,6 @@ function Module(module_num, main, content_elements) {
 	 *   Update Font Size   *
 	 ************************/
 	this.textBoxMaxHeight = document.getElementById("adjustable").scrollHeight;
-
-	/************************
-	 *   Development Mode   *
-	 ************************/
-	this.dev_receiver.subscribe(this.devRxCallback);
 
 	/******************************
 	 *   Setup Section Sequence   *
@@ -528,13 +526,14 @@ Module.prototype.displayOff = function(clearCanvas=false) {
 /**
  * Toggles development mode.
  *
- * Should be called whenever a message is received on the development mode topic.
+ * Callback for the DevModeSrv service.
  * Turns development mode on if the message is 1, off if 0.
  *
- * @param {object}	message 	ROS message containing 0 or 1.
+ * @param {object}	req 	ROS message containing 0 or 1.
+ * @param {object}  resp    To be honest, I don't really know why this is an input.
  */
-Module.prototype.devRxCallback = function(message) {
-	switch (message.data) {
+Module.prototype.devRxCallback = function(req, resp) {
+	switch (req.status) {
 		case 0:
 			self.devMode = false
 			for (let s=0; s<self.sections.length; s++) {
@@ -553,6 +552,10 @@ Module.prototype.devRxCallback = function(message) {
 			if (VERBOSE) console.log('Entering dev mode.');
 			break;
 	}
+
+	resp['success'] = true;
+    resp['message'] = 'Set successfully';
+    return true;
 }
 
 /**

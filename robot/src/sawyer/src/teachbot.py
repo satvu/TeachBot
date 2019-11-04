@@ -47,12 +47,10 @@ class Module():
 		self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
 		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
 		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
-		self.dev_topic = rospy.Publisher('/teachbot/dev_topic', Int32, queue_size = 10)
 		self.scroll_wheel_button_topic = rospy.Publisher('/teachbot/scroll_wheel_button_topic', Empty, queue_size = 10)
 		self.command_complete_topic = rospy.Publisher('/teachbot/command_complete', Empty, queue_size=1)
 		self.wheel_delta_topic = rospy.Publisher('/teachbot/wheel_delta', Int32, queue_size=10)
 		self.clicked = rospy.Publisher('/teachbot/scroll_wheel_pressed', Bool, queue_size=10)
-		self.toggle_completed_topic = rospy.Publisher('/teachbot/toggle_completed', Empty, queue_size=1)
 		self.highTwo_success_topic = rospy.Publisher('/teachbot/highTwo_success', Bool, queue_size=1)
 		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
 		self.pickedup_topic = rospy.Publisher('/teachbot/pickedup', Bool, queue_size=1)
@@ -76,9 +74,11 @@ class Module():
 		rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
 		rospy.Subscriber('/robot/digital_io/right_upper_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_upper)
 
-		# Services
+		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
 		rospy.Service('/teachbot/wheel_subscription', ScrollWheelSubscription, self.cb_WheelSubscription)
+		# Service Clients
+		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
 
 		# Actions
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
@@ -434,11 +434,6 @@ class Module():
 		msg.data = arr
 		self.array_topic.publish(msg)
 		if self.VERBOSE: rospy.loginfo("I sent: " + str(arr))
-	def pub_dev(self, cmd):
-		msg = Int32()
-		msg.data = cmd
-		self.dev_topic.publish(msg)
-		if self.VERBOSE: rospy.loginfo("I sent: " + str(cmd))
 
 	## ROS SUBSCRIBERS ##
 	def rx_audio_duration(self,data):
@@ -479,12 +474,12 @@ class Module():
 		if self.navigator.button_string_lookup(data) == 'OFF':
 			if self.devMode:
 				self.devMode = False
-				self.pub_dev(0)
+				self.DevModeSrv(0)
 				self.lights.set_light_state('head_blue_light',False)
 				if self.VERBOSE: rospy.loginfo('Exiting dev mode')
 			else:
 				self.devMode = True
-				self.pub_dev(1)
+				self.DevModeSrv(1)
 				self.lights.set_light_state('head_blue_light',True)
 				if self.VERBOSE: rospy.loginfo('Entering dev mode')
 
