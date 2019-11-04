@@ -789,7 +789,8 @@ class Module():
 				result_HighTwo.is_success = False
 
 		if success:
-			this.HighTwoAct.set_succeeded(result_HighTwo)
+			rospy.loginfo(result_HighTwo.is_success)
+			self.HighTwoAct.set_succeeded(result_HighTwo)
 
 	def cb_impedance(self, req):
 		if self.VERBOSE: rospy.loginfo('Impedance activated')
