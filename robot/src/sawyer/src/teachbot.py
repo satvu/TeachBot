@@ -61,7 +61,6 @@ class Module():
 		rospy.Subscriber('/teachbot/JointAngle', String, self.cb_joint_angle)
 		rospy.Subscriber('/teachbot/JointImpedance', JointImpedance, self.cb_impedance)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
-		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
 
 		# Service Servers
@@ -80,6 +79,7 @@ class Module():
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
 		self.MultipleChoice = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
+		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
 		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
 
 		# Global Vars
@@ -525,12 +525,18 @@ class Module():
 	def rx_command(self, data):
 		pass
 
-	def cb_adjustPoseBy(self, req):
+	def cb_AdjustPoseBy(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose by')
 
-		self.limb.adjustPoseBy(req.geometry, req.axis, eval(req.amount))
+		success = True
+		result_AdjustPoseBy = AdjustPoseByResult()
+		result_AdjustPoseBy.is_done = False
 
-		self.command_complete_topic.publish()
+		self.limb.adjustPoseBy(goal.geometry, goal.axis, eval(goal.amount))
+
+		if success:
+			result_AdjustPoseBy.is_done = True
+			self.AdjustPoseByAct.set_succeeded(result_AdjustPoseBy)
 
 	def cb_AdjustPoseTo(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')

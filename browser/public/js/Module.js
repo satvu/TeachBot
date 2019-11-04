@@ -591,7 +591,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'adjustPoseBy':
 				checkInstruction(instr, ['geometry', 'axis', 'amount'], instructionAddr);
 
-				var goal_AdjustPoseBy = ROSLIB.Goal({
+				var goal_AdjustPoseBy = new ROSLIB.Goal({
 					actionClient: this.AdjustPoseByAct,
 					goalMessage: {
 						geometry: this.hashTokeyVal(instr.geometry),
@@ -1059,7 +1059,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'highTwo':
 
-				var goal_HighTwo = ROSLIB.Goal({
+				var goal_HighTwo = new ROSLIB.Goal({
 					actionClient: this.HighTwoAct,
 					goalMessage:{ high_two: true }
 				});
