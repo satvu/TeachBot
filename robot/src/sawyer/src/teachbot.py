@@ -69,6 +69,7 @@ class Module():
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
+		self.InteractionControlActCli = actionlib.SimpleActionClient('/teachbot/InteractionControl',InteractionControlAction)
 		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
 		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
@@ -694,21 +695,19 @@ class Module():
 					rospy.loginfo('Audio file played')
 					rospy.sleep(10.5)
 
-					msg = InteractionControl()
-					msg.position_only = False
-					msg.orientation_x = True
-					msg.orientation_y = True
-					msg.orientation_z = True
-					msg.position_x = True
-					msg.position_y = True
-					msg.position_z = True
-					msg.PASS = False
-					msg.ways = False
-					self.interaction_control_topic.publish(msg)
-
-					self.finished = False
-					while (not self.finished):
-						pass
+					goal_InteractionControl = InteractionControlGoal(
+						position_only = False,
+						orientation_x = True,
+						orientation_y = True,
+						orientation_z = True,
+						position_x = True,
+						position_y = True,
+						position_z = True,
+						PASS = False,
+						ways = False
+						)
+					InteractionControlActCli.send_goal(goal_InteractionControl)
+					InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
@@ -717,7 +716,7 @@ class Module():
 					rospy.sleep(4.5)
 					self.limb.go_to_joint_angles(default)
 
-				while rospy.get_time()-startTime<self.audio_duration:
+				while rospy.get_time()-startTime<self.audio_duration + 3:
 					pass
 			else:
 				goto = self.limb.go_to_joint_angles(eval(goal.name), speed_ratio=speed_ratio, ways = ways)
@@ -731,21 +730,19 @@ class Module():
 					rospy.loginfo('Audio file played')
 					rospy.sleep(10.5)
 
-					msg = InteractionControl()
-					msg.position_only = False
-					msg.orientation_x = True
-					msg.orientation_y = True
-					msg.orientation_z = True
-					msg.position_x = True
-					msg.position_y = True
-					msg.position_z = True
-					msg.PASS = False
-					msg.ways = False
-					self.interaction_control_topic.publish(msg)
-
-					self.finished = False
-					while (not self.finished):
-						pass
+					goal_InteractionControl = InteractionControlGoal(
+						position_only = False,
+						orientation_x = True,
+						orientation_y = True,
+						orientation_z = True,
+						position_x = True,
+						position_y = True,
+						position_z = True,
+						PASS = False,
+						ways = False
+						)
+					InteractionControlActCli.send_goal(goal_InteractionControl)
+					InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
