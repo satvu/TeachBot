@@ -84,8 +84,8 @@ class Module():
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
-		self.adjustPoseToAct = actionlib.SimpleActionServer('/teachbot/adjustPoseTo', adjustPoseToAction, execute_cb = self.cb_adjustPoseTo, auto_start=True)
-		self.gripperAct = actionlib.SimpleActionServer('/teachbot/gripper', gripperAction, execute_cb = self.cb_gripper, auto_start=True)
+		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb = self.cb_AdjustPoseTo, auto_start=True)
+		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb = self.cb_Gripper, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -566,33 +566,33 @@ class Module():
 
 		self.command_complete_topic.publish()
 
-	def cb_adjustPoseTo(self, req):
+	def cb_AdjustPoseTo(self, req):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
 		success = True
-		result_adjustPoseTo = adjustPoseToResult()
-		result_adjustPoseTo.is_done = False
+		result_AdjustPoseTo = adjustPoseToResult()
+		result_AdjustPoseTo.is_done = False
 
-		if self.adjustPoseToAct.is_preempt_requested():
+		if self.AdjustPoseToAct.is_preempt_requested():
 			rospy.loginfo("%s: Preempted", 'n/a')
-			self.adjustPoseToAct.set_preempted()
+			self.AdjustPoseToAct.set_preempted()
 			success = False
 
 		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
 
 		if success:
-			self.result_adjustPoseTo.is_done = True
-			self.adjustPoseToAct.set_succeeded(self.result_adjustPoseTo)
+			self.result_AdjustPoseTo.is_done = True
+			self.AdjustPoseToAct.set_succeeded(self.result_AdjustPoseTo)
 
 	def cb_gripper(self,goal):
 
 		success = True
-		result_gripper = gripperResult()
-		self.result_gripper.is_done = False
+		result_Gripper = GripperResult()
+		result_Gripper.is_done = False
 
-		if self.gripperAct.is_preempt_requested():
+		if self.GripperAct.is_preempt_requested():
 			rospy.loginfo("%s: Preempted", 'n/a')
-			self.gripperAct.set_preempted()
+			self.GripperAct.set_preempted()
 			success = False
 
 		if (goal.todo=='open'):
@@ -606,8 +606,8 @@ class Module():
 			pass
 
 		if success:
-			self.result_gripper.is_done = True
-			self.gripperAct.set_succeeded(self.result_gripper)
+			result_Gripper.is_done = True
+			self.GripperAct.set_succeeded(result_Gripper)
 
 	def cb_camera(self, data):
 		if data.data == True:
