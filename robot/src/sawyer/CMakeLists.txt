@@ -53,6 +53,7 @@ add_action_files(
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
+  HighTwo.action
 )
 
 generate_messages(

@@ -188,6 +188,11 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/AdjustPoseBy',
 		actionName: ROBOT + '/AdjustPoseByAction'
 	});
+	this.HighTwoAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/HighTwo',
+		actionName: ROBOT + '/HighTwoAction'
+	});
 
 
 	// Initialize dictionary
@@ -1052,33 +1057,28 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'highTwo':
-				var req = new ROSLIB.Message({
-					data: true
+
+				var goal_HighTwo = ROSLIB.Goal({
+					actionClient: this.HighTwoAct,
+					goalMessage:{ high_two: true }
 				});
-
-				this.highTwo.publish(req)
-
-				this.highTwo_success.subscribe(async function(message) {
-					if (VERBOSE) console.log('High two: ' + message.data);
-					if (message.data == true) {
+				goal_HighTwo.on('result', function(result){
+					if (VERBOSE) console.log('High two: ' + result.is_success);
+					if (result.is_success == true) {
 						wheel_val = 1
 						if (instr.hasOwnProperty('store_answer_in')) {
 							self.dictionary[instr.store_answer_in] = wheel_val;
 						}
-						self.highTwo_success.unsubscribe();
-						self.highTwo_success.removeAllListeners();
 						self.start(self.getNextAddress(instructionAddr));
 					} else{
 						wheel_val = 2
 						if (instr.hasOwnProperty('store_answer_in')) {
 							self.dictionary[instr.store_answer_in] = wheel_val;
 						}
-						self.highTwo_success.unsubscribe();
-						self.highTwo_success.removeAllListeners();
 						self.start(self.getNextAddress(instructionAddr));
 					}
 				});
-
+				goal_HighTwo.send();
 
 				break;
 
