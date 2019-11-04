@@ -60,12 +60,9 @@ class Module():
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
 		rospy.Subscriber('/teachbot/JointAngle', String, self.cb_joint_angle)
 		rospy.Subscriber('/teachbot/JointImpedance', JointImpedance, self.cb_impedance)
-		rospy.Subscriber('/teachbot/multiple_choice', Bool, self.cb_multiple_choice)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
-		#rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
-		#rospy.Subscriber('/robot/digital_io/right_upper_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_upper)
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
@@ -81,6 +78,7 @@ class Module():
 		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
 		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
+		self.MultipleChoice = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
 
@@ -515,20 +513,6 @@ class Module():
 		self.navigator.deregister_callback(self.wheel_callback_id)
 		self.wheel_callback_id = -1
 
-	def subscribe_to_multi_choice(self):
-		def button_pressed(name, data):
-			if self.navigator.button_string_lookup(data) == 'OFF':
-				self.pub_num(self.BUTTON[name])
-			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
-
-		for key in self.BUTTON:
-			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key : button_pressed(key, data), 'right_button_' + key)
-
-	def unsubscribe_from_multi_choice(self):
-		if self.multi_choice_callback_ids[self.BUTTON.keys()[0]]==-1:
-			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
-		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
-
 	def _unsubscribe_from(self, obj, callback_ids):
 		notified = False
 		for key in callback_ids:
@@ -849,12 +833,25 @@ class Module():
 		result.done = True
 		self.JointMoveAct.set_succeeded(result);
 
-	def cb_multiple_choice(self, req):
+	def unsubscribe_from_multi_choice(self):
+		if self.multi_choice_callback_ids[self.BUTTON.keys()[0]]==-1:
+			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
+		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
+
+	def cb_MultipleChoice(self, goal):
 		if self.VERBOSE: rospy.loginfo('Multiple choice ready')
-		if req.data:
-			self.subscribe_to_multi_choice()
-		else:
-			self.unsubscribe_from_multi_choice()
+
+		result = sawyer.msg.MultipleChoiceResult()
+
+		def button_pressed(name, data):
+			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
+			if self.navigator.button_string_lookup(data) == 'OFF':
+				result.answer = self.BUTTON[name];
+				self.MultipleChoiceAct.set_succeeded(result)
+				self.unsubscribe_from_multi_choice()
+
+		for key in self.BUTTON:
+			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key : button_pressed(key, data), 'right_button_' + key)
 
 	def cb_WheelSubscription(self, req):
 		if req.subscribe:

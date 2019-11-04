@@ -54,11 +54,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/JointImpedance',
 		messageType: ROBOT + '/JointImpedance'
 	});
-	this.multiple_choice = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/multiple_choice',
-		messageType: 'std_msgs/Bool'
-	})
 	this.highTwo = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/highTwo',
@@ -178,6 +173,11 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/GoToCartesianPose',
 		actionName: ROBOT + '/GoToCartesianPoseAction'
 	});
+	this.MultipleChoiceAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/multiple_choice',
+		actionName: ROBOT + '/MultipleChoice'
+	});
 	this.PickUpBoxAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/PickUpBox',
@@ -259,6 +259,7 @@ Module.prototype.loadTextAndAudio = function() {
 
 			// Load audio.
 			var audioCount = self.sections[s]._textArray.length;
+			console.log(`${self.sections[s].id} text array length ${audioCount}`);
 			// If there are no audio files in this section, mark the section as loaded.
 			if (audioCount==0) {
 				self.sections[s]._textLoaded = true;
@@ -1296,43 +1297,19 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], multi_choice_url);
 
-				var req = new ROSLIB.Message({
-					data: true
+				var goal = new ROSLIB.Goal({
+					actionClient: this.MultipleChoiceAct,
+					goalMessage: {goal: true}
 				});
 
-				this.multiple_choice.publish(req);
-
-				this.wheel_delta_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Button pressed:' + message.data);
-					wheel_val = message.data
-					if (instr.hasOwnProperty('store_answer_in')) {
-						self.dictionary[instr.store_answer_in] = wheel_val;
-					}
-					self.wheel_delta_topic.unsubscribe();
-					self.wheel_delta_topic.removeAllListeners();
+				goal.on('result', function(result) {
+					if (VERBOSE) console.log('Button pressed:' + result.answer);
+					self.dictionary[instr.store_answer_in] = result.answer;
 					self.displayOff(true);
 					self.start(self.getNextAddress(instructionAddr));
 				});
 
-				break;
-
-			case 'multiple_choice2':
-				var req = new ROSLIB.Message({
-					data: true
-				});
-
-				this.multiple_choice.publish(req);
-
-				this.wheel_delta_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Button pressed:' + message.data);
-					wheel_val = message.data
-					if (instr.hasOwnProperty('store_answer_in')) {
-						self.dictionary[instr.store_answer_in] = wheel_val;
-					}
-					self.wheel_delta_topic.unsubscribe();
-					self.wheel_delta_topic.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
-				});
+				goal.send();
 
 				break;
 

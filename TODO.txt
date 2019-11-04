@@ -10,3 +10,4 @@
   - JS functions
   - JSON instruction types
   - ROS topics
+- Alphabetize CMakeLists and topics

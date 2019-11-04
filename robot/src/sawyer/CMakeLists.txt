@@ -50,6 +50,7 @@ add_action_files(
   JointMove.action
   GoToCartesianPose.action
   Gripper.action
+  MultipleChoice.action
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
