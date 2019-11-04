@@ -52,6 +52,8 @@ add_action_files(
   Gripper.action
   AdjustPoseTo.action
   PickUpBox.action
+  AdjustPoseBy.action
+  HighTwo.action
 )
 
 generate_messages(

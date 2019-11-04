@@ -1,14 +1,11 @@
-# adjust pose to .action file
+# .action file for high two
 
 # goal definition
-
-string geometry
-string axis
-string amount
+bool high_two
 ---
 
 # result definition
-bool is_done
+bool is_success
 ---
 
 # feedback definition

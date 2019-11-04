@@ -54,19 +54,14 @@ class Module():
 		self.command_complete_topic = rospy.Publisher('/teachbot/command_complete', Empty, queue_size=1)
 		self.wheel_delta_topic = rospy.Publisher('/teachbot/wheel_delta', Int32, queue_size=10)
 		self.clicked = rospy.Publisher('/teachbot/scroll_wheel_pressed', Bool, queue_size=10)
-		self.highTwo_success_topic = rospy.Publisher('/teachbot/highTwo_success', Bool, queue_size=1)
 		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
-		self.pickedup_topic = rospy.Publisher('/teachbot/pickedup', Bool, queue_size=1)
 
 		# Subscribing topics
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
 		rospy.Subscriber('/teachbot/JointAngle', String, self.cb_joint_angle)
 		rospy.Subscriber('/teachbot/JointImpedance', JointImpedance, self.cb_impedance)
 		rospy.Subscriber('/teachbot/multiple_choice', Bool, self.cb_multiple_choice)
-		rospy.Subscriber('/teachbot/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
-		rospy.Subscriber('/teachbot/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
-		rospy.Subscriber('/teachbot/check_pickup', Bool, self.cb_check_pickup)
 		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
 		#rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
@@ -87,6 +82,7 @@ class Module():
 		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
+		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -353,32 +349,8 @@ class Module():
 			self.PickUpBoxAct.set_succeeded(result_PickUpBox)
 
 	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
-	def check_pickup(self, lift_position = Z_TABLE + BOX_HEIGHT + 0.1, effort_tol = 5):
-		# Leave the box and lift upward to measure no-load effort
-		self.limb.adjustPoseTo('position','z',lift_position)
-		rospy.sleep(1)
-		effort_nobox = sum(abs(effort) for effort in self.limb.joint_efforts().values())
 
-		# Grab and lift box to measure effort under load
-		self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
-		self.close_gripper()
-		rospy.sleep(2)
-		self.limb.adjustPoseTo('position','z',lift_position)
-		rospy.sleep(1)
-		effort_box = sum(abs(effort) for effort in self.limb.joint_efforts().values())
-		print('no box: ' + str(effort_nobox))
-		print('w/ box: ' + str(effort_box))
-
-		hasBox = effort_box-effort_nobox>effort_tol
-		if not hasBox:
-			self.open_gripper()
-			if self.VERBOSE: rospy.loginfo('Failed to pick up box.')
-		elif self.VERBOSE:
-			rospy.loginfo('Successfully picked up box.')
-			#self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
-			# self.open_gripper()
-			# self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT+0.1)
-		return hasBox
+	# Comments inside check_pickup 
 		'''
 		del self.effort[:]
 
@@ -404,6 +376,7 @@ class Module():
 		if(not self.compare_efforts(effort1 = self.effort[0], effort2 = self.effort[1])):
 			self.limb.go_to_cartesian_pose(joint_angles = self.newCartPose_arg)
 		'''
+
 	def display_camera_callback(self, img_data):
 		bridge = CvBridge()
 		try:
@@ -635,19 +608,6 @@ class Module():
 			camera = intera_interface.Cameras()
 			camera.stop_streaming('right_hand_camera')
 
-	def cb_check_pickup(self, req):
-		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')
-
-		box = self.check_pickup()
-
-		rospy.loginfo(box)
-
-		self.pickedup_topic.publish(box)
-
-	def unsubscribe_from_cuff_interaction(self):
-		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
-		self.limb.position_mode()
-
 	# When the lower cuff button is pressed, allow 2D position movement.
 	def cb_cuff_lower(self, data):
 		rospy.loginfo('Cuff lower button pressed.')
@@ -805,17 +765,25 @@ class Module():
 			result.success = True
 			self.GoToJointAnglesAct.set_succeeded(result)
 
-	def cb_highTwo(self, req):
+	def cb_HighTwo(self, goal):
 		if self.VERBOSE: rospy.loginfo('High two attempted')
-		if req.data == True:
+
+		success = True
+		result_HighTwo = HighTwoResult()
+		result_HighTwo.is_success = False
+
+		if goal.high_two == True:
 			startEffort = sum(abs(effort) for effort in self.limb.joint_efforts().values())
 			startTime = rospy.get_time()
 			while abs(startEffort-sum(abs(effort) for effort in self.limb.joint_efforts().values()))<0.1*startEffort and rospy.get_time()-startTime<8:
 				rospy.sleep(0.1)
 			if rospy.get_time()-startTime<8:
-				self.highTwo_success_topic.publish(True)
+				result_HighTwo.is_success = True
 			else:
-				self.highTwo_success_topic.publish(False)
+				result_HighTwo.is_success = False
+
+		if success:
+			this.HighTwoAct.set_succeeded(result_HighTwo)
 
 	def cb_impedance(self, req):
 		if self.VERBOSE: rospy.loginfo('Impedance activated')
