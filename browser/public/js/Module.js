@@ -1058,7 +1058,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'highTwo':
 
-				var goal_HighTwo = ROSLIB.Goal({
+				var goal_HighTwo = new ROSLIB.Goal({
 					actionClient: this.HighTwoAct,
 					goalMessage:{ high_two: true }
 				});
