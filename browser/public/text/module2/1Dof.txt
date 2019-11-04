@@ -7,4 +7,4 @@ Oops, I couldn’t pick it up like that. This time, try to get the entire width 
 You just helped me change my gripper's orientation so that I could pick up the box. Now, help me pick up Box 3. This time, my gripper is already in the correct orientation, but not in the correct position. Can you move my hand so that it can pick up Box 3? When you're ready for me to pick up the box, press the scroll wheel button.
 Great! Before, you helped me change my gripper's orientation so that I could pick up Box 2. This time, you helped me change my gripper's position so that I could pick up Box 3.
 Now, help me pick up Box 4. If you press the gray button on my wrist, you can change my arm's position. If you press the white button on my wrist, you can change my arm's orientation. Feel free to switch between the two modes to figure out the difference between the position and orientation. When you're ready for me to pick up Box 4, press the scroll wheel button.
-Great job! 
+Great job!
