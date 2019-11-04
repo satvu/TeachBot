@@ -64,26 +64,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/highTwo',
 		messageType: 'std_msgs/Bool'
 	})
-	this.adjustPoseTo = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/adjustPoseTo',
-		messageType: ROBOT + '/adjustPoseTo'
-	})
-	this.closeGripper = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/closeGripper',
-		messageType: 'std_msgs/Bool'
-	})
-	this.openGripper = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/openGripper',
-		messageType: 'std_msgs/Bool'
-	})
-	this.GoToCartesianPose = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/GoToCartesianPose',
-		messageType: ROBOT + '/GoToCartesianPose'
-	});
 	this.cuffInteraction = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/cuffInteraction',
@@ -198,6 +178,22 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/InteractionControl',
 		actionName: ROBOT + '/InteractionControlAction'
 	});
+	this.AdjustPoseToAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/AdjustPoseTo',
+		actionName: ROBOT + '/AdjustPoseToAction'
+	});
+	this.GripperAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/Gripper',
+		actionName: ROBOT + '/GripperAction'
+	});
+	this.GoToCartesianPoseAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/GoToCartesianPose',
+		actionName: ROBOT + '/GoToCartesianPoseAction'
+	});
+
 
 	// Initialize dictionary
 	this.dictionary = {};
@@ -419,29 +415,6 @@ Module.prototype.pub_impedance = function(terminatingCondition,tics) {
 
 }
 
-Module.prototype.pub_adjustPoseTo = function(geometry,axis,amount){
-	var req = new ROSLIB.Message({
-		geometry: this.hashTokeyVal(geometry),
-		axis: this.hashTokeyVal(axis),
-		amount: this.hashTokeyVal(amount),
-	});
-
-	this.adjustPoseTo.publish(req)
-}
-
-Module.prototype.pub_cartesian = function(position, orientation, relative_pose, joint_angles, endpoint_pose) {
-	
-	var req = new ROSLIB.Message({
-		position: this.hashTokeyVal(position),
-		orientation: this.hashTokeyVal(orientation),
-		relative_pose: this.hashTokeyVal(relative_pose),
-		joint_angles: this.hashTokeyVal(joint_angles),
-		endpoint_pose: this.hashTokeyVal(endpoint_pose)
-	});
-
-	this.GoToCartesianPose.publish(req);
-
-}
 Module.prototype.pub_cuff = function(terminatingCondition, ways) {
 	
 	var req = new ROSLIB.Message({
@@ -651,13 +624,18 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'adjustPoseTo':
 				checkInstruction(instr, ['geometry', 'axis', 'amount'], instructionAddr);
 
-				this.pub_adjustPoseTo(instr.geometry, instr.axis, instr.amount)
-
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
+				var goal_AdjustPoseTo = new ROSLIB.Goal({
+					actionClient: this.AdjustPoseToAct,
+					goalMessage:{
+						geometry: this.hashTokeyVal(instr.geometry),
+						axis: this.hashTokeyVal(instr.axis),
+						amount: this.hashTokeyVal(instr.amount)
+					}
+				});
+				goal_AdjustPoseTo.on('result', function(result){
 					self.start(self.getNextAddress(instructionAddr));
 				});
+				goal_AdjustPoseTo.send()
 
 				break;
 
@@ -909,17 +887,15 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'closeGripper':
-				var req = new ROSLIB.Message({
-					data: true
+
+				var goal_closeGripper = new ROSLIB.Goal({
+					actionClient: this.GripperAct,
+					goalMessage:{todo: "close"}
 				});
-
-				this.closeGripper.publish(req);
-
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
+				goal_closeGripper.on('result', function(result){
 					self.start(self.getNextAddress(instructionAddr));
 				});
+				goal_closeGripper.send();
 
 				break;
 
@@ -1072,13 +1048,20 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'goToCartesianPose':
 				checkInstruction(instr, ['position','orientation','relative_pose','joint_angles','endpoint_pose'], instructionAddr);
 
-				this.pub_cartesian(instr.position, instr.orientation, instr.relative_pose, instr.joint_angles, instr.endpoint_pose)
-
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
+				var goal_GoToCartesianPose = new ROSLIB.Goal({
+					actionClient: this.GoToCartesianPoseAct,
+					goalMessage:{
+						position: this.hashTokeyVal(instr.position),
+						orientation: this.hashTokeyVal(instr.orientation),
+						relative_pose: this.hashTokeyVal(instr.relative_pose),
+						joint_angles: this.hashTokeyVal(instr.joint_angles),
+						endpoint_pose: this.hashTokeyVal(instr.endpoint_pose)
+					}
 				});
+				goal_GoToCartesianPose.on('result', function(result){
+					self.start(self.getNextAddress(instructionAddr));
+				})
+				goal_GoToCartesianPose.send();
 
 				break;
 
@@ -1372,18 +1355,15 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'openGripper':
-				var req = new ROSLIB.Message({
-					data: true
-				});
 
-				this.openGripper.publish(req);
-
-				this.command_complete.subscribe(function(message) {
-					console.log('Command completed');
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
+				var goal_openGripper = new ROSLIB.Goal({
+					actionClient: this.GripperAct,
+					goalMessage:{todo: "open"}
 				});
+				goal_openGripper.on('result', function(result){
+					self.start(self.getNextAddress(instructionAddr))
+				});
+				goal_openGripper.send()
 
 				break;
 

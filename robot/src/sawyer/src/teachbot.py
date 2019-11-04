@@ -66,7 +66,6 @@ class Module():
 		rospy.Subscriber('/teachbot/multiple_choice', Bool, self.cb_multiple_choice)
 		rospy.Subscriber('/teachbot/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
-		rospy.Subscriber('/teachbot/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
 		rospy.Subscriber('/teachbot/cuffInteraction', cuffInteraction, self.cb_cuffInteraction)
 		rospy.Subscriber('/teachbot/check_pickup', Bool, self.cb_check_pickup)
 		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
@@ -86,6 +85,7 @@ class Module():
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
 		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb = self.cb_AdjustPoseTo, auto_start=True)
 		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb = self.cb_Gripper, auto_start=True)
+		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -566,11 +566,11 @@ class Module():
 
 		self.command_complete_topic.publish()
 
-	def cb_AdjustPoseTo(self, req):
+	def cb_AdjustPoseTo(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
 		success = True
-		result_AdjustPoseTo = adjustPoseToResult()
+		result_AdjustPoseTo = AdjustPoseToResult()
 		result_AdjustPoseTo.is_done = False
 
 		if self.AdjustPoseToAct.is_preempt_requested():
@@ -581,10 +581,10 @@ class Module():
 		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
 
 		if success:
-			self.result_AdjustPoseTo.is_done = True
-			self.AdjustPoseToAct.set_succeeded(self.result_AdjustPoseTo)
+			result_AdjustPoseTo.is_done = True
+			self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
 
-	def cb_gripper(self,goal):
+	def cb_Gripper(self,goal):
 
 		success = True
 		result_Gripper = GripperResult()
@@ -651,12 +651,24 @@ class Module():
 			self.pos_orient_topic.publish('orien')
 
 
-	def cb_GoToCartesianPose(self, req):
+	def cb_GoToCartesianPose(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to cartesian pose')
 
-		self.limb.go_to_cartesian_pose(position=eval(req.position), orientation=eval(req.orientation), relative_pose=eval(req.relative_pose), joint_angles=eval(req.joint_angles), endpoint_pose=eval(req.endpoint_pose))
+		success = True
 
-		self.command_complete_topic.publish()
+		result_GoToCartesianPose = GoToCartesianPoseResult()
+		result_GoToCartesianPose.is_done = False
+
+		if self.GoToCartesianPoseAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.GoToCartesianPoseAct.set_preempted()
+			success = False
+
+		self.limb.go_to_cartesian_pose(position=eval(goal.position), orientation=eval(goal.orientation), relative_pose=eval(goal.relative_pose), joint_angles=eval(goal.joint_angles), endpoint_pose=eval(goal.endpoint_pose))
+
+		if success:
+			result_GoToCartesianPose.is_done = True
+			self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
 
 	def cb_GoToJointAngles(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to joint angles')
