@@ -30,7 +30,6 @@ add_message_files(
   JointImpedance.msg
   EndpointInfo.msg
   GoToCartesianPose.msg
-  cuffInteraction.msg
   adjustPoseBy.msg
   Image.msg
 )
@@ -45,6 +44,7 @@ add_service_files(
 add_action_files(
   DIRECTORY action
   FILES
+  CuffInteraction.action
   GoToJointAngles.action
   InteractionControl.action
   JointMove.action

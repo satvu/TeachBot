@@ -5,3 +5,8 @@
 - Add spaces before open braces
 - Fix high_two. Generalize.
 - Don't hard set the position above box 3
+- Standardize format for:
+  - Python functions
+  - JS functions
+  - JSON instruction types
+  - ROS topics

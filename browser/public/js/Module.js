@@ -84,11 +84,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/GoToCartesianPose',
 		messageType: ROBOT + '/GoToCartesianPose'
 	});
-	this.cuffInteraction = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/cuffInteraction',
-		messageType: ROBOT + '/cuffInteraction'
-	});
 	this.check_pickup = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/check_pickup',
@@ -183,6 +178,11 @@ function Module(module_num, main, content_elements) {
 	});
 
 	// Actions
+	this.CuffInteraction = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/CuffInteraction',
+		actionName: ROBOT + '/CuffInteractionAction'
+	});
 	this.GoToJointAnglesAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/GoToJointAngles',
@@ -440,16 +440,6 @@ Module.prototype.pub_cartesian = function(position, orientation, relative_pose, 
 	});
 
 	this.GoToCartesianPose.publish(req);
-
-}
-Module.prototype.pub_cuff = function(terminatingCondition, ways) {
-	
-	var req = new ROSLIB.Message({
-		terminatingCondition: this.hashTokeyVal(terminatingCondition),
-		ways: ways
-	});
-
-	this.cuffInteraction.publish(req);
 
 }
 
@@ -931,21 +921,30 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				var position_bw_url = DIR + 'images/position_bw.png';
 				var position_color_url = DIR + 'images/position_color.png';
 
-				this.pub_cuff(instr.terminatingCondition, instr.ways)
-
-				this.pos_orient.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,message.data)
+				var goal = new ROSLIB.Goal({
+					actionClient: this.CuffInteractionAct,
+					goalMessage: {
+						terminatingCondition: instr.terminatingCondition,
+						ways: instr.ways
+					}
 				});
 
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.ctx.clearRect(3, 300, 403, 1100)
-						self.start(self.getNextAddress(instructionAddr));
+				goal.on('feedback', function(feedback) {
+					var POSITION = true;
+					var ORIENTATION = false;
+					if (feedback.mode === POSITION) {
+						if (VERBOSE) console.log('Position Mode');
+						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'pos');
+					} else if (feedback.mode === ORIENTATION) {
+						if (VERBOSE) console.log('Orientation Mode');
+						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'orien');
 					}
+				});
+
+				goal.on('result', function(result) {
+					if (VERBOSE) console.log('Exited cuff interaction.');
+					self.ctx.clearRect(3, 300, 403, 1100)
+					self.start(self.getNextAddress(instructionAddr));
 				});
 
 				break;

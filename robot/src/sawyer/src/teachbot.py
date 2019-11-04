@@ -57,7 +57,6 @@ class Module():
 		self.highTwo_success_topic = rospy.Publisher('/teachbot/highTwo_success', Bool, queue_size=1)
 		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
 		self.pickedup_topic = rospy.Publisher('/teachbot/pickedup', Bool, queue_size=1)
-		self.pos_orient_topic = rospy.Publisher('/teachbot/pos_orient', String, queue_size=1)
 
 		# Subscribing topics
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
@@ -67,12 +66,11 @@ class Module():
 		rospy.Subscriber('/teachbot/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
-		rospy.Subscriber('/teachbot/cuffInteraction', cuffInteraction, self.cb_cuffInteraction)
 		rospy.Subscriber('/teachbot/check_pickup', Bool, self.cb_check_pickup)
 		rospy.Subscriber('/teachbot/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
-		rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
-		rospy.Subscriber('/robot/digital_io/right_upper_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_upper)
+		#rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
+		#rospy.Subscriber('/robot/digital_io/right_upper_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_upper)
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
@@ -81,6 +79,7 @@ class Module():
 		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
 
 		# Actions
+		self.CuffInteractionAct = actionlib.SimpleActionServer('/teachbot/CuffInteraction', CuffInteractionAction, execute_cb=self.cb_CuffInteraction, auto_start=True)
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
@@ -521,32 +520,6 @@ class Module():
 			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
 		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
 
-	def subscribe_to_cuff_interaction(self, terminatingCondition=None, ways=False):
-		rospy.loginfo('Going into cuff interaction')
-
-		self.cuff_callback_ids['upper'] = self.cuff.register_callback(lambda data: self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True), 'right_button_upper')
-		self.cuff_callback_ids['lower'] = self.cuff.register_callback(lambda data: self.limb.interaction_control(position_x=True, position_y=True)   , 'right_button_lower')
-		# self.cuff_callback_ids['upper'] = self.cuff.register_callback(lambda data: self.interaction_control_topic.publish(orientation_z=True, in_end_point_frame=True), 'right_button_upper')
-		# self.cuff_callback_ids['lower'] = self.cuff.register_callback(lambda data: self.interaction_control_topic.publish(position_x=True, position_y=True)   , 'right_button_lower')
-
-		rospy.loginfo(self.cuff_callback_ids['upper'])
-		self.finished = False
-		if ways:
-			if terminatingCondition is not None:
-				while not terminatingCondition(self):
-					pass
-				waypoints.append(self.limb.joint_angles())
-		else:
-			if terminatingCondition is not None:
-				while not terminatingCondition(self):
-					pass
-		rospy.loginfo('Done with cuff interaction')
-		self.unsubscribe_from_cuff_interaction()
-
-	def unsubscribe_from_cuff_interaction(self):
-		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
-		self.limb.position_mode()
-
 	def _unsubscribe_from(self, obj, callback_ids):
 		notified = False
 		for key in callback_ids:
@@ -635,21 +608,53 @@ class Module():
 
 		self.pickedup_topic.publish(box)
 
-	def cb_cuffInteraction(self, req):
+	def unsubscribe_from_cuff_interaction(self):
+		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
+		self.limb.position_mode()
+
+	def cb_CuffInteraction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')
+		terminatingCondition = eval(goal.terminatingCondition)
+		ways = goal.ways
 
-		self.subscribe_to_cuff_interaction(eval(req.terminatingCondition), req.ways)
+		# Initialize action objects
+		feedback = sawyer.msg.CuffInteractionFeedback()
+		result = sawyer.msg.CuffInteractionResult()
 
-	def cb_cuff_lower(self, req):
-		if req.state == 1:
-			rospy.loginfo('Cuff lower button pressed')
-			self.pos_orient_topic.publish('pos')
+		# When the lower cuff button is pressed, allow 2D position movement.
+		def cb_cuff_lower(self, data):
+			rospy.loginfo('Cuff lower button pressed. state ' + data.state)
+			self.limb.interaction_control(position_x=True, position_y=True)
+			feedback.mode = True
+			self.CuffInteractionAct.publish_feedback(feedback)
+		self.cuff_callback_ids['lower'] = self.cuff.register_callback(self.cb_cuff_lower, 'right_button_lower')
 
-	def cb_cuff_upper(self, req):
-		if req.state == 1:
-			rospy.loginfo('Cuff upper button pressed')
-			self.pos_orient_topic.publish('orien')
-
+		# When the upper cuff button is pressed, allow 1D orientation movement.
+		def cb_cuff_upper(self, data):
+			rospy.loginfo('Cuff upper button pressed. state ' + data.state)
+			self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True)
+			feedback.mode = False
+			self.CuffInteractionAct.publish_feedback(feedback)
+		self.cuff_callback_ids['upper'] = self.cuff.register_callback(self.cb_cuff_upper, 'right_button_upper')
+		
+		# Continue until terminating condition is met.
+		# If in waypoint mode, store each waypoint.
+		self.finished = False
+		if ways:
+			if terminatingCondition is not None:
+				while not terminatingCondition(self):
+					pass
+				waypoints.append(self.limb.joint_angles())
+		else:
+			if terminatingCondition is not None:
+				while not terminatingCondition(self):
+					pass
+		
+		# After the terminating condition is met, reset to position mode and complete action.
+		rospy.loginfo('Done with cuff interaction')
+		self.unsubscribe_from_cuff_interaction()
+		result.done = True
+		self.CuffInteractionAct.set_succeeded(result)
 
 	def cb_GoToCartesianPose(self, req):
 		if self.VERBOSE: rospy.loginfo('Going to cartesian pose')
