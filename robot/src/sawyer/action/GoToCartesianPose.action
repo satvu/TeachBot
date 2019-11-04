@@ -1,0 +1,21 @@
+# Go to the specific Cartesian pose
+
+# goal definition
+# CHECK data types!!!!!!
+
+string position
+string orientation
+string relative_pose
+string joint_angles
+string endpoint_pose
+---
+
+# result definition
+bool is_done
+---
+
+# feedback definition
+# 0: unpressed
+# 1: pressed
+int32 process
+
