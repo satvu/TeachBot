@@ -193,6 +193,11 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/GoToCartesianPose',
 		actionName: ROBOT + '/GoToCartesianPoseAction'
 	});
+	this.PickUpBoxAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/PickUpBox',
+		actionName: ROBOT + '/PickUpBoxAction'
+	});
 
 
 	// Initialize dictionary
@@ -850,32 +855,28 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'check_pickup':
-				var req = new ROSLIB.Message({
-					data: true
+
+				var goal_PickUpBox = new ROSLIB.Goal({
+					actionClient: this.PickUpBoxAct,
+					goalMessage:{check: true}
 				});
-
-				this.check_pickup.publish(req);
-
-				this.pickedup.subscribe(async function(message) {
-					if (VERBOSE) console.log('Picked up: ' + message.data);
-					if (message.data == true) {
+				goal_PickUpBox.on('result', function(result){
+					if (VERBOSE) console.log('Picked up: ' + result);
+					if (result.is_picked == true) {
 						wheel_val = 1
 						if (instr.hasOwnProperty('store_answer_in')) {
 							self.dictionary[instr.store_answer_in] = wheel_val;
 						}
-						self.pickedup.unsubscribe();
-						self.pickedup.removeAllListeners();
 						self.start(self.getNextAddress(instructionAddr));
 					} else{
 						wheel_val = 2
 						if (instr.hasOwnProperty('store_answer_in')) {
 							self.dictionary[instr.store_answer_in] = wheel_val;
 						}
-						self.pickedup.unsubscribe();
-						self.pickedup.removeAllListeners();
 						self.start(self.getNextAddress(instructionAddr));
 					}
 				});
+				goal_PickUpBox.send();
 
 				break;
 

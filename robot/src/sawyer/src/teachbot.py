@@ -83,9 +83,10 @@ class Module():
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
-		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb = self.cb_AdjustPoseTo, auto_start=True)
-		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb = self.cb_Gripper, auto_start=True)
+		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
+		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
+		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -316,6 +317,40 @@ class Module():
 			self.gripper.set_ee_signal_value('grip', True)
 		else:
 			self.gripper.close()
+
+	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
+	def cb_PickUpBox(self, goal, lift_position=Z_TABLE+BOX_HEIGHT+0.1, effort_tol=5):
+		success = True
+		result_PickUpBox = PickUpBoxResult()
+
+		# Leave the box and lift upward to measure no-load effort
+		self.limb.adjustPoseTo('position','z',lift_position)
+		rospy.sleep(1)
+		effort_nobox = sum(abs(effort) for effort in self.limb.joint_efforts().values())
+
+		# Grab and lift box to measure effort under load
+		self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
+		self.close_gripper()
+		rospy.sleep(2)
+		self.limb.adjustPoseTo('position','z',lift_position)
+		rospy.sleep(1)
+		effort_box = sum(abs(effort) for effort in self.limb.joint_efforts().values())
+		print('no box: ' + str(effort_nobox))
+		print('w/ box: ' + str(effort_box))
+
+		hasBox = effort_box-effort_nobox>effort_tol
+		if not hasBox:
+			self.open_gripper()
+			if self.VERBOSE: rospy.loginfo('Failed to pick up box.')
+		elif self.VERBOSE:
+			rospy.loginfo('Successfully picked up box.')
+			#self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
+			# self.open_gripper()
+			# self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT+0.1)
+
+		if success:
+			result_PickUpBox.is_picked = hasBox
+			self.PickUpBoxAct.set_succeeded(result_PickUpBox)
 
 	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
 	def check_pickup(self, lift_position = Z_TABLE + BOX_HEIGHT + 0.1, effort_tol = 5):

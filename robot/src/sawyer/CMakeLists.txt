@@ -51,6 +51,7 @@ add_action_files(
   GoToCartesianPose.action
   Gripper.action
   AdjustPoseTo.action
+  PickUpBox.action
 )
 
 generate_messages(

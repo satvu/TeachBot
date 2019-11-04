@@ -217,7 +217,7 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.1"
 			},
 			{
-				"//":"4: Great! I was abe to determine if I succesfully picked up the box by comparing the force my motors exert on my joints to maintain my position before and after closing the gripper.",
+				"//":"4: Great! I was able to determine if I succesfully picked up the box by comparing the force my motors exert on my joints to maintain my position before and after closing the gripper.",
 				"type":"play",
 				"audio_index":4,
 				"delay":true
