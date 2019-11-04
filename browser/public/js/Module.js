@@ -1239,46 +1239,29 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					goal = this.getJointMoveGoal(instr.joints, instr.terminatingCondition, instr.resetPOS, instr.min_thresh, instr.bias);
 				}
 
-				if (instr.hasOwnProperty('wait') && instr.wait) {
-					goal.on('result', function(result) {
-						this.start(self.getNextAddress(instructionAddr));
-					});
-					goal.send();
-				} else {
-					goal.send()
-					this.start(self.getNextAddress(instructionAddr));
-				}
-
-				/*
 				if (instr.listen == false){
 					if(instr.hasOwnProperty('wait')){
-						this.pressed.subscribe(async function(message) {
-							if (VERBOSE) console.log('Pressed: ' + message.data);
-							if (message.data == true) {
-								self.pressed.unsubscribe();
-								self.pressed.removeAllListeners();
-								self.start(self.getNextAddress(instructionAddr));
-							}	
+						goal.on('result', function(result) {
+							self.start(self.getNextAddress(instructionAddr));
 						});
+						goal.send();
 					} else{
-						this.start(self.getNextAddress(instructionAddr));
+						goal.send();
+						self.start(self.getNextAddress(instructionAddr));
 					}
 				} else{
 					if(instr.hasOwnProperty('wait')){
-						this.toggle.subscribe(async function(message) {
-							self.toggle.unsubscribe();
-							self.toggle.removeAllListeners();
+						goal.on('result', function(result) {
 							self.start(self.getNextAddress(instructionAddr));
 						});
+						goal.send();
 					} else{
-						this.command_complete.subscribe(function(message) {
-							self.command_complete.unsubscribe();
-							self.command_complete.removeAllListeners();
+						goal.on('result', function(result) {
 							self.start(self.getNextAddress(instructionAddr));
 						});
+						goal.send();
 					}
 				}
-				*/
 
 				break;
 
