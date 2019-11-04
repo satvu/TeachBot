@@ -12,3 +12,5 @@
   - JSON instruction types
   - ROS topics
 - Alphabetize CMakeLists and topics
+- Semicolons after JS ROS initializations.
+- Make JointImpedance general to joints

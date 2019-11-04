@@ -26,7 +26,6 @@ add_message_files(
   FILES
   adjustPoseTo.msg
   JointInfo.msg
-  joint_move.msg
   JointImpedance.msg
   EndpointInfo.msg
   GoToCartesianPose.msg
@@ -55,6 +54,8 @@ add_action_files(
   PickUpBox.action
   AdjustPoseBy.action
   HighTwo.action
+  WaitForPush.action
+  JointImpedance.action
 )
 
 generate_messages(

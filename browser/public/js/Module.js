@@ -44,21 +44,6 @@ function Module(module_num, main, content_elements) {
 	ros.on('close', function() { console.log('Connection to websocket server closed.'); });
 
 	// Publishing topics
-	this.joint_angle = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/JointAngle',
-		messageType: 'std_msgs/String'
-	});
-	this.joint_impedance = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/JointImpedance',
-		messageType: ROBOT + '/JointImpedance'
-	});
-	this.highTwo = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/highTwo',
-		messageType: 'std_msgs/Bool'
-	})
 	this.camera = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/camera',
@@ -96,25 +81,10 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/effort',
 		messageType: ROBOT + '/JointInfo'
 	});
-	this.toggle = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/toggle_completed',
-		messageType: 'std_msgs/Empty'
-	});
-	this.highTwo_success = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/highTwo_success',
-		messageType: 'std_msgs/Bool'
-	});
 	this.endpoint = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/EndpointInfo',
 		messageType: ROBOT + '/EndpointInfo'
-	});
-	this.pos_orient = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/pos_orient',
-		messageType: 'std_msgs/String'
 	});
 
 	// Service Servers
@@ -193,7 +163,16 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/HighTwo',
 		actionName: ROBOT + '/HighTwoAction'
 	});
-
+	this.WaitForPushAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/WaitForPush',
+		actionName: ROBOT + '/WaitForPushAction'
+	});
+	this.JointImpedanceAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/JointImpedance',
+		actionName: ROBOT + '/JointImpedanceAction'
+	});
 
 	// Initialize dictionary
 	this.dictionary = {};
@@ -402,17 +381,6 @@ Module.prototype.pub_angle = function(angle) {
 	});
 
 	this.joint_angle.publish(req);
-
-}
-
-Module.prototype.pub_impedance = function(terminatingCondition,tics) {
-	
-	var req = new ROSLIB.Message({
-		terminatingCondition: this.hashTokeyVal(terminatingCondition),
-		tics: tics
-	});
-
-	this.joint_impedance.publish(req);
 
 }
 
@@ -1207,23 +1175,31 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'joint_angle':
-				checkInstruction(instr, ["angle"], instructionAddr);
+			case 'wait_for_push':
+				checkInstruction(instr, ['joint'], instructionAddr);
 
-				this.pub_angle(instr.angle)
-
-				this.command_complete.subscribe(function(message) {
-					self.command_complete.unsubscribe();
-					self.command_complete.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
+				var goal = new ROSLIB.Goal({
+					actionClient: this.WaitForPushAct,
+					goalMessage: { joint: instr.joint }
 				});
+
+				goal.on('result', result => { self.start(self.getNextAddress(instructionAddr)); });
+
+				goal.send();
 
 				break;
 
 			case 'joint_impedance':
 				checkInstruction(instr, ["terminatingCondition","tics"], instructionAddr);
 
-				this.pub_impedance(instr.terminatingCondition,instr.tics)
+				var goal = new ROSLIB.Goal({
+					actionClient: this.JointImpedanceAct,
+					goalMessage: {
+						terminatingCondition: this.hashTokeyVal(instr.terminatingCondition),
+						tics: instr.tics
+					}
+				});
+				goal.send();
 
 				this.start(self.getNextAddress(instructionAddr));
 

@@ -26,9 +26,6 @@ from sawyer.msg import *
 from sawyer.srv import *
 from cv_bridge import CvBridge, CvBridgeError
 
-# Action messages
-import actionlib
-
 class Module():
 	FORCE2VELOCITY = {'right_j0': 0.06, 'right_j1': 0.06, 'right_j2': 0.4, 'right_j3': 0.2, 'right_j4': 1, 'right_j5': 0.9, 'right_j6': 2}
 	VERBOSE = True
@@ -58,8 +55,6 @@ class Module():
 
 		# Subscribing topics
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
-		rospy.Subscriber('/teachbot/JointAngle', String, self.cb_joint_angle)
-		rospy.Subscriber('/teachbot/JointImpedance', JointImpedance, self.cb_impedance)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
 
@@ -81,6 +76,8 @@ class Module():
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
 		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
+		self.WaitForPushAct = actionlib.SimpleActionServer('/teachbot/WaitForPush', WaitForPushAction, execute_cb=self.cb_WaitForPush, auto_start=True)
+		self.JointImpedanceAct = actionlib.SimpleActionServer('/teachbot/JointImpedance', JointImpedanceAction, execute_cb=self.cb_JointImpedance, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -614,6 +611,10 @@ class Module():
 		feedback.mode = False
 		self.CuffInteractionAct.publish_feedback(feedback)
 
+	def unsubscribe_from_cuff_interaction(self):
+		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
+		self.limb.position_mode()
+
 	def cb_CuffInteraction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')
 		terminatingCondition = eval(goal.terminatingCondition)
@@ -776,7 +777,7 @@ class Module():
 			rospy.loginfo(result_HighTwo.is_success)
 			self.HighTwoAct.set_succeeded(result_HighTwo)
 
-	def cb_impedance(self, req):
+	def cb_JointImpedance(self, goal):
 		if self.VERBOSE: rospy.loginfo('Impedance activated')
 		k = self.limb.joint_angles()
 		b = k.copy()
@@ -784,7 +785,11 @@ class Module():
 			k[joint] = 160 if joint=='right_j1' else 10
 			b[joint] = 5 if joint=='right_j1' else 10
 		self.finished = False
-		self.joint_impedance_move(b,k,eval(req.terminatingCondition), tics=req.tics)
+		self.joint_impedance_move(b,k,eval(goal.terminatingCondition), tics=goal.tics)
+		
+		result = sawyer.msg.JointImpedanceResult()
+		result.done = True
+		self.JointImpedanceAct.set_succeeded(result)
 
 	def cb_interaction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Free motion is on')
@@ -822,12 +827,14 @@ class Module():
 			result.done = True
 			self.InteractionControlAct.set_succeeded(result)
 
-	def cb_joint_angle(self, req):
+	def cb_WaitForPush(self, goal):
 		if self.VERBOSE: rospy.loginfo('First example of impedance')
-		self.startPos = self.limb.joint_angle(req.data)					# Record starting position
-		while(abs(self.startPos-self.limb.joint_angle('right_j1'))<0.01):	# Wait for user to begin moving arm
+		self.startPos = self.limb.joint_angle(goal.joint)					# Record starting position
+		while(abs(self.startPos-self.limb.joint_angle(goal.joint))<0.01):	# Wait for user to begin moving arm
 			pass
-		self.command_complete_topic.publish()
+		
+		result = sawyer.msg.WaitForPushResult()
+		self.WaitForPushAct.set_succeeded(result)
 
 	def cb_joint_move(self, req):
 		self.finished = False
