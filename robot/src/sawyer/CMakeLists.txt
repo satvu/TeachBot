@@ -49,7 +49,9 @@ add_action_files(
   InteractionControl.action
   JointMove.action
   GoToCartesianPose.action
-  gripper.action
+  Gripper.action
+  AdjustPoseTo.action
+  PickUpBox.action
 )
 
 generate_messages(

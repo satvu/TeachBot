@@ -83,8 +83,10 @@ class Module():
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
 		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
-		self.adjustPoseToAct = actionlib.SimpleActionServer('/teachbot/adjustPoseTo', adjustPoseToAction, execute_cb = self.cb_adjustPoseTo, auto_start=True)
-		self.gripperAct = actionlib.SimpleActionServer('/teachbot/gripper', gripperAction, execute_cb = self.cb_gripper, auto_start=True)
+		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
+		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
+		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
+		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -317,6 +319,40 @@ class Module():
 			self.gripper.close()
 
 	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
+	def cb_PickUpBox(self, goal, lift_position=Z_TABLE+BOX_HEIGHT+0.1, effort_tol=5):
+		success = True
+		result_PickUpBox = PickUpBoxResult()
+
+		# Leave the box and lift upward to measure no-load effort
+		self.limb.adjustPoseTo('position','z',lift_position)
+		rospy.sleep(1)
+		effort_nobox = sum(abs(effort) for effort in self.limb.joint_efforts().values())
+
+		# Grab and lift box to measure effort under load
+		self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
+		self.close_gripper()
+		rospy.sleep(2)
+		self.limb.adjustPoseTo('position','z',lift_position)
+		rospy.sleep(1)
+		effort_box = sum(abs(effort) for effort in self.limb.joint_efforts().values())
+		print('no box: ' + str(effort_nobox))
+		print('w/ box: ' + str(effort_box))
+
+		hasBox = effort_box-effort_nobox>effort_tol
+		if not hasBox:
+			self.open_gripper()
+			if self.VERBOSE: rospy.loginfo('Failed to pick up box.')
+		elif self.VERBOSE:
+			rospy.loginfo('Successfully picked up box.')
+			#self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
+			# self.open_gripper()
+			# self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT+0.1)
+
+		if success:
+			result_PickUpBox.is_picked = hasBox
+			self.PickUpBoxAct.set_succeeded(result_PickUpBox)
+
+	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
 	def check_pickup(self, lift_position = Z_TABLE + BOX_HEIGHT + 0.1, effort_tol = 5):
 		# Leave the box and lift upward to measure no-load effort
 		self.limb.adjustPoseTo('position','z',lift_position)
@@ -539,33 +575,33 @@ class Module():
 
 		self.command_complete_topic.publish()
 
-	def cb_adjustPoseTo(self, req):
+	def cb_AdjustPoseTo(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
 		success = True
-		result_adjustPoseTo = adjustPoseToResult()
-		result_adjustPoseTo.is_done = False
+		result_AdjustPoseTo = AdjustPoseToResult()
+		result_AdjustPoseTo.is_done = False
 
-		if self.adjustPoseToAct.is_preempt_requested():
+		if self.AdjustPoseToAct.is_preempt_requested():
 			rospy.loginfo("%s: Preempted", 'n/a')
-			self.adjustPoseToAct.set_preempted()
+			self.AdjustPoseToAct.set_preempted()
 			success = False
 
 		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
 
 		if success:
-			self.result_adjustPoseTo.is_done = True
-			self.adjustPoseToAct.set_succeeded(self.result_adjustPoseTo)
+			result_AdjustPoseTo.is_done = True
+			self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
 
-	def cb_gripper(self,goal):
+	def cb_Gripper(self,goal):
 
 		success = True
-		result_gripper = gripperResult()
-		self.result_gripper.is_done = False
+		result_Gripper = GripperResult()
+		result_Gripper.is_done = False
 
-		if self.gripperAct.is_preempt_requested():
+		if self.GripperAct.is_preempt_requested():
 			rospy.loginfo("%s: Preempted", 'n/a')
-			self.gripperAct.set_preempted()
+			self.GripperAct.set_preempted()
 			success = False
 
 		if (goal.todo=='open'):
@@ -579,8 +615,8 @@ class Module():
 			pass
 
 		if success:
-			self.result_gripper.is_done = True
-			self.gripperAct.set_succeeded(self.result_gripper)
+			result_Gripper.is_done = True
+			self.GripperAct.set_succeeded(result_Gripper)
 
 	def cb_camera(self, data):
 		if data.data == True:
@@ -612,29 +648,32 @@ class Module():
 		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
 		self.limb.position_mode()
 
+	# When the lower cuff button is pressed, allow 2D position movement.
+	def cb_cuff_lower(self, data):
+		rospy.loginfo('Cuff lower button pressed.')
+		self.limb.interaction_control(position_x=True, position_y=True)
+		feedback = sawyer.msg.CuffInteractionFeedback()
+		feedback.mode = True
+		self.CuffInteractionAct.publish_feedback(feedback)
+
+	# When the upper cuff button is pressed, allow 1D orientation movement.
+	def cb_cuff_upper(self, data):
+		rospy.loginfo('Cuff upper button pressed.')
+		self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True)
+		feedback = sawyer.msg.CuffInteractionFeedback()
+		feedback.mode = False
+		self.CuffInteractionAct.publish_feedback(feedback)
+
 	def cb_CuffInteraction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')
 		terminatingCondition = eval(goal.terminatingCondition)
 		ways = goal.ways
 
 		# Initialize action objects
-		feedback = sawyer.msg.CuffInteractionFeedback()
 		result = sawyer.msg.CuffInteractionResult()
 
-		# When the lower cuff button is pressed, allow 2D position movement.
-		def cb_cuff_lower(self, data):
-			rospy.loginfo('Cuff lower button pressed. state ' + data.state)
-			self.limb.interaction_control(position_x=True, position_y=True)
-			feedback.mode = True
-			self.CuffInteractionAct.publish_feedback(feedback)
+		
 		self.cuff_callback_ids['lower'] = self.cuff.register_callback(self.cb_cuff_lower, 'right_button_lower')
-
-		# When the upper cuff button is pressed, allow 1D orientation movement.
-		def cb_cuff_upper(self, data):
-			rospy.loginfo('Cuff upper button pressed. state ' + data.state)
-			self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True)
-			feedback.mode = False
-			self.CuffInteractionAct.publish_feedback(feedback)
 		self.cuff_callback_ids['upper'] = self.cuff.register_callback(self.cb_cuff_upper, 'right_button_upper')
 		
 		# Continue until terminating condition is met.
@@ -656,12 +695,24 @@ class Module():
 		result.done = True
 		self.CuffInteractionAct.set_succeeded(result)
 
-	def cb_GoToCartesianPose(self, req):
+	def cb_GoToCartesianPose(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to cartesian pose')
 
-		self.limb.go_to_cartesian_pose(position=eval(req.position), orientation=eval(req.orientation), relative_pose=eval(req.relative_pose), joint_angles=eval(req.joint_angles), endpoint_pose=eval(req.endpoint_pose))
+		success = True
 
-		self.command_complete_topic.publish()
+		result_GoToCartesianPose = GoToCartesianPoseResult()
+		result_GoToCartesianPose.is_done = False
+
+		if self.GoToCartesianPoseAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.GoToCartesianPoseAct.set_preempted()
+			success = False
+
+		self.limb.go_to_cartesian_pose(position=eval(goal.position), orientation=eval(goal.orientation), relative_pose=eval(goal.relative_pose), joint_angles=eval(goal.joint_angles), endpoint_pose=eval(goal.endpoint_pose))
+
+		if success:
+			result_GoToCartesianPose.is_done = True
+			self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
 
 	def cb_GoToJointAngles(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to joint angles')
@@ -782,11 +833,6 @@ class Module():
 		result = sawyer.msg.InteractionControlResult()
 		
 		self.limb.interaction_control(position_only=goal.position_only, orientation_x=goal.orientation_x, orientation_y=goal.orientation_y, orientation_z=goal.orientation_z, position_x=goal.position_x, position_y=goal.position_y, position_z=goal.position_z, in_endpoint_frame=goal.in_end_point_frame)
-
-		if goal.position_z == False and goal.orientation_z == False:
-			self.pos_orient_topic.publish('pos')
-		elif goal.orientation_z == True and goal.position_x == False:
-			self.pos_orient_topic.publish('orien')
 
 		if goal.PASS == False:
 			ang_arr = [0]*self.JOINTS

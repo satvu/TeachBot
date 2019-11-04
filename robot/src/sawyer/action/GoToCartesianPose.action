@@ -17,5 +17,5 @@ bool is_done
 # feedback definition
 # 0: unpressed
 # 1: pressed
-int32 process
+int32 feedback
 
