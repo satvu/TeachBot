@@ -77,7 +77,7 @@ class Module():
 		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
 		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
 		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
-		self.MultipleChoice = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
+		self.MultipleChoiceAct = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
 		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
@@ -845,20 +845,26 @@ class Module():
 			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
 		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
 
+	def multiple_choice_button_pressed(self, name, data):
+		if self.navigator.button_string_lookup(data) == 'OFF':
+			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
+			self.multiple_chocie_result = sawyer.msg.MultipleChoiceResult()
+			self.multiple_chocie_result.answer = self.BUTTON[name];
+			#self.unsubscribe_from_multi_choice()
+			self.multiple_choice_selected = True
+
 	def cb_MultipleChoice(self, goal):
 		if self.VERBOSE: rospy.loginfo('Multiple choice ready')
 
-		result = sawyer.msg.MultipleChoiceResult()
-
-		def button_pressed(name, data):
-			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
-			if self.navigator.button_string_lookup(data) == 'OFF':
-				result.answer = self.BUTTON[name];
-				self.MultipleChoiceAct.set_succeeded(result)
-				self.unsubscribe_from_multi_choice()
+		self.multiple_choice_selected = False
 
 		for key in self.BUTTON:
-			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key : button_pressed(key, data), 'right_button_' + key)
+			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key, self=self : self.multiple_choice_button_pressed(key, data), 'right_button_' + key)
+			print(self.multi_choice_callback_ids[key])
+
+		while not self.multiple_choice_selected:
+			pass
+		self.MultipleChoiceAct.set_succeeded(self.multiple_chocie_result)
 
 	def cb_WheelSubscription(self, req):
 		if req.subscribe:

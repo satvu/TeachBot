@@ -1,7 +1,7 @@
 ## Asks a multiple choice question and records the answer.
 
 ## Goal
-bool goal
+bool on
 ---
 ## Result: the selected answer
 int32 answer

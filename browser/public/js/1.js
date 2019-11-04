@@ -14,5 +14,5 @@ var start_seq = 'feedback';
 async function main() {
     m.displayOff();
     image.style.display = 'initial';
-    m.start([start_seq,32]);
+    m.start([start_seq,31]);
 }

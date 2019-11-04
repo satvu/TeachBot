@@ -175,8 +175,8 @@ function Module(module_num, main, content_elements) {
 	});
 	this.MultipleChoiceAct = new ROSLIB.ActionClient({
 		ros: ros,
-		serverName: '/teachbot/multiple_choice',
-		actionName: ROBOT + '/MultipleChoice'
+		serverName: '/teachbot/MultipleChoice',
+		actionName: ROBOT + '/MultipleChoiceAction'
 	});
 	this.PickUpBoxAct = new ROSLIB.ActionClient({
 		ros: ros,
@@ -259,7 +259,7 @@ Module.prototype.loadTextAndAudio = function() {
 
 			// Load audio.
 			var audioCount = self.sections[s]._textArray.length;
-			console.log(`${self.sections[s].id} text array length ${audioCount}`);
+
 			// If there are no audio files in this section, mark the section as loaded.
 			if (audioCount==0) {
 				self.sections[s]._textLoaded = true;
@@ -1299,7 +1299,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				var goal = new ROSLIB.Goal({
 					actionClient: this.MultipleChoiceAct,
-					goalMessage: {goal: true}
+					goalMessage: {on: true}
 				});
 
 				goal.on('result', function(result) {
