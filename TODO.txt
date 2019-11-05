@@ -14,3 +14,4 @@
 - Alphabetize CMakeLists and topics
 - Semicolons after JS ROS initializations.
 - Make JointImpedance general to joints
+- Fix text issues in M2
