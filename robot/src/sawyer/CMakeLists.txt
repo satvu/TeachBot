@@ -62,7 +62,7 @@ catkin_package(
   message_runtime
   tf
   DEPENDS
-  apriltag
+  #apriltag
 )
 
 install(

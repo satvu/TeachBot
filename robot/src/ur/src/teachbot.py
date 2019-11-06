@@ -7,7 +7,6 @@ from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
-import ur_kinematics as ur_kin 
 import actionlib
 import sensor_msgs
 import threading

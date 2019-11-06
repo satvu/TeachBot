@@ -63,10 +63,9 @@
   <build_depend>trajectory_msgs</build_depend>
   <build_depend>intera_interface</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>apriltag</build_depend>
+  <!-- <build_depend>apriltag</build_depend> -->
   <build_depend>image_transport</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>ur_msgs</build_depend>
   
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>rospy</exec_depend>
@@ -83,11 +82,10 @@
   <exec_depend>intera_interface</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>tf</exec_depend>
-  <exec_depend>apriltag</exec_depend>
+  <!-- <exec_depend>apriltag</exec_depend> -->
   <exec_depend>image_transport</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>ur_msgs</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
