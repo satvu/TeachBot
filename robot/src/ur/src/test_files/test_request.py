@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-'''
-Created on July 1, 2019
-Author: Albert Go (albertgo@mit.edu)
-'''
 
 import rospy
 import sys
@@ -10,7 +6,8 @@ import roslib
 import sensor_msgs.msg as smsg
 from ur.msg import Position, PositionFeedback, PositionResult, GoToCartesianPose
 from std_msgs.msg import Bool, Int32
-from ur_kin_py import forward, reverse
+
+
 
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
 ROTATE_WRIST = [0, -3.14, 0, -3.14, -1.57, -1]
@@ -30,11 +27,11 @@ class PositionClient:
         self.pub_goal = rospy.Publisher('/GoToCartesianPose', GoToCartesianPose, queue_size = 1)
 
         print 'press enter to send to test forward kinematics'
-        converted_joint_angles1 = ur_kin.forward(np.array(SCARA))
+        converted_joint_angles1 = ur_kinematics.forward(np.array(SCARA))
         print converted_joint_angles1
 
         print 'press enter to send to test inverse kinematics'
-        converted_joint_angles2 = ur_kinematics.ur_kin_py.inverse(np.array(converted_joint_angles1))
+        converted_joint_angles2 = inverse(np.array(converted_joint_angles1))
         print converted_joint_angles2
 
         print 'prese enter to test with robot'

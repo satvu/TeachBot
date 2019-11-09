@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 ## IMPORTS ##
 # Basic
-import rospy, numpy, math
+import rospy, math
+import numpy as np
+import sys
+import roslib
+from ur_kinematics import *
 
 from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16, Empty
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -13,8 +17,6 @@ import threading
 
 from ur.msg import *
 
-from scipy.fftpack import fft
-from statistics import mode, mean
 from geometry_msgs.msg import WrenchStamped
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
