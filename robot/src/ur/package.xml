@@ -64,6 +64,7 @@
   <build_depend>intera_interface</build_depend>
   <build_depend>tf</build_depend>
   <!-- <build_depend>apriltag</build_depend> -->
+  <build_depend>ur_kinematics</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>message_generation</build_depend>
   
@@ -83,6 +84,7 @@
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>tf</exec_depend>
   <!-- <exec_depend>apriltag</exec_depend> -->
+  <exec_depend>ur_kinematics</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>

@@ -164,6 +164,7 @@ catkin_package(
 	message_runtime
 	tf
 	std_msgs
+  ur_kinematics
 
 	DEPENDS 
 	#apriltag
