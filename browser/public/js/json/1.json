@@ -115,9 +115,51 @@
 				"type":"play",
 				"audio_index":5,
 				"delay":false
-			},	
+			},
 			{
-				"//":"I have seven motors. Now, please stand back so I can show you something else.",
+				"//":"Let's count them together. Please stand back.",
+				"type":"play",
+				"audio_index":9,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_motor_animation_0"
+			},
+			{
+				"type":"set",
+				"key":"j",
+				"val":0
+			},
+			{
+				"type":"while",
+				"conditional":"#j<JOINTS",
+				"instructions":[
+					{
+						"//":"#<the number I'm on>",
+						"type":"play",
+						"audio_index":"#j+10",
+						"delay":false
+					},
+					{
+						"type":"goToJointAngles",
+						"joint_angles":"joint_test[#j]",
+						"skippable":true
+					},
+					{
+						"type":"goToJointAngles",
+						"joint_angles":"joint_motor_animation_0",
+						"skippable":true
+					},
+					{
+						"type":"set",
+						"key":"j",
+						"val":"#j+1"
+					}
+				]
+			},
+			{
+				"//":"I have six motors. Now, please stand back so I can show you something else.",
 				"type":"play",
 				"audio_index":17,
 				"delay":true

@@ -3,8 +3,7 @@ const DIR = 'https://localhost:8000/';    // Directory containing resources
 const JOINTS = 7;                         // Numer of joints in Sawyer arm
 const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
-// const ROBOT = 'sawyer';
-const ROBOT = 'ur';
+const ROBOT = 'sawyer';
 
 /**
  * A learning module for TeachBot.
@@ -243,7 +242,6 @@ function Module(module_num, main, content_elements) {
 		self.loaded['json'] = true;
 		if (self.allLoaded()) { self.main(); }
 	});
-	console.log("completed initializing");
 }
 
 /**
@@ -269,6 +267,7 @@ Module.prototype.loadTextAndAudio = function() {
 			if (audioCount==0) {
 				self.sections[s]._textLoaded = true;
 				self.sections[s]._audioLoaded = true;
+
 			// Otherwise, load them.
 			} else {
 				self.sections[s]._audiofiles_mp3 = new Array(audioCount);
@@ -355,7 +354,6 @@ Module.prototype.pub_dur = function(audio_duration) {
  */
 Module.prototype.pub_goto = function(joint_angles, speed_ratio=0, wait=false) {
 	if (typeof joint_angles === 'string') {
-		console.log("sending joint angles");
 		var req = new ROSLIB.Message({
 			name: this.hashTokeyVal(joint_angles)
 		});
@@ -611,7 +609,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 	if (this.thisSection === undefined) {
 		throw `There is no section with id ${instructionAddr[0]}`;
 	}
-	console.log("starting section");
+
 	var instructions = this.thisSection.instructions;
 	this.instructionSets = [JSONcopy(instructions)];
 
@@ -859,7 +857,43 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					self.start(self.getNextAddress(instructionAddr));
 				});
 
-				break
+				break;
+
+			case 'camerabw_graphic':
+
+				var cv_image_url = DIR + 'images/cv_1.png';
+
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
+
+				break;
+
+			case 'camera_color_graphic':
+				var cv_image_url = DIR + 'images/cv_2.png';
+
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
+
+				break;
+
+			case 'camera_off':
+				var req = new ROSLIB.Message({
+					data: false
+				});
+
+				console.log('Shutting down camera')
+
+				this.camera.publish(req);
+
+				this.command_complete.subscribe(function(message) {
+					self.command_complete.unsubscribe();
+					self.command_complete.removeAllListeners();
+					self.start(self.getNextAddress(instructionAddr));
+				});
+
+				break;
 
 			case 'check_pickup':
 				var req = new ROSLIB.Message({
@@ -893,8 +927,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'clearRect':
 				this.ctx.clearRect(0,0,100*m.cw,100*m.ch);
-
+				
 				this.start(this.getNextAddress(instructionAddr));
+
 				break;
 
 			case 'closeGripper':
@@ -971,22 +1006,22 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 77*this.ch;
 						// x = 77*this.cw;
 						// y = 73*this.ch;
-						x = 77*this.cw;
-						y = 90*this.ch;
+						x = 79*this.cw;
+						y = 88*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 					case 2:
 						// x = 70*this.cw;
 						// y = 74*this.ch;
-						x = 62*this.cw;
-						y = 75*this.ch;
+						x = 65*this.cw;
+						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 3:
 						// x = 47*this.cw;
 						// y = 82*this.ch;
-						x = 47*this.cw;
-						y = 75*this.ch;
+						x = 49*this.cw;
+						y = 74*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 4:
@@ -994,8 +1029,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 40*this.ch;
 						// x = 39*this.cw;
 						// y = 40*this.ch;
-						x = 62*this.cw;
-						y = 16*this.ch;
+						x = 63*this.cw;
+						y = 13*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 				}
@@ -1386,6 +1421,27 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
+			case 'pos_orient':
+				var orient_bw_url = DIR + 'images/orientation_bw.png';
+				var orient_color_url = DIR + 'images/orientation_color.png';
+				var position_bw_url = DIR + 'images/position_bw.png';
+				var position_color_url = DIR + 'images/position_color.png';
+
+				draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+
+				this.start(this.getNextAddress(instructionAddr));
+
+				break;
+
+			case 'programming_choices':
+				this.ctx.font = "60px Arial";
+				this.ctx.fillText("Close Gripper", 10, 50);
+
+
+				this.start(this.getNextAddress(instructionAddr));
+
+				break;
+
 			case 'pressed_button':
 				this.pressed.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
@@ -1499,15 +1555,22 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'show_camera':
+				// this.displayOff();
+				// var cv_image = new Image();
 
-				var cv_image = new Image();
-				cv_image.onload = function() {
-					console.log('Displaying camera')
-		            self.ctx.drawImage(cv_image, 20, 70)
+				// cv_image.onload = function() {
+				// 	console.log('Displaying camera')
+		  //           self.ctx.drawImage(cv_image, 20, 70)
 
-		            self.start(self.getNextAddress(instructionAddr));
-				};
-				cv_image.src = DIR + 'images/cv_image.png';
+		  //           self.start(self.getNextAddress(instructionAddr));
+				// };
+				// cv_image.src = DIR + 'images/cv_image.png';
+
+				var cv_image_url = DIR + 'images/cv_image.png';
+
+                image.src = cv_image_url;
+				
+                this.start(this.getNextAddress(instructionAddr));
 
 				break;
 

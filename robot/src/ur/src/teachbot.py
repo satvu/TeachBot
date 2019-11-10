@@ -144,6 +144,7 @@ if __name__ == '__main__':
     joint_motor_animation_0 = SCARA
     joint_motor_animation_1 = [0, -3.14, -0.25, -3.14, -1.25, 0]
     # 4
+    joint_test = [0]*Module.JOINTS
     joint_test = [WRIST_3_FWD, WRIST_2_FWD, WRIST_1_FWD, ELBOW_FWD, SHOULDER_FWD, BASE_FWD]
 
     m = Module()
