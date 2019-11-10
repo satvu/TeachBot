@@ -131,21 +131,18 @@ class Module:
 ## DEFINE IMPORTANT CONSTANpointsTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
 if __name__ == '__main__':
     # POSITION CONSTANTS - ARRAYS THAT MATCH JOINT_NAMES
-    SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
-    WRIST_3_FWD = [0, -3.14, 0, -3.14, -1.57, -1]
-    WRIST_2_FWD = [0, -3.14, 0, -3.14, -.57, 0]
-    WRIST_1_FWD = [0, -3.14, 0, -2.14, -1.57, 0]
-    ELBOW_FWD = [0, -3.14, 1, -3.14, -1.57, 0]
+    SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
+    WRIST_3_FWD = [0, -3.14, 0, -3.14, -1.57, -.5]
+    WRIST_2_FWD = [0, -3.14, 0, -3.14, -1.0, 0]
+    WRIST_1_FWD = [0, -3.14, 0, -2.54, -1.57, 0]
+    ELBOW_FWD = [0, -3.14, 0.5, -3.14, -1.57, 0]
     SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
-    BASE_FWD = [0.60, -3.14, 0, -3.14, -1.57, 0]
+    BASE_FWD = [0.50, -3.14, 0, -3.14, -1.57, 0]
 
     # 1
     joint_motor_animation_0 = SCARA
-    joint_motor_animation_1 = joint_motor_animation_0[:]
-    joint_motor_animation_1[1] = -2.90
-    joint_motor_animation_1[4] = -2.90
-
+    joint_motor_animation_1 = [0, -3.14, -0.25, -3.14, -1.25, 0]
     # 4
     joint_test = [WRIST_3_FWD, WRIST_2_FWD, WRIST_1_FWD, ELBOW_FWD, SHOULDER_FWD, BASE_FWD]
 
