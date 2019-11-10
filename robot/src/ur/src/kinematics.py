@@ -1,7 +1,7 @@
 import math
 
 
-class Kinematics:
+class Kinematics():
     ZERO_THRESH = 0.00000001
     PI = math.pi
 
