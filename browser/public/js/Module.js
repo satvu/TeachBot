@@ -53,7 +53,7 @@ function Module(module_num, main, content_elements) {
 	// Subscribing topics
 	this.box_bin = new ROSLIB.Topic({
 		ros: this.ros,
-		name: '/box_in_bin',
+		name: '/teachbot/box_in_bin',
 		messageType: 'std_msgs/Bool'
 	});
 	this.command_complete = new ROSLIB.Topic({
