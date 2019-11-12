@@ -14,3 +14,7 @@ string name
 float32 speed_ratio
 #Optional: Audio file delay
 bool wait
+---
+bool success
+---
+bool feedback

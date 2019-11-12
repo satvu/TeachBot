@@ -1,0 +1,17 @@
+- Fix JointMove. We can do better than strings.
+- Fix JS docstrings. Format correctly.
+- What is happening with toggle and command_complete in joint_move?
+- What is listen and wait in joint_move?
+- Rename joint_move to admittance control
+- Add spaces before open braces
+- Fix high_two. Generalize.
+- Don't hard set the position above box 3
+- Standardize format for:
+  - Python functions
+  - JS functions
+  - JSON instruction types
+  - ROS topics
+- Alphabetize CMakeLists and topics
+- Semicolons after JS ROS initializations.
+- Make JointImpedance general to joints
+- Fix text issues in M2
