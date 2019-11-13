@@ -29,7 +29,7 @@ $ source devel/setup.bash
 ```
 
 ## Setting up a UR robot for the ur_robot_driver
-To set up a UR robot for the ur_robot_driver, follow the instructions provided from the <a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#prepare-the-robot">Prepare the robot section</a> and <a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#prepare-the-ros-pc">Prepare the ROS PC</a>. In this repository, the calibration file was placed inside `$(HOME/TeachBot/robot/src)`, but it can be placed anywhere as long as you use the correct path when passing it into commands as a parameter. 
+To set up a UR robot for the ur_robot_driver, follow the instructions provided from the <a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#prepare-the-robot">Prepare the robot section</a> and <a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#prepare-the-ros-pc">Prepare the ROS PC</a>. In this repository, the calibration file was placed inside `$(HOME/TeachBot/robot/src/ur)`, but it can be placed anywhere as long as you use the correct path when passing it into commands as a parameter. 
 
 Note that setting up an e-series robot has additional instructions. 
 
@@ -46,7 +46,7 @@ On your PC, open three terminals to `~/TeachBot/robot` and don't forget to `sour
 
 In the first terminal, run the following command with your parameters:
 
-    $ roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.157.0 \ kinematics_config:="$(HOME/TeachBot/robot/src/ur5e_robot_calibration.yaml)
+    $ roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.157.0 \ kinematics_config:="$(HOME/TeachBot/robot/src/ur/ur5e_robot_calibration.yaml)
 
 For `robot_ip:=`, put the IP address of your UR robot to replace the IP address of this example. 
 
