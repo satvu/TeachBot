@@ -29,9 +29,9 @@ class Module():
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
 
-        # Subscribing Topics (get commands from browser)
-        rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles)
-        rospy.Subscriber('/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
+        # Action Servers
+        self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
+
 
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -52,22 +52,25 @@ class Module():
     action client provided by Universal Robots driver. Upon completion, it publishes to "/command-complete"
     to let the browser know that it has finished its task.
     '''
-    def cb_GoToJointAngles(self, req):
+    def cb_GoToJointAngles(self, goal):
         self.joint_traj_client.wait_for_server()
 
         followJoint_msg = FollowJointTrajectoryGoal()
 
-        if req.name != '':
-            print req.name
-            followJoint_msg.trajectory = self.create_traj_goal(eval(req.name))
+        if goal.name != '':
+            print goal.name
+            followJoint_msg.trajectory = self.create_traj_goal(eval(goal.name))
         else:
-            followJoint_msg.trajectory = self.create_traj_goal([req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos])
+            followJoint_msg.trajectory = self.create_traj_goal([goal.j0pos, goal.j1pos, goal.j2pos, goal.j3pos, goal.j4pos, goal.j5pos])
         
         # Send goal to action client and wait for completion of task
         self.joint_traj_client.send_goal(followJoint_msg)
         self.joint_traj_client.wait_for_result()
 
-        self.command_complete_topic.publish()
+        # Set success and return to browser module
+        result = ur.msg.GoToJointAnglesResult()
+        result.success = True
+        self.GoToJointAnglesAct.set_succeeded(result)
 
     '''
     Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
