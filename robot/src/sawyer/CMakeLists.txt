@@ -17,6 +17,7 @@ find_package(catkin
   intera_interface
   genmsg
   message_generation
+  actionlib_msgs
 )
 
 catkin_python_setup()
@@ -24,22 +25,44 @@ catkin_python_setup()
 add_message_files(
   FILES
   adjustPoseTo.msg
-  GoToJointAngles.msg
   JointInfo.msg
-  joint_move.msg
-  InteractionControl.msg
   JointImpedance.msg
   EndpointInfo.msg
   GoToCartesianPose.msg
-  cuffInteraction.msg
   adjustPoseBy.msg
   Image.msg
+)
+
+add_service_files(
+  FILES
+  AudioDuration.srv
+  DevMode.srv
+  ScrollWheelSubscription.srv
+)
+
+add_action_files(
+  DIRECTORY action
+  FILES
+  CuffInteraction.action
+  GoToJointAngles.action
+  InteractionControl.action
+  JointMove.action
+  GoToCartesianPose.action
+  Gripper.action
+  MultipleChoice.action
+  AdjustPoseTo.action
+  PickUpBox.action
+  AdjustPoseBy.action
+  HighTwo.action
+  WaitForPush.action
+  JointImpedance.action
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  actionlib_msgs
 )
 
 #generate_dynamic_reconfigure_options(

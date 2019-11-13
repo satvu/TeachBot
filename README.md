@@ -1,56 +1,29 @@
 # TeachBot
 
 ## First Setup Only
-The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and http://wiki.ros.org/melodic/Installation/Ubuntu for Ubuntu 18.04 and ROS Melodic.
+The following is adapted from http://sdk.rethinkrobotics.com/intera/Workstation_Setup and https://wiki.ros.org/kinetic/Installation/Ubuntu. It runs exclusively on Ubuntu 16.04. If you run this on newer versions of Ubuntu, you will have to update `install.sh` for the latest ROS distro.
 
 ### Clone Development Workspace
 If you change the directory, make sure you adjust all following commands.
 ```
 $ cd
+$ sudo apt -y install git
 $ git clone https://github.com/Darbeloff/TeachBot.git
 ```
 
-### Install Apt Dependencies
+### Install Using the Installation Script
+Run the following commands in terminal:
 ```
-$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-$ sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-$ sudo apt update
-$ sudo apt install -y ros-melodic-desktop-full python-rosinstall python-rosinstall-generator python-wstool build-essential python-pip
-```
-
-### Initialize ROS and Update .bashrc
-```
-$ sudo rosdep init
-$ rosdep update
-$ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
-$ source ~/.bashrc
+$ cd ~/TeachBot
+$ ./install.sh
 ```
 
-### Install Other Dependencies
+Alternatively, if you do not run `install.sh` because you already installed the dependencies previously, and now you just want to prepare a freshly cloned version of this repository to work, run the following commands in terminal:
 ```
-$ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-$ sudo apt-get update
-$ sudo apt-get install -y git-core python-argparse python-vcstools python-rosdep ros-melodic-control-msgs ros-melodic-joystick-drivers ros-melodic-xacro ros-melodic-tf2-ros ros-melodic-rviz ros-melodic-cv-bridge ros-melodic-actionlib ros-melodic-actionlib-msgs ros-melodic-dynamic-reconfigure ros-melodic-trajectory-msgs ros-melodic-rospy-message-converter ros-melodic-rosbridge-suite nodejs
-$ pip install --upgrade --user gTTS gTTS-token pexpect playsound pyttsx3 pygame
+$ cd ~/TeachBot
+$ ./setup.sh
 ```
-
-### Merge Intera Resources
-```
-$ cd ~/TeachBot/robot/src
-$ wstool init .
-$ git clone https://github.com/RethinkRobotics/sawyer_robot.git
-$ wstool merge sawyer_robot/sawyer_robot.rosinstall
-$ wstool update
-$ cd ..
-$ source ~/.bashrc
-$ catkin_make
-```
-
-### NPM Installs
-```
-$ cd ~/TeachBot/browser
-$ npm install .
-```
+That setup script only merges the Intera resources and installs NPM directories.
 
 ### Set Up Networking
 Connect to the robot via the ethernet port on the outside of the Controller.
@@ -63,39 +36,6 @@ Navigate to the IPv4 tab and select "Link-Local Only." Then, click "Apply."
 ![Enable Link-Local Only](/images/wired_settings.png?raw=true)
 
 You will not be able to use that ethernet port to access the internet until you revert the Method to "Automatic (DHCP)." You may now close the Settings window.
-
-### Set Up Intera
-Copy the `intera.sh` file into your ros workspace
-```
-$ cp ~/TeachBot/robot/src/intera_sdk/intera.sh ~/TeachBot/robot
-```
-
-Now you'll need to edit three lines of `intera.sh` specific to your system.
-```
-$ gedit intera.sh
-```
-
-#### Edit `robot_hostname`
-Edit the `robot_hostname` field on line 22 to be the name of your robot. For example:
-```
-robot_hostname="jerry.local"
-```
-where `jerry` is the name of your robot. This needs to match the name you gave it when you set it up.
-
-#### Replace `your_ip` with `your_hostname`
-Comment out the `your_ip` field on line 26 and edit the `your_hostname` field on line 27 as follows:
-```
-#your_ip="192.168.XXX.XXX"
-your_hostname="$(uname -n).local"
-```
-
-#### Edit `ros_version`
-Edit the `ros_version` field on line 30 to be the version of ROS you are running. Assuming you followed this README, that is:
-```
-ros_version="melodic"
-```
-
-Save and close `intera.sh` script.
 
 ### Verify Environment
 ```
@@ -248,6 +188,12 @@ You have successfully launched the teaching module!
 |   +-- logo.png                        TeachBot logo to be displayed on Sawyer head display.
 |   +-- safety1.mp3                     Audio file to be played when TeachBot limb exits safety zone.
 |   +-- safety2.mp3                     Audio file to be played when TeachBot limb resets to within the safety zone.
+|
++-- edit_intera.py                      Used by install.sh. Copies and edits intera.sh into TeachBot/robot.
++-- install.sh                          Installation script.
++-- LICENSE                             BSD 3-Clause software license.
++-- README.md                           This document.
++-- setup.sh                            Used by install.sh. Merges Intera resources and installs NPM dependencies.
 ```
 The project is organized in two segments:
 1) JavaScript Node application, responsible for coordinating the module and displaying content in the browser, and
@@ -278,6 +224,3 @@ The main `teachbot.py` scripts are run using the command described above:
 $ # This is just the format of the command. Do not actually enter <name_of_cobot>.
 $ rosrun <name_of_cobot> teachbot.py
 ```
-
-### Block Diagram of Command Flow
-![](/images/software_overview.svg?raw=true)

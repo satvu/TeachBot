@@ -43,7 +43,7 @@ class Camera():
 		self.heights = []
 		self.widths = []
 
-		# self.limb.go_to_joint_angles([0.314609375, 0.19108984375, -1.9322587890625, 1.64379296875, 1.7396455078125, 0.37216796875, 0.183701171875])
+		self.limb.go_to_joint_angles([0.314609375, 0.19108984375, -1.9322587890625, 1.64379296875, 1.7396455078125, 0.37216796875, 0.183701171875])
 
 		# rospy.sleep(3)
 
@@ -67,7 +67,7 @@ class Camera():
 
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 40, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -88,9 +88,9 @@ class Camera():
 		a = sum(map(lambda x: x[0], box))/4
 		b = sum(map(lambda x: x[1], box))/4
 
-		cv2.circle(cv_image, (a,b), 8, (255,0,0), -1)
+		# cv2.circle(cv_image, (a,b), 8, (255,0,0), -1)
 
-		cv2.imwrite('/home/albertgo/teachbot/browser/public/images/cv_image.png', cv_image)
+		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 
 		cv2.imshow('new', cv_image)
 

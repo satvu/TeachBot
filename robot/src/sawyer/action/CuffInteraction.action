@@ -1,0 +1,12 @@
+## Activates position/orientation toggle by using cuff buttons
+
+## Goal
+# Lambda function of terminating condition
+string terminatingCondition
+bool ways
+---
+## Result
+bool done
+---
+## Feedback: true => position; false => orientation
+bool mode

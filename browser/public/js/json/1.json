@@ -510,8 +510,8 @@
 				"delay":false
 			},
 			{
-				"type":"joint_angle",
-				"angle":"right_j1"
+				"type":"wait_for_push",
+				"joint":"right_j1"
 			},
 			{
 				"//":"Watch the projection as you push my arm. I've put up a little display showing how far you've pushed my arm and how much force I'm using to push back. The further you push my arm, the harder I tell my motors to push back. It should feel a little bit like a rubber band: the more you displace it, the harder it will want to spring back into its original position. When you're done, press the scroll wheel button.",
@@ -1191,9 +1191,18 @@
 				"wait":true
 			},
 			{
+				"type":"proceed",
+				"to_section":"end"
+			}
+		]
+	},
+	{
+		"id":"end",
+		"instructions":[
+			{
 				"//":"And that's what it's all about! High two!",
 				"type":"play",
-				"audio_index":12,
+				"audio_index":0,
 				"delay":false
 			},
 			{
@@ -1203,6 +1212,9 @@
 				"type":"goToJointAngles",
 				"joint_angles":"joint_high_two",
 				"wait":true
+			},
+			{
+				"type":"image"
 			},
 			{
 				"type":"highTwo",
@@ -1215,7 +1227,7 @@
 					{
 						"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
 						"type":"play",
-						"audio_index":15,
+						"audio_index":3,
 						"delay":true
 					}
 				],
@@ -1223,7 +1235,7 @@
 					{
 						"//":"I only have two fingers, so instead of a high five I can only give high two's. High two!",
 						"type":"play",
-						"audio_index":13,
+						"audio_index":1,
 						"delay":false
 					},
 					{
@@ -1237,7 +1249,7 @@
 							{
 								"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
 								"type":"play",
-								"audio_index":15,
+								"audio_index":3,
 								"delay":true
 							}
 						],
@@ -1245,13 +1257,13 @@
 							{
 								"//":"Okay,",
 								"type":"play",
-								"audio_index":14,
+								"audio_index":2,
 								"delay":true
 							},
 							{
 								"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
 								"type":"play",
-								"audio_index":15,
+								"audio_index":3,
 								"delay":true
 							}
 						]
@@ -1259,21 +1271,9 @@
 				]
 			},
 			{
-				"type":"image"
-			},
-			{
-				"type":"proceed",
-				"to_section":"end"
-			}
-		]
-	},
-	{
-		"id":"end",
-		"instructions":[
-			{
 				"//":"Great job! You have completed the first learning module.",
 				"type":"play",
-				"audio_index":0,
+				"audio_index":4,
 				"delay":true
 			}
 		]

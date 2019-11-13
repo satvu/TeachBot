@@ -63,6 +63,9 @@ teachbot_ws/src/sawyer_robot
 teachbot_ws/build
 teachbot_ws/devel
 
+robot/src/universal_robot
+robot/src/Universal_Robots_ROS_Driver
+
 # Files you need to replace #
 #############################
 robot/src/teachbot/src/test.py

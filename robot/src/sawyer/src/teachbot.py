@@ -2,12 +2,10 @@
 
 ## IMPORTS ##
 # Basic
-import rospy, numpy, math
+import rospy, actionlib, numpy, math
 from pygame import mixer
-from playsound import playsound
-import pyttsx3
 import cv2
-
+import apriltag
 # Intera
 import intera_interface
 from std_msgs.msg import (
@@ -25,6 +23,7 @@ import intera_core_msgs
 # Custom
 from limb_plus import LimbPlus
 from sawyer.msg import *
+from sawyer.srv import *
 from cv_bridge import CvBridge, CvBridgeError
 
 class Module():
@@ -45,43 +44,41 @@ class Module():
 
 		# Publishing topics
 		suppress_cuff_interaction = rospy.Publisher('/robot/limb/right/suppress_cuff_interaction', Empty, queue_size=1)
-		self.position_topic = rospy.Publisher('/position', JointInfo, queue_size=1)
-		self.velocity_topic = rospy.Publisher('/velocity', JointInfo, queue_size=1)
-		self.effort_topic = rospy.Publisher('/effort', JointInfo, queue_size=1)
-		self.dev_topic = rospy.Publisher('/dev_topic', Int32, queue_size = 10)
-		self.scroll_wheel_button_topic = rospy.Publisher('/scroll_wheel_button_topic', Empty, queue_size = 10)
-		self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1)
-		self.wheel_delta_topic = rospy.Publisher('/wheel_delta', Int32, queue_size=10)
-		self.clicked = rospy.Publisher('scroll_wheel_pressed', Bool, queue_size=10)
-		self.toggle_completed_topic = rospy.Publisher('/toggle_completed', Empty, queue_size=1)
-		self.highTwo_success_topic = rospy.Publisher('/highTwo_success', Bool, queue_size=1)
-		self.endpoint_topic = rospy.Publisher('/EndpointInfo', EndpointInfo, queue_size=10)
-		self.interaction_control_topic = rospy.Publisher('/InteractionControl', InteractionControl, queue_size=10)
-		self.pickedup_topic = rospy.Publisher('/pickedup', Bool, queue_size=1)
-		self.pos_orient_topic = rospy.Publisher('/pos_orient', String, queue_size=1)
+		self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
+		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
+		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
+		self.scroll_wheel_button_topic = rospy.Publisher('/teachbot/scroll_wheel_button_topic', Empty, queue_size = 10)
+		self.command_complete_topic = rospy.Publisher('/teachbot/command_complete', Empty, queue_size=1)
+		self.wheel_delta_topic = rospy.Publisher('/teachbot/wheel_delta', Int32, queue_size=10)
+		self.clicked = rospy.Publisher('/teachbot/scroll_wheel_pressed', Bool, queue_size=10)
+		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
 
 		# Subscribing topics
-		rospy.Subscriber('/audio_duration', Float64, self.rx_audio_duration)
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
-		rospy.Subscriber('/GoToJointAngles', GoToJointAngles, self.cb_GoToJointAngles)
-		rospy.Subscriber('/wheel_subscription', Bool, self.cb_WheelSubscription)
-		rospy.Subscriber('/joint_move', joint_move, self.cb_joint_move)
-		rospy.Subscriber('/InteractionControl', InteractionControl, self.cb_interaction)
-		rospy.Subscriber('/JointAngle', String, self.cb_joint_angle)
-		rospy.Subscriber('/JointImpedance', JointImpedance, self.cb_impedance)
-		rospy.Subscriber('/multiple_choice', Bool, self.cb_multiple_choice)
-		rospy.Subscriber('/highTwo', Bool, self.cb_highTwo)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
-		rospy.Subscriber('/adjustPoseTo', adjustPoseTo, self.cb_adjustPoseTo)
-		rospy.Subscriber('/closeGripper', Bool, self.cb_closeGripper)
-		rospy.Subscriber('/openGripper', Bool, self.cb_openGripper)
-		rospy.Subscriber('/GoToCartesianPose', GoToCartesianPose, self.cb_GoToCartesianPose)
-		rospy.Subscriber('/cuffInteraction', cuffInteraction, self.cb_cuffInteraction)
-		rospy.Subscriber('/check_pickup', Bool, self.cb_check_pickup)
-		rospy.Subscriber('/adjustPoseBy', adjustPoseBy, self.cb_adjustPoseBy)
-		rospy.Subscriber('/camera', Bool, self.cb_camera)
-		rospy.Subscriber('/robot/digital_io/right_lower_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_lower)
-		rospy.Subscriber('/robot/digital_io/right_upper_button/state', intera_core_msgs.msg.DigitalIOState, self.cb_cuff_upper)
+		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
+
+		# Service Servers
+		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
+		rospy.Service('/teachbot/wheel_subscription', ScrollWheelSubscription, self.cb_WheelSubscription)
+		# Service Clients
+		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
+
+		# Actions
+		self.CuffInteractionAct = actionlib.SimpleActionServer('/teachbot/CuffInteraction', CuffInteractionAction, execute_cb=self.cb_CuffInteraction, auto_start=True)
+		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
+		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
+		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
+		self.InteractionControlActCli = actionlib.SimpleActionClient('/teachbot/InteractionControl',InteractionControlAction)
+		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
+		self.GripperAct = actionlib.SimpleActionServer('/teachbot/Gripper', GripperAction, execute_cb=self.cb_Gripper, auto_start=True)
+		self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
+		self.MultipleChoiceAct = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
+		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
+		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
+		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
+		self.WaitForPushAct = actionlib.SimpleActionServer('/teachbot/WaitForPush', WaitForPushAction, execute_cb=self.cb_WaitForPush, auto_start=True)
+		self.JointImpedanceAct = actionlib.SimpleActionServer('/teachbot/JointImpedance', JointImpedanceAction, execute_cb=self.cb_JointImpedance, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -314,7 +311,10 @@ class Module():
 			self.gripper.close()
 
 	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
-	def check_pickup(self, lift_position = Z_TABLE + BOX_HEIGHT + 0.1, effort_tol = 5):
+	def cb_PickUpBox(self, goal, lift_position=Z_TABLE+BOX_HEIGHT+0.1, effort_tol=5):
+		success = True
+		result_PickUpBox = PickUpBoxResult()
+
 		# Leave the box and lift upward to measure no-load effort
 		self.limb.adjustPoseTo('position','z',lift_position)
 		rospy.sleep(1)
@@ -339,7 +339,14 @@ class Module():
 			#self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT/2)
 			# self.open_gripper()
 			# self.limb.adjustPoseTo('position','z',self.Z_TABLE+self.BOX_HEIGHT+0.1)
-		return hasBox
+
+		if success:
+			result_PickUpBox.is_picked = hasBox
+			self.PickUpBoxAct.set_succeeded(result_PickUpBox)
+
+	# Lower the gripper, close gripper, raise gripper, check effort, return whether or not an object is being supported 
+
+	# Comments inside check_pickup 
 		'''
 		del self.effort[:]
 
@@ -365,6 +372,7 @@ class Module():
 		if(not self.compare_efforts(effort1 = self.effort[0], effort2 = self.effort[1])):
 			self.limb.go_to_cartesian_pose(joint_angles = self.newCartPose_arg)
 		'''
+
 	def display_camera_callback(self, img_data):
 		bridge = CvBridge()
 		try:
@@ -372,12 +380,22 @@ class Module():
 		except CvBridgeError, err:
 			rospy.logerr(err)
 
+		img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+		detector = apriltag.Detector()
+		detections = detector.detect(img)
+		# rospy.loginfo(detections[0].corners)
+
+		cv2.line(cv_image, (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[1][0]),int(detections[0].corners[1][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[2][0]),int(detections[0].corners[2][1])), (255,255,51), 3)
+		cv2.line(cv_image, (int(detections[0].corners[3][0]),int(detections[0].corners[3][1])), (int(detections[0].corners[0][0]),int(detections[0].corners[0][1])), (255,255,51), 3)
+
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
+		
 		cnt = contours[0]
 		max_area = cv2.contourArea(cnt)
 
@@ -392,15 +410,14 @@ class Module():
 
 		cv2.drawContours(cv_image, [box], -1, (0,255,0), 3)
 
-		a = sum(map(lambda x: x[0], box))/4
-		b = sum(map(lambda x: x[1], box))/4
-
-		cv2.circle(cv_image, (a,b), 8, (255,0,0), -1)
+		# a = sum(map(lambda x: x[0], box))/4
+		# b = sum(map(lambda x: x[1], box))/4
 
 		#img = cv_image
 		# rospy.loginfo('Creating image')
-		cv2.imwrite('/home/albertgo/teachbot/browser/public/images/cv_image.png', cv_image)
+		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 		self.command_complete_topic.publish()
+	
 
 
 	def addSeq(self, seq):
@@ -423,15 +440,11 @@ class Module():
 		msg.data = arr
 		self.array_topic.publish(msg)
 		if self.VERBOSE: rospy.loginfo("I sent: " + str(arr))
-	def pub_dev(self, cmd):
-		msg = Int32()
-		msg.data = cmd
-		self.dev_topic.publish(msg)
-		if self.VERBOSE: rospy.loginfo("I sent: " + str(cmd))
 
 	## ROS SUBSCRIBERS ##
 	def rx_audio_duration(self,data):
-		self.audio_duration = data.data
+		self.audio_duration = data.audio_duration
+		return True
 
 	def forwardJointState(self, data):
 		position = JointInfo()
@@ -467,12 +480,12 @@ class Module():
 		if self.navigator.button_string_lookup(data) == 'OFF':
 			if self.devMode:
 				self.devMode = False
-				self.pub_dev(0)
+				self.DevModeSrv(0)
 				self.lights.set_light_state('head_blue_light',False)
 				if self.VERBOSE: rospy.loginfo('Exiting dev mode')
 			else:
 				self.devMode = True
-				self.pub_dev(1)
+				self.DevModeSrv(1)
 				self.lights.set_light_state('head_blue_light',True)
 				if self.VERBOSE: rospy.loginfo('Entering dev mode')
 
@@ -498,46 +511,6 @@ class Module():
 		self.navigator.deregister_callback(self.wheel_callback_id)
 		self.wheel_callback_id = -1
 
-	def subscribe_to_multi_choice(self):
-		def button_pressed(name, data):
-			if self.navigator.button_string_lookup(data) == 'OFF':
-				self.pub_num(self.BUTTON[name])
-			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
-
-		for key in self.BUTTON:
-			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key : button_pressed(key, data), 'right_button_' + key)
-
-	def unsubscribe_from_multi_choice(self):
-		if self.multi_choice_callback_ids[self.BUTTON.keys()[0]]==-1:
-			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
-		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
-
-	def subscribe_to_cuff_interaction(self, terminatingCondition=None, ways=False):
-		rospy.loginfo('Going into cuff interaction')
-
-		self.cuff_callback_ids['upper'] = self.cuff.register_callback(lambda data: self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True), 'right_button_upper')
-		self.cuff_callback_ids['lower'] = self.cuff.register_callback(lambda data: self.limb.interaction_control(position_x=True, position_y=True)   , 'right_button_lower')
-		# self.cuff_callback_ids['upper'] = self.cuff.register_callback(lambda data: self.interaction_control_topic.publish(orientation_z=True, in_end_point_frame=True), 'right_button_upper')
-		# self.cuff_callback_ids['lower'] = self.cuff.register_callback(lambda data: self.interaction_control_topic.publish(position_x=True, position_y=True)   , 'right_button_lower')
-
-		rospy.loginfo(self.cuff_callback_ids['upper'])
-		self.finished = False
-		if ways:
-			if terminatingCondition is not None:
-				while not terminatingCondition(self):
-					pass
-				waypoints.append(self.limb.joint_angles())
-		else:
-			if terminatingCondition is not None:
-				while not terminatingCondition(self):
-					pass
-		rospy.loginfo('Done with cuff interaction')
-		self.unsubscribe_from_cuff_interaction()
-
-	def unsubscribe_from_cuff_interaction(self):
-		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
-		self.limb.position_mode()
-
 	def _unsubscribe_from(self, obj, callback_ids):
 		notified = False
 		for key in callback_ids:
@@ -550,85 +523,168 @@ class Module():
 	def rx_command(self, data):
 		pass
 
-	def cb_adjustPoseBy(self, req):
+	def cb_AdjustPoseBy(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose by')
 
-		self.limb.adjustPoseBy(req.geometry, req.axis, eval(req.amount))
+		success = True
+		result_AdjustPoseBy = AdjustPoseByResult()
+		result_AdjustPoseBy.is_done = False
 
-		self.command_complete_topic.publish()
+		self.limb.adjustPoseBy(goal.geometry, goal.axis, eval(goal.amount))
 
-	def cb_adjustPoseTo(self, req):
+		if success:
+			result_AdjustPoseBy.is_done = True
+			self.AdjustPoseByAct.set_succeeded(result_AdjustPoseBy)
+
+	def cb_AdjustPoseTo(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
-		self.limb.adjustPoseTo(req.geometry, req.axis, eval(req.amount))
+		success = True
+		result_AdjustPoseTo = AdjustPoseToResult()
+		result_AdjustPoseTo.is_done = False
 
-		self.command_complete_topic.publish()
+		if self.AdjustPoseToAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.AdjustPoseToAct.set_preempted()
+			success = False
+
+		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
+
+		if success:
+			result_AdjustPoseTo.is_done = True
+			self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
+
+	def cb_Gripper(self,goal):
+
+		success = True
+		result_Gripper = GripperResult()
+		result_Gripper.is_done = False
+
+		if self.GripperAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.GripperAct.set_preempted()
+			success = False
+
+		if (goal.todo=='open'):
+			if self.VERBOSE: rospy.loginfo('Opening gripper')
+			self.open_gripper()
+		elif (goal.todo=='close'):
+			if self.VERBOSE: rospy.loginfo('Closing gripper')
+			self.close_gripper()
+		else:
+			if self.VERBOSE: rospy.loginfo('Gripper doing nothing')
+			pass
+
+		if success:
+			result_Gripper.is_done = True
+			self.GripperAct.set_succeeded(result_Gripper)
 
 	def cb_camera(self, data):
-		if self.VERBOSE: rospy.loginfo('Accessing camera')
+		if data.data == True:
+			if self.VERBOSE: rospy.loginfo('Accessing camera')
 
-		rp = intera_interface.RobotParams()
-		valid_cameras = rp.get_camera_names()
-		camera = intera_interface.Cameras()
-		camera.start_streaming('right_hand_camera')
-		rectify_image = False
-		camera.set_callback('right_hand_camera', self.display_camera_callback)
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.start_streaming('right_hand_camera')
+			rectify_image = False
+			camera.set_callback('right_hand_camera', self.display_camera_callback)
+		else:
+			if self.VERBOSE: rospy.loginfo('Shutting down camera')
+			rp = intera_interface.RobotParams()
+			valid_cameras = rp.get_camera_names()
+			camera = intera_interface.Cameras()
+			camera.stop_streaming('right_hand_camera')
 
-	def cb_check_pickup(self, req):
-		if self.VERBOSE: rospy.loginfo('Checking if box was picked up')
+	# When the lower cuff button is pressed, allow 2D position movement.
+	def cb_cuff_lower(self, data):
+		rospy.loginfo('Cuff lower button pressed.')
+		self.limb.interaction_control(position_x=True, position_y=True)
+		feedback = sawyer.msg.CuffInteractionFeedback()
+		feedback.mode = True
+		self.CuffInteractionAct.publish_feedback(feedback)
 
-		box = self.check_pickup()
+	# When the upper cuff button is pressed, allow 1D orientation movement.
+	def cb_cuff_upper(self, data):
+		rospy.loginfo('Cuff upper button pressed.')
+		self.limb.interaction_control(orientation_z=True, in_endpoint_frame=True)
+		feedback = sawyer.msg.CuffInteractionFeedback()
+		feedback.mode = False
+		self.CuffInteractionAct.publish_feedback(feedback)
 
-		rospy.loginfo(box)
+	def unsubscribe_from_cuff_interaction(self):
+		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
+		self.limb.position_mode()
 
-		self.pickedup_topic.publish(box)
-
-	def cb_closeGripper(self, req):
-		if self.VERBOSE: rospy.loginfo('Closing gripper')
-
-		if req.data == True:
-			self.close_gripper()
-		self.command_complete_topic.publish()
-
-	def cb_cuffInteraction(self, req):
+	def cb_CuffInteraction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Cuff interaction engaged')
+		terminatingCondition = eval(goal.terminatingCondition)
+		ways = goal.ways
 
-		self.subscribe_to_cuff_interaction(eval(req.terminatingCondition), req.ways)
+		# Initialize action objects
+		result = sawyer.msg.CuffInteractionResult()
 
-	def cb_cuff_lower(self, req):
-		if req.state == 1:
-			rospy.loginfo('Cuff lower button pressed')
-			self.pos_orient_topic.publish('pos')
+		
+		self.cuff_callback_ids['lower'] = self.cuff.register_callback(self.cb_cuff_lower, 'right_button_lower')
+		self.cuff_callback_ids['upper'] = self.cuff.register_callback(self.cb_cuff_upper, 'right_button_upper')
+		
+		# Continue until terminating condition is met.
+		# If in waypoint mode, store each waypoint.
+		self.finished = False
+		if ways:
+			if terminatingCondition is not None:
+				while not terminatingCondition(self):
+					pass
+				waypoints.append(self.limb.joint_angles())
+		else:
+			if terminatingCondition is not None:
+				while not terminatingCondition(self):
+					pass
+		
+		# After the terminating condition is met, reset to position mode and complete action.
+		rospy.loginfo('Done with cuff interaction')
+		self.unsubscribe_from_cuff_interaction()
+		result.done = True
+		self.CuffInteractionAct.set_succeeded(result)
 
-	def cb_cuff_upper(self, req):
-		if req.state == 1:
-			rospy.loginfo('Cuff upper button pressed')
-			self.pos_orient_topic.publish('orien')
-
-
-	def cb_GoToCartesianPose(self, req):
+	def cb_GoToCartesianPose(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to cartesian pose')
 
-		self.limb.go_to_cartesian_pose(position=eval(req.position), orientation=eval(req.orientation), relative_pose=eval(req.relative_pose), joint_angles=eval(req.joint_angles), endpoint_pose=eval(req.endpoint_pose))
+		success = True
 
-		self.command_complete_topic.publish()
+		result_GoToCartesianPose = GoToCartesianPoseResult()
+		result_GoToCartesianPose.is_done = False
 
-	def cb_GoToJointAngles(self, req):
+		if self.GoToCartesianPoseAct.is_preempt_requested():
+			rospy.loginfo("%s: Preempted", 'n/a')
+			self.GoToCartesianPoseAct.set_preempted()
+			success = False
+
+		self.limb.go_to_cartesian_pose(position=eval(goal.position), orientation=eval(goal.orientation), relative_pose=eval(goal.relative_pose), joint_angles=eval(goal.joint_angles), endpoint_pose=eval(goal.endpoint_pose))
+
+		if success:
+			result_GoToCartesianPose.is_done = True
+			self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
+
+	def cb_GoToJointAngles(self, goal):
 		if self.VERBOSE: rospy.loginfo('Going to joint angles')
 
-		speed_ratio = 0.5 if req.speed_ratio == 0 else req.speed_ratio
+		speed_ratio = 0.5 if goal.speed_ratio == 0 else goal.speed_ratio
 
 		ways = False
-		if req.name == 'waypoints.pop(0)':
+		if goal.name == 'waypoints.pop(0)':
 			ways = True
 
-		if req.name is '':
-			self.limb.go_to_joint_angles([req.j0pos, req.j1pos, req.j2pos, req.j3pos, req.j4pos, req.j5pos, req.j6pos], speed_ratio=speed_ratio)
-			self.command_complete_topic.publish()
+		result = sawyer.msg.GoToJointAnglesResult()
+
+		if goal.name is '':
+			self.limb.go_to_joint_angles([goal.j0pos, goal.j1pos, goal.j2pos, goal.j3pos, goal.j4pos, goal.j5pos, goal.j6pos], speed_ratio=speed_ratio)
+			result.success = True
+			self.GoToJointAnglesAct.set_succeeded(result)
 		else:
-			if req.wait == True:
+			if goal.wait == True:
 				startTime = rospy.get_time()
-				goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+				goto = self.limb.go_to_joint_angles(eval(goal.name), speed_ratio=speed_ratio, ways = ways)
 
 				if goto == False:
 					rospy.loginfo('correct me please')
@@ -639,21 +695,19 @@ class Module():
 					rospy.loginfo('Audio file played')
 					rospy.sleep(10.5)
 
-					msg = InteractionControl()
-					msg.position_only = False
-					msg.orientation_x = True
-					msg.orientation_y = True
-					msg.orientation_z = True
-					msg.position_x = True
-					msg.position_y = True
-					msg.position_z = True
-					msg.PASS = False
-					msg.ways = False
-					self.interaction_control_topic.publish(msg)
-
-					self.finished = False
-					while (not self.finished):
-						pass
+					goal_InteractionControl = InteractionControlGoal(
+						position_only = False,
+						orientation_x = True,
+						orientation_y = True,
+						orientation_z = True,
+						position_x = True,
+						position_y = True,
+						position_z = True,
+						PASS = False,
+						ways = False
+						)
+					InteractionControlActCli.send_goal(goal_InteractionControl)
+					InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
@@ -662,10 +716,10 @@ class Module():
 					rospy.sleep(4.5)
 					self.limb.go_to_joint_angles(default)
 
-				while rospy.get_time()-startTime<self.audio_duration:
+				while rospy.get_time()-startTime<self.audio_duration + 3:
 					pass
 			else:
-				goto = self.limb.go_to_joint_angles(eval(req.name), speed_ratio=speed_ratio, ways = ways)
+				goto = self.limb.go_to_joint_angles(eval(goal.name), speed_ratio=speed_ratio, ways = ways)
 				rospy.loginfo(goto)
 				if goto == False:
 					rospy.loginfo('correct me please')
@@ -676,21 +730,19 @@ class Module():
 					rospy.loginfo('Audio file played')
 					rospy.sleep(10.5)
 
-					msg = InteractionControl()
-					msg.position_only = False
-					msg.orientation_x = True
-					msg.orientation_y = True
-					msg.orientation_z = True
-					msg.position_x = True
-					msg.position_y = True
-					msg.position_z = True
-					msg.PASS = False
-					msg.ways = False
-					self.interaction_control_topic.publish(msg)
-
-					self.finished = False
-					while (not self.finished):
-						pass
+					goal_InteractionControl = InteractionControlGoal(
+						position_only = False,
+						orientation_x = True,
+						orientation_y = True,
+						orientation_z = True,
+						position_x = True,
+						position_y = True,
+						position_z = True,
+						PASS = False,
+						ways = False
+						)
+					InteractionControlActCli.send_goal(goal_InteractionControl)
+					InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
@@ -698,21 +750,31 @@ class Module():
 					rospy.loginfo('Audio file played')
 					rospy.sleep(4.5)
 					self.limb.go_to_joint_angles(default)
-			self.command_complete_topic.publish()
+			result.success = True
+			self.GoToJointAnglesAct.set_succeeded(result)
 
-	def cb_highTwo(self, req):
+	def cb_HighTwo(self, goal):
 		if self.VERBOSE: rospy.loginfo('High two attempted')
-		if req.data == True:
+
+		success = True
+		result_HighTwo = HighTwoResult()
+		result_HighTwo.is_success = False
+
+		if goal.high_two == True:
 			startEffort = sum(abs(effort) for effort in self.limb.joint_efforts().values())
 			startTime = rospy.get_time()
 			while abs(startEffort-sum(abs(effort) for effort in self.limb.joint_efforts().values()))<0.1*startEffort and rospy.get_time()-startTime<8:
 				rospy.sleep(0.1)
 			if rospy.get_time()-startTime<8:
-				self.highTwo_success_topic.publish(True)
+				result_HighTwo.is_success = True
 			else:
-				self.highTwo_success_topic.publish(False)
+				result_HighTwo.is_success = False
 
-	def cb_impedance(self, req):
+		if success:
+			rospy.loginfo(result_HighTwo.is_success)
+			self.HighTwoAct.set_succeeded(result_HighTwo)
+
+	def cb_JointImpedance(self, goal):
 		if self.VERBOSE: rospy.loginfo('Impedance activated')
 		k = self.limb.joint_angles()
 		b = k.copy()
@@ -720,20 +782,20 @@ class Module():
 			k[joint] = 160 if joint=='right_j1' else 10
 			b[joint] = 5 if joint=='right_j1' else 10
 		self.finished = False
-		self.joint_impedance_move(b,k,eval(req.terminatingCondition), tics=req.tics)
+		self.joint_impedance_move(b,k,eval(goal.terminatingCondition), tics=goal.tics)
+		
+		result = sawyer.msg.JointImpedanceResult()
+		result.done = True
+		self.JointImpedanceAct.set_succeeded(result)
 
-	def cb_interaction(self, req):
+	def cb_interaction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Free motion is on')
-		
-		self.limb.interaction_control(position_only=req.position_only, orientation_x=req.orientation_x, orientation_y=req.orientation_y, orientation_z=req.orientation_z, position_x=req.position_x, position_y=req.position_y, position_z=req.position_z, in_endpoint_frame=req.in_end_point_frame)
 
+		result = sawyer.msg.InteractionControlResult()
 		
-		if req.position_z == False and req.orientation_z == False:
-			self.pos_orient_topic.publish('pos')
-		elif req.orientation_z == True and req.position_x == False:
-			self.pos_orient_topic.publish('orien')
+		self.limb.interaction_control(position_only=goal.position_only, orientation_x=goal.orientation_x, orientation_y=goal.orientation_y, orientation_z=goal.orientation_z, position_x=goal.position_x, position_y=goal.position_y, position_z=goal.position_z, in_endpoint_frame=goal.in_end_point_frame)
 
-		if req.PASS == False:
+		if goal.PASS == False:
 			ang_arr = [0]*self.JOINTS
 			self.finished = False
 			while(not self.finished):													# Wait for user to stop moving arm
@@ -743,52 +805,77 @@ class Module():
 						ang_arr[j] = self.limb.joint_angles()['right_j' + str(j)]
 					rospy.sleep(0.1)
 			self.limb.position_mode()
-		elif req.ways == False:
+			result.done = True
+			self.InteractionControlAct.set_succeeded(result)
+		elif goal.ways == False:
 			self.finished = False
 			while(not self.finished):
 				pass
 			self.limb.position_mode()
+			result.done = True
+			self.InteractionControlAct.set_succeeded(result)
 		else:
-			self.limb.interaction_control(position_only=req.position_only, orientation_x=req.orientation_x, orientation_y=req.orientation_y, orientation_z=req.orientation_z, position_x=req.position_x, position_y=req.position_y, position_z=req.position_z, in_endpoint_frame=req.in_end_point_frame)
+			self.limb.interaction_control(position_only=goal.position_only, orientation_x=goal.orientation_x, orientation_y=goal.orientation_y, orientation_z=goal.orientation_z, position_x=goal.position_x, position_y=goal.position_y, position_z=goal.position_z, in_endpoint_frame=goal.in_end_point_frame)
 			self.finished = False
 			while not self.finished:
 				pass
 			waypoints.append(self.limb.joint_angles())
 			self.limb.position_mode()
+			result.done = True
+			self.InteractionControlAct.set_succeeded(result)
 
-	def cb_joint_angle(self, req):
+	def cb_WaitForPush(self, goal):
 		if self.VERBOSE: rospy.loginfo('First example of impedance')
-		self.startPos = self.limb.joint_angle(req.data)					# Record starting position
-		while(abs(self.startPos-self.limb.joint_angle('right_j1'))<0.01):	# Wait for user to begin moving arm
+		self.startPos = self.limb.joint_angle(goal.joint)					# Record starting position
+		while(abs(self.startPos-self.limb.joint_angle(goal.joint))<0.01):	# Wait for user to begin moving arm
 			pass
-		self.command_complete_topic.publish()
+		
+		result = sawyer.msg.WaitForPushResult()
+		self.WaitForPushAct.set_succeeded(result)
 
 	def cb_joint_move(self, req):
 		self.finished = False
 		if self.VERBOSE: rospy.loginfo('joint able to be moved')
 		
+		result = sawyer.msg.JointMoveResult()
+
 		self.joint_move(eval(req.joints), eval(req.terminatingCondition), eval(req.resetPOS), min_thresh=eval(req.min_thresh), bias=eval(req.bias))
 
-	def cb_multiple_choice(self, req):
+		result.done = True
+		self.JointMoveAct.set_succeeded(result);
+
+	def unsubscribe_from_multi_choice(self):
+		if self.multi_choice_callback_ids[self.BUTTON.keys()[0]]==-1:
+			rospy.loginfo('Already unsubscribed from multiple choice callbacks.')
+		self._unsubscribe_from(self.navigator, self.multi_choice_callback_ids)
+
+	def multiple_choice_button_pressed(self, name, data):
+		if self.navigator.button_string_lookup(data) == 'OFF':
+			if self.VERBOSE: rospy.loginfo(name + ' button pressed.')
+			self.multiple_chocie_result = sawyer.msg.MultipleChoiceResult()
+			self.multiple_chocie_result.answer = self.BUTTON[name];
+			#self.unsubscribe_from_multi_choice()
+			self.multiple_choice_selected = True
+
+	def cb_MultipleChoice(self, goal):
 		if self.VERBOSE: rospy.loginfo('Multiple choice ready')
-		if req.data:
-			self.subscribe_to_multi_choice()
-		else:
-			self.unsubscribe_from_multi_choice()
 
-	def cb_openGripper(self, req):
-		if self.VERBOSE: rospy.loginfo('Opening gripper')
+		self.multiple_choice_selected = False
 
-		if req.data == True:
-			self.open_gripper()
-		self.command_complete_topic.publish()
-		rospy.loginfo('Gripper opened')
+		for key in self.BUTTON:
+			self.multi_choice_callback_ids[key] = self.navigator.register_callback(lambda data, key=key, self=self : self.multiple_choice_button_pressed(key, data), 'right_button_' + key)
+			print(self.multi_choice_callback_ids[key])
+
+		while not self.multiple_choice_selected:
+			pass
+		self.MultipleChoiceAct.set_succeeded(self.multiple_chocie_result)
 
 	def cb_WheelSubscription(self, req):
-		if req.data:
+		if req.subscribe:
 			self.subscribe_to_wheel_move()
 		else:
 			self.unsubscribe_from_wheel_move()
+		return True
 
 class Sequence():
 	def __init__(self, idn, timestamp=None):

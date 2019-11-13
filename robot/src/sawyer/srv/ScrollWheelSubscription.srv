@@ -1,0 +1,7 @@
+## Subscribe to scroll wheel.
+
+# Request
+bool subscribe
+---
+# Response
+bool done
