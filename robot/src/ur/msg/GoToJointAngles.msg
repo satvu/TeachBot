@@ -6,7 +6,6 @@ float32 j2pos
 float32 j3pos
 float32 j4pos
 float32 j5pos
-float32 j6pos
 string name
 # Optional: Fraction of fastest speed the arm can move
 float32 speed_ratio
