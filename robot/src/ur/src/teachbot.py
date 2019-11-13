@@ -139,6 +139,8 @@ if __name__ == '__main__':
     ELBOW_FWD = [0, -3.14, 0.5, -3.14, -1.57, 0]
     SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
     BASE_FWD = [0.50, -3.14, 0, -3.14, -1.57, 0]
+    
+    default = SCARA
 
     # 1
     joint_motor_animation_0 = SCARA
