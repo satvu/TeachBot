@@ -52,7 +52,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"//":"3: Oh, that's embarrassing. Let me try again. I think I know what I did wrong. Would you please move the box back into the designated area? Press the scroll wheel on my arm when you've done so.",
@@ -69,7 +70,8 @@
 				"endpoint_pose":"None"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"pressed_button"
@@ -106,7 +108,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"type":"goToCartesianPose",
@@ -123,7 +126,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"goToCartesianPose",
@@ -208,7 +212,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"adjustPoseTo",
@@ -289,7 +294,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"goToCartesianPose",
@@ -413,7 +419,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"goToCartesianPose",
@@ -479,7 +486,8 @@
 				"wait":true
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"//":"6: Now, lift my hand high enough so that the box higher than the bin. Press the scroll wheel to continue.",
@@ -536,7 +544,8 @@
 				"wait":true
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"//":"9: Please stand back so I can reset my position to be over Box 4.",
@@ -582,7 +591,8 @@
 				"joint_angles":"waypoints.pop(0)"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"type":"goToJointAngles",
@@ -597,7 +607,8 @@
 				"joint_angles":"waypoints.pop(0)"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"//":"13: Great job! Please stand back so I can adjust",

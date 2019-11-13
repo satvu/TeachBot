@@ -835,19 +835,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'closeGripper':
-
-				var goal_closeGripper = new ROSLIB.Goal({
-					actionClient: this.GripperAct,
-					goalMessage:{todo: "close"}
-				});
-				goal_closeGripper.on('result', function(result){
-					self.start(self.getNextAddress(instructionAddr));
-				});
-				goal_closeGripper.send();
-
-				break;
-
 			case 'cuff_interaction':
 				checkInstruction(instr, ['terminatingCondition', 'ways'], instructionAddr);
 
@@ -981,7 +968,20 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-		   
+			case 'gripper':
+				checkInstruction(instr, ['grip'], instructionAddr);
+
+				var goal_Gripper = new ROSLIB.Goal({
+					actionClient: this.GripperAct,
+					goalMessage:{grip: instr.grip}
+				});
+				goal_Gripper.on('result', function(result){
+					self.start(self.getNextAddress(instructionAddr));
+				});
+				goal_Gripper.send();
+
+				break;
+
 			case 'goToJointAngles':
 				checkInstruction(instr, ['joint_angles'], instructionAddr);
 
@@ -1269,19 +1269,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 
 				goal.send();
-
-				break;
-
-			case 'openGripper':
-
-				var goal_openGripper = new ROSLIB.Goal({
-					actionClient: this.GripperAct,
-					goalMessage:{todo: "open"}
-				});
-				goal_openGripper.on('result', function(result){
-					self.start(self.getNextAddress(instructionAddr))
-				});
-				goal_openGripper.send()
 
 				break;
 

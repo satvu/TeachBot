@@ -224,7 +224,6 @@ class Module():
 
 			rate.sleep()
 		rospy.loginfo('Joint move completed')
-		self.command_complete_topic.publish()
 		self.limb.exit_control_mode()
 
 	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
@@ -539,45 +538,28 @@ class Module():
 	def cb_AdjustPoseTo(self, goal):
 		if self.VERBOSE: rospy.loginfo('Adjusting pose to')
 
-		success = True
 		result_AdjustPoseTo = AdjustPoseToResult()
 		result_AdjustPoseTo.is_done = False
 
-		if self.AdjustPoseToAct.is_preempt_requested():
-			rospy.loginfo("%s: Preempted", 'n/a')
-			self.AdjustPoseToAct.set_preempted()
-			success = False
-
 		self.limb.adjustPoseTo(goal.geometry, goal.axis, eval(goal.amount))
 
-		if success:
-			result_AdjustPoseTo.is_done = True
-			self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
+		result_AdjustPoseTo.is_done = True
+		self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
 
 	def cb_Gripper(self,goal):
 
-		success = True
 		result_Gripper = GripperResult()
 		result_Gripper.is_done = False
 
-		if self.GripperAct.is_preempt_requested():
-			rospy.loginfo("%s: Preempted", 'n/a')
-			self.GripperAct.set_preempted()
-			success = False
-
-		if (goal.todo=='open'):
-			if self.VERBOSE: rospy.loginfo('Opening gripper')
-			self.open_gripper()
-		elif (goal.todo=='close'):
+		if (goal.grip==True):
 			if self.VERBOSE: rospy.loginfo('Closing gripper')
 			self.close_gripper()
 		else:
-			if self.VERBOSE: rospy.loginfo('Gripper doing nothing')
-			pass
+			if self.VERBOSE: rospy.loginfo('Opening gripper')
+			self.open_gripper()
 
-		if success:
-			result_Gripper.is_done = True
-			self.GripperAct.set_succeeded(result_Gripper)
+		result_Gripper.is_done = True
+		self.GripperAct.set_succeeded(result_Gripper)
 
 	def cb_camera(self, data):
 		if data.data == True:
