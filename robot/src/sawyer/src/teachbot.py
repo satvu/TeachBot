@@ -76,9 +76,8 @@ class Module():
 		self.MultipleChoiceAct = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
-		self.HighTwoAct = actionlib.SimpleActionServer('/teachbot/HighTwo', HighTwoAction, execute_cb=self.cb_HighTwo, auto_start=True)
-		self.WaitForPushAct = actionlib.SimpleActionServer('/teachbot/WaitForPush', WaitForPushAction, execute_cb=self.cb_WaitForPush, auto_start=True)
 		self.JointImpedanceAct = actionlib.SimpleActionServer('/teachbot/JointImpedance', JointImpedanceAction, execute_cb=self.cb_JointImpedance, auto_start=True)
+		self.WaitAct = actionlib.SimpleActionServer('/teachbot/Wait', WaitAction, execute_cb=self.cb_Wait, auto_start=True)
 
 		# Global Vars
 		self.audio_duration = 0
@@ -698,8 +697,10 @@ class Module():
 					rospy.sleep(4.5)
 					self.limb.go_to_joint_angles(default)
 
-				while rospy.get_time()-startTime<self.audio_duration + 3:
+				# while(rospy.get_time()-startTime<self.audio_duration or sum(abs(velocity) for velocity in self.limb.joint_velocities().values())>0.05):
+				while(sum(abs(velocity) for velocity in self.limb.joint_velocities().values())>0.05):	
 					pass
+
 			else:
 				goto = self.limb.go_to_joint_angles(eval(goal.name), speed_ratio=speed_ratio, ways = ways)
 				rospy.loginfo(goto)
@@ -734,27 +735,6 @@ class Module():
 					self.limb.go_to_joint_angles(default)
 			result.success = True
 			self.GoToJointAnglesAct.set_succeeded(result)
-
-	def cb_HighTwo(self, goal):
-		if self.VERBOSE: rospy.loginfo('High two attempted')
-
-		success = True
-		result_HighTwo = HighTwoResult()
-		result_HighTwo.is_success = False
-
-		if goal.high_two == True:
-			startEffort = sum(abs(effort) for effort in self.limb.joint_efforts().values())
-			startTime = rospy.get_time()
-			while abs(startEffort-sum(abs(effort) for effort in self.limb.joint_efforts().values()))<0.1*startEffort and rospy.get_time()-startTime<8:
-				rospy.sleep(0.1)
-			if rospy.get_time()-startTime<8:
-				result_HighTwo.is_success = True
-			else:
-				result_HighTwo.is_success = False
-
-		if success:
-			rospy.loginfo(result_HighTwo.is_success)
-			self.HighTwoAct.set_succeeded(result_HighTwo)
 
 	def cb_JointImpedance(self, goal):
 		if self.VERBOSE: rospy.loginfo('Impedance activated')
@@ -806,15 +786,6 @@ class Module():
 			result.done = True
 			self.InteractionControlAct.set_succeeded(result)
 
-	def cb_WaitForPush(self, goal):
-		if self.VERBOSE: rospy.loginfo('First example of impedance')
-		self.startPos = self.limb.joint_angle(goal.joint)					# Record starting position
-		while(abs(self.startPos-self.limb.joint_angle(goal.joint))<0.01):	# Wait for user to begin moving arm
-			pass
-		
-		result = sawyer.msg.WaitForPushResult()
-		self.WaitForPushAct.set_succeeded(result)
-
 	def cb_joint_move(self, req):
 		self.finished = False
 		if self.VERBOSE: rospy.loginfo('joint able to be moved')
@@ -825,6 +796,34 @@ class Module():
 
 		result.done = True
 		self.JointMoveAct.set_succeeded(result);
+
+	def cb_Wait(self, goal):
+
+		result_wait = sawyer.msg.WaitResult()
+		result_wait.success = False
+
+		if goal.timeout<0:
+			rospy.loginfo('Timeout not specified! Wait functoin cannot wait for forever.')
+			raise
+		startTime = rospy.get_time()
+
+		if goal.what=='effort':
+			startEffort = sum(abs(effort) for effort in self.limb.joint_efforts().values())
+			while (rospy.get_time()-startTime<goal.timeout and not result_wait.success):
+				result_wait.success = abs(startEffort-sum(abs(effort) for effort in self.limb.joint_efforts().values()))>0.1*startEffort
+				rospy.sleep(0.1)
+		else:
+			pass
+
+		if not result_wait.success:
+			if rospy.get_time()-startTime>=goal.timeout:
+				rospy.loginfo('Wait callback: timeout!')
+			else:
+				rospy.loginfo('Wait callback: failed to receive an input or wait not properly formatted.')
+		else:
+			rospy.loginfo('Wait callback: success!')
+
+		self.WaitAct.set_succeeded(result_wait)
 
 	def unsubscribe_from_multi_choice(self):
 		if self.multi_choice_callback_ids[self.BUTTON.keys()[0]]==-1:

@@ -543,7 +543,8 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"joint_push_down"
+				"joint_angles":"joint_push_down",
+				"wait":true
 			},
 			{
 				"//":"But that's only one demonstration of feedback. Let me show you another one. Try gently pushing down on my arm. Can you notice the difference?",
@@ -552,8 +553,10 @@
 				"delay":false
 			},
 			{
-				"type":"wait_for_push",
-				"joint":"right_j1"
+				"type":"wait",
+				"what":"effort",
+				"timeout": 1000,
+				"store_answer_in":"wait_output"
 			},
 			{
 				"//":"Watch the projection as you push my arm. I've put up a little display showing how far you've pushed my arm and how much force I'm using to push back. The further you push my arm, the harder I tell my motors to push back. It should feel a little bit like a rubber band: the more you displace it, the harder it will want to spring back into its original position. When you're done, press the scroll wheel button.",
@@ -1242,13 +1245,13 @@
 		"id":"end",
 		"instructions":[
 			{
+				"type":"image"
+			},
+			{
 				"//":"And that's what it's all about! High two!",
 				"type":"play",
 				"audio_index":0,
 				"delay":false
-			},
-			{
-				"type":"image"
 			},
 			{
 				"type":"goToJointAngles",
@@ -1256,15 +1259,14 @@
 				"wait":true
 			},
 			{
-				"type":"image"
-			},
-			{
-				"type":"highTwo",
-				"store_answer_in":"wheelVal"
+				"type":"wait",
+				"what": "effort",
+				"timeout": 5,
+				"store_answer_in":"wait_output"
 			},
 			{
 				"type":"if",
-				"conditional":"#wheelVal==1",
+				"conditional":"#wait_output==true",
 				"if_true":[
 					{
 						"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
@@ -1278,15 +1280,17 @@
 						"//":"I only have two fingers, so instead of a high five I can only give high two's. High two!",
 						"type":"play",
 						"audio_index":1,
-						"delay":false
+						"delay":true
 					},
 					{
-						"type":"highTwo",
-						"store_answer_in":"wheelVal"
+						"type":"wait",
+						"what":"effort",
+						"timeout": 5,
+						"store_answer_in":"wait_output"
 					},
 					{
 						"type":"if",
-						"conditional":"#wheelVal==1",
+						"conditional":"#wait_output",
 						"if_true":[
 							{
 								"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",

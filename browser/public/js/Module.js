@@ -158,21 +158,16 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/AdjustPoseBy',
 		actionName: ROBOT + '/AdjustPoseByAction'
 	});
-	this.HighTwoAct = new ROSLIB.ActionClient({
-		ros: ros,
-		serverName: '/teachbot/HighTwo',
-		actionName: ROBOT + '/HighTwoAction'
-	});
-	this.WaitForPushAct = new ROSLIB.ActionClient({
-		ros: ros,
-		serverName: '/teachbot/WaitForPush',
-		actionName: ROBOT + '/WaitForPushAction'
-	});
 	this.JointImpedanceAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/JointImpedance',
 		actionName: ROBOT + '/JointImpedanceAction'
 	});
+	this.WaitAct =  new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/Wait',
+		actionName: ROBOT + '/WaitAction'
+	})
 
 	// Initialize dictionary
 	this.dictionary = {};
@@ -1025,32 +1020,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'highTwo':
-
-				var goal_HighTwo = new ROSLIB.Goal({
-					actionClient: this.HighTwoAct,
-					goalMessage:{ high_two: true }
-				});
-				goal_HighTwo.on('result', function(result){
-					if (VERBOSE) console.log('High two: ' + result.is_success);
-					if (result.is_success == true) {
-						wheel_val = 1
-						if (instr.hasOwnProperty('store_answer_in')) {
-							self.dictionary[instr.store_answer_in] = wheel_val;
-						}
-						self.start(self.getNextAddress(instructionAddr));
-					} else{
-						wheel_val = 2
-						if (instr.hasOwnProperty('store_answer_in')) {
-							self.dictionary[instr.store_answer_in] = wheel_val;
-						}
-						self.start(self.getNextAddress(instructionAddr));
-					}
-				});
-				goal_HighTwo.send();
-
-				break;
-
 			case 'hokeypokey':
 				var hokeypokey_out_url = DIR + 'images/hokeypokey_out.png';
 				var hokeypokey_in_url = DIR + 'images/hokeypokey_in.png';
@@ -1076,7 +1045,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'if':
 				checkInstruction(instr, ['conditional','if_true'], instructionAddr);
-
+				console.log((this.hashTokeyVal(instr.conditional)))
 				if (eval(this.hashTokeyVal(instr.conditional))) {
 					instructionAddr.push(true);
 					instructionAddr.push(0);
@@ -1175,16 +1144,23 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'wait_for_push':
-				checkInstruction(instr, ['joint'], instructionAddr);
+			case 'wait':
+				checkInstruction(instr, ['what'], instructionAddr);
 
 				var goal = new ROSLIB.Goal({
-					actionClient: this.WaitForPushAct,
-					goalMessage: { joint: instr.joint }
+					actionClient: this.WaitAct,
+					goalMessage:{ 
+						what: instr.what,
+						timeout: instr.timeout 
+					}
 				});
 
-				goal.on('result', result => { self.start(self.getNextAddress(instructionAddr)); });
-
+				goal.on('result', result => {
+					if (instr.hasOwnProperty('store_answer_in')) {
+							self.dictionary[instr.store_answer_in] = result.success;
+						}
+					self.start(self.getNextAddress(instructionAddr));
+				});
 				goal.send();
 
 				break;
