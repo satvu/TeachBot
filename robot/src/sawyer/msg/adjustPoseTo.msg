@@ -13,4 +13,4 @@ string geometry
 # 'w': the w-axis, only available if geometry is 'orientation'
 string axis
 # amount to set the pose value
-string amount
+float32 amount
