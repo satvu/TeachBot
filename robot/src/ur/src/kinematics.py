@@ -5,7 +5,7 @@ class Kinematics():
     ZERO_THRESH = 0.00000001
     PI = math.pi
 
-    def __init__(self, analytic_parameters): 
+    def __init__(self, parameters): 
         '''
         Initializes with the parameters for the robot - the default is for the ur5e
         '''
@@ -15,8 +15,7 @@ class Kinematics():
         d4 = parameters[3]
         d5 = parameters[4]
         d6 = parameters[5]
-    
-    # Helper function for analytical kinematics 
+
     def SIGN(x):
       return (x > 0) - (x < 0)
 
@@ -60,7 +59,6 @@ class Kinematics():
         result.append(-c234*s6 - s234*c5*c6)
         result.append(s234*c5*s6 - c234*c6)
         result.append(d1 + a3*s23 + a2*s2 - d5*(c23*c4 - s23*s4) - d6*s5*(c23*s4 + s23*c4))
-        
         # not sure what the part below is for - probably related to some matrix? makes it a square
         # which could be easier for something
         result.append(0.0)
