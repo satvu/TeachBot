@@ -83,7 +83,19 @@ add_service_files(
 ## Generate actions in the 'action' folder
 add_action_files(
    FILES
-   JointPositions.action
+   AdjustPoseBy.action
+   AdjustPoseTo.action
+   CuffInteraction.action
+   GoToCartesianPose.action 
+   GoToJointAngles.action
+   Gripper.action 
+   HighTwo.action 
+   InteractionControl.action 
+   JointImpedance.action 
+   JointMove.action 
+   MultipleChoice.action 
+   PickUpBox.action 
+   WaitForPush.action 
  )
 
 ## Generate added messages and services with any dependencies listed here
