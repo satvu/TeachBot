@@ -131,8 +131,9 @@ class Module():
         return traj_msg
 
 
-## DEFINE IMPORTANT CONSTANpointsTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
 if __name__ == '__main__':
+    ## DEFINE IMPORTANT CONSTANTS --- MAKE SURE THEY MATCH WITH MODULE 1 OR 2 CONSTANTS ##
+
     # POSITION CONSTANTS - ARRAYS THAT MATCH JOINT_NAMES
     ZERO = [0, -1.57, 0, -1.57, 0, 0]
     SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
@@ -145,12 +146,25 @@ if __name__ == '__main__':
     
     default = SCARA
 
+    # TODO: Figure out what no_hit is and what j4 max is    
+    # TODO: Figure out DPS becaues the arm needs to be over the table for this part
+    DSP = SCARA[0]
+    j2scara = SCARA[2]
+
     # 1
     joint_motor_animation_0 = SCARA
     joint_motor_animation_1 = [0, -3.14, -0.25, -3.14, -1.25, 0]
     # 4
     joint_test = [0]*Module.JOINTS
     joint_test = [WRIST_3_FWD, WRIST_2_FWD, WRIST_1_FWD, ELBOW_FWD, SHOULDER_FWD, BASE_FWD]
+    
+    # 6 - 15
+    # TODO Find the hard-coded values that work for UR
+    joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0]
+	joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0]
+	joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0
+	joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45]
+	joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0]
 
     m = Module()
 
