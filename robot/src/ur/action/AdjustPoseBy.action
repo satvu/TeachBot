@@ -1,0 +1,17 @@
+# adjust pose by .action file
+
+# goal definition
+
+string geometry
+string axis
+string amount
+---
+
+# result definition
+bool is_done
+---
+
+# feedback definition
+# currently unused
+int32 feedback
+

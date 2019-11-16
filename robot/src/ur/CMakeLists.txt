@@ -56,7 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   DIRECTORY
-   msg/teachbot_module
+   msg
 
    FILES
    #files in Sawyer + Module
@@ -73,30 +73,6 @@ add_message_files(
    Image.msg
  )
 
- add_message_files(
-   DIRECTORY
-   msg/ur_rtde
-
-   FILES
-   Command.msg
-   Setpoint.msg
-   Trajectory.msg
-   Mode.msg
-   ToolState.msg
-   Robotiq2FGripper_robot_input.msg
-   Robotiq2FGripper_robot_output.msg
-   JointAction.msg
-   JointActionGoal.msg
-   JointActionResult.msg
-   JointActionFeedback.msg
-   JointGoal.msg
-   JointFeedback.msg
-   JointResult.msg
-   Position.msg
-   PositionFeedback.msg
-   PositionResult.msg
- )
-
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
@@ -107,7 +83,19 @@ add_service_files(
 ## Generate actions in the 'action' folder
 add_action_files(
    FILES
-   JointPositions.action
+   AdjustPoseBy.action
+   AdjustPoseTo.action
+   CuffInteraction.action
+   GoToCartesianPose.action 
+   GoToJointAngles.action
+   Gripper.action 
+   HighTwo.action 
+   InteractionControl.action 
+   JointImpedance.action 
+   JointMove.action 
+   MultipleChoice.action 
+   PickUpBox.action 
+   WaitForPush.action 
  )
 
 ## Generate added messages and services with any dependencies listed here

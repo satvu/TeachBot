@@ -54,6 +54,12 @@ For `kinematics_config:=`, put the path to your configuration file and replace t
 
 Once this command has run successfully, press "play" on the UR5e interface. It is to the right of the speed slider. If the connection is successful, you should see a confirmation in your terminal tab and no errors on the UR5e interface. 
 
+```bash
+[ INFO] [1573668956.316314604]: Robot requested program
+[ INFO] [1573668956.316407273]: Sent program to robot
+[ INFO] [1573668957.972437669]: Robot ready to receive control commands.
+```
+
 In the next terminal tab, run 
 
     $ rosrun ur teachbot.py
