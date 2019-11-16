@@ -78,6 +78,8 @@ add_service_files(
    FILES
    Joints.srv
    JointCommand.srv
+   AudioDuration.srv
+   DevMode.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -152,7 +154,6 @@ catkin_package(
 	message_runtime
 	tf
 	std_msgs
-  ur_kinematics
 
 	DEPENDS 
 	#apriltag

@@ -16,6 +16,7 @@ import sensor_msgs
 import threading
 
 from ur.msg import *
+from ur.srv import *
 
 from geometry_msgs.msg import WrenchStamped
 
@@ -31,6 +32,9 @@ class Module():
 
         # Action Servers
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
+        
+        # Service Servers
+        rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
 
 
         # Action Clients - Publish to robot
@@ -46,6 +50,9 @@ class Module():
         self.devMode = False
         self.seqArr = []
 
+    def rx_audio_duration(self,data):
+        self.audio_duration = data.audio_duration
+        return True
     '''
     When the subscriber to "GoToJointAngles" receives the name of a constant from the browser,
     it is evaluated in this function and parsed into a "FollowTrajectoryGoal" object and sent to the
@@ -144,12 +151,14 @@ if __name__ == '__main__':
     SHOULDER_FWD = [0, -2.80, 0, -3.14, -1.57, 0]
     BASE_FWD = [0.50, -3.14, 0, -3.14, -1.57, 0]
     
-    default = SCARA
+    default = ZERO
 
     # TODO: Figure out what no_hit is and what j4 max is    
     # TODO: Figure out DPS becaues the arm needs to be over the table for this part
     DSP = SCARA[0]
     j2scara = SCARA[2]
+    no_hit = SCARA[1]
+    j4max = SCARA[4]
 
     # 1
     joint_motor_animation_0 = SCARA
@@ -161,10 +170,10 @@ if __name__ == '__main__':
     # 6 - 15
     # TODO Find the hard-coded values that work for UR
     joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0]
-	joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0]
-	joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0
-	joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45]
-	joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0]
+    joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0]
+    joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0]
+    joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45]
+    joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0]
 
     m = Module()
 

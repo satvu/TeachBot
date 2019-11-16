@@ -1,0 +1,8 @@
+## Toggle dev mode.
+
+# Request
+int32 status
+---
+# Response
+bool success
+string message
