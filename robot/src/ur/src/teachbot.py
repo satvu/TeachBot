@@ -155,9 +155,9 @@ if __name__ == '__main__':
 
     # TODO: Figure out what no_hit is and what j4 max is    
     # TODO: Figure out DPS becaues the arm needs to be over the table for this part
-    DSP = SCARA[0]
+    DSP = SCARA[1]
     j2scara = SCARA[2]
-    no_hit = SCARA[1]
+    over_table = -3.5
     j4max = SCARA[4]
 
     # 1
@@ -169,11 +169,11 @@ if __name__ == '__main__':
     
     # 6 - 15
     # TODO Find the hard-coded values that work for UR
-    joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0]
-    joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0]
-    joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0]
-    joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45]
-    joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0]
+    joint_dof_start = [-1.57, DSP,j2scara,0,-j4max,0]
+    joint_dof_shoulder = [-1.57, -2.80 ,j2scara,0,-j4max,0]
+    joint_dof_elbow = [-1.57, DSP, .30, 0,-j4max,0]
+    joint_dof_wrist = [-1.57, DSP,j2scara,0, 0.45,0]
+    joint_dof_up = [-1.57, DSP, j2scara,0,-j4max,0]
 
     m = Module()
 
