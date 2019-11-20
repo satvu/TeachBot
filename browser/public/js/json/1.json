@@ -216,6 +216,12 @@
 		"id":"encoders",
 		"instructions":[
 			{
+				"type":"LOG",
+				"name": "hello",
+				"test": "if you see me then it is success!",
+				"aDict": {"key1": 1, "key2": "Two"}
+			},
+			{
 				"type":"goToJointAngles",
 				"joint_angles":"default"
 			},
@@ -281,7 +287,17 @@
 				"listen":false
 			},
 			{
-				"type":"bar_shoulder"
+				"type": "initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position":["j0"]},
+				"x_ratio": [4],
+				"y_ratio": [85],
+				"width_ratio": [9],
+				"max_height_ratio": [80],
+				"fillStyle": ["#7c2629"]
 			},
 			{
 				"//":"Let me show you how I know. Please stand back.",
@@ -307,6 +323,9 @@
 				"joint_angles":"joint_dof_start"
 			},
 			{
+				"type": "stopEncode"
+			},
+			{
 				"//":"Now I'm going to lock my shoulder and unlock my wrist. Try pushing my hand. When you're done, press the scroll wheel button.",
 				"type":"play",
 				"audio_index":6,
@@ -322,7 +341,17 @@
 				"listen":false
 			},
 			{
-				"type":"bar_wrist"
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position":["j5"]},
+				"x_ratio": [15],
+				"y_ratio": [85],
+				"width_ratio": [9],
+				"max_height_ratio": [80],
+				"fillStyle": ["BlueViolet"]
 			},
 			{
 				"//":"So far I've only unlocked one motor at a time. Let's try unlocking both my shoulder and wrist motors. Push on my arm again and see what happens. When you're done, press the scroll wheel button.",
@@ -340,7 +369,17 @@
 				"listen":false
 			},
 			{
-				"type":"bar_both"
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position": ["j0","j5"]},
+				"x_ratio": [4, 13],
+				"y_ratio": [85, 85],
+				"width_ratio": [7, 7],
+				"max_height_ratio": [80, 80],
+				"fillStyle": ["#7c2629", "BlueViolet"]
 			},
 			{
 				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can move my arm for you to use the scroll wheel.",
@@ -403,7 +442,18 @@
 				"ways":false
 			},
 			{
-				"type":"interaction_projection"
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position": ["j0","j1","j2","j3","j4","j5","j6"]},
+				"x_ratio": [4,18,32,46,60,74,88],
+				"y_ratio": [80,80,80,80,80,80,80],
+				"width_ratio": [9,9,9,9,9,9,9],
+				"max_height_ratio": [70,70,70,70,70,70,70],
+				"fillStyle": ["#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629"],
+				"label": ["Joint 1","Joint 2","Joint 3","Joint 4","Joint 5","Joint 6","Joint 7"]
 			},
 			{
 				"//":"Using my encoders, I can measure the angles of all seven of my motors. Please stand back so I can reset my position.",
@@ -421,8 +471,27 @@
 		"id":"feedback",
 		"instructions":[
 			{
-				"type":"balls",
-				"ballAB":true
+				"type": "initializeDisplay"
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 25,
+				"y_ratio": 83,
+				"r_ratio": 10,
+				"fillStyle": "BlueViolet",
+				"label": "A",
+				"labelsize_ratio": 5
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 22,
+				"y_ratio": 47,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"label": "B",
+				"labelsize_ratio": 5
 			},
 			{
 				"type":"goToJointAngles",
@@ -468,8 +537,14 @@
 				"delay":true
 			},
 			{
-				"type":"balls",
-				"ballC":true
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 21,
+				"y_ratio": 18,
+				"r_ratio": 10,
+				"fillStyle": "DarkGreen",
+				"label": "C",
+				"labelsize_ratio": 5
 			},
 			{
 				"//":"Can you correct my position back to point B?",
@@ -497,7 +572,15 @@
 				"joint_angles":"point_a"
 			},
 			{
-				"type":"bar_A"
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 36,
+				"y_ratio": 85,
+				"width_ratio": 8,
+				"max_height_ratio": 40,
+				"height_percent": 0.3,
+				"fillStyle": "BlueViolet",
+				"label": "A"
 			},
 			{
 				"//":"here is position B,",
@@ -510,7 +593,15 @@
 				"joint_angles":"point_b"
 			},
 			{
-				"type":"bar_B"
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 48,
+				"y_ratio": 85,
+				"width_ratio": 8,
+				"max_height_ratio": 40,
+				"height_percent": 0.5,
+				"fillStyle": "#7c2629",
+				"label": "B"
 			},
 			{
 				"//":"and here is position C.",
@@ -523,7 +614,15 @@
 				"joint_angles":"point_c"
 			},
 			{
-				"type":"bar_C"
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 60,
+				"y_ratio": 85,
+				"width_ratio": 8,
+				"max_height_ratio": 40,
+				"height_percent": 0.6,
+				"fillStyle": "DarkGreen",
+				"label": "C"
 			},
 			{
 				"//":"I compare my encoder reading at my current position, C, against the destination encoder position, B. If C is smaller than B, I push right. If C is longer than B, I push left. The 'feedback' from my encoders helps me decide which way to go to get to my destination. Now, please stand back.",
@@ -535,7 +634,8 @@
 				"type":"reset"
 			},
 			{
-				"type":"image"
+				"type":"displayImage",
+				"location":"images/Welcome.png"
 			},
 			{
 				"type":"goToJointAngles",
@@ -682,8 +782,13 @@
 				"delay":true
 			},
 			{
-				"type":"balls",
-				"ballR":true
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 53,
+				"y_ratio": 89,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
 			},
 			{
 				"//":"I'll need to move another motor, too!",
@@ -716,8 +821,13 @@
 				"delay":true
 			},
 			{
-				"type":"balls",
-				"ballMotor":true
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 22,
+				"y_ratio": 47,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
 			},
 			{
 				"//":"How many motors will I need to use to reach this new point? When you think you know the answer, push my arm to the point to see if you were right.",
@@ -781,8 +891,13 @@
 				"joint_angles":"joint_ortho_kin"
 			},
 			{
-				"type":"balls",
-				"ballR_new":true
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 27,
+				"y_ratio": 88,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
 			},
 			{
 				"//":"Let's try another. If I want to move to this point, how many movements will I have to make if I can only move one motor at a time? Just like before, I'm going to unlock my shoulder motor for you to push my hand toward the point. If you want to switch to moving my wrist motor, press the scroll wheel button.",
@@ -1046,8 +1161,8 @@
 				"delay":true
 			},
 			{
-				"type":"hokeypokey",
-				"out":true
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
 			},
 			{
 				"//":"Start by pulling my arm so it's extended all the way and matches the image on the projector. When it's in the right position, press the scroll wheel button and I'll record the position as a waypoint.",
@@ -1076,8 +1191,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"in":true
+				"type":"displayImage",
+				"location":"images/hokeypokey_in.png"
 			},
 			{
 				"type":"interaction_control",
@@ -1100,8 +1215,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"out":true
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
 			},
 			{
 				"type":"interaction_control",
@@ -1124,8 +1239,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"rot1":true
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot1.png"
 			},
 			{
 				"type":"interaction_control",
@@ -1148,8 +1263,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"rot2":true
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot2.png"
 			},
 			{
 				"type":"interaction_control",
@@ -1172,8 +1287,8 @@
 				"delay":true
 			},
 			{
-				"type":"hokeypokey",
-				"out":true
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
 			},
 			{
 				"//":"First, you put my arm in.",
@@ -1193,8 +1308,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"in":true
+				"type":"displayImage",
+				"location":"images/hokeypokey_in.png"
 			},
 			{
 				"type":"goToJointAngles",
@@ -1208,8 +1323,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"out":true
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
 			},
 			{
 				"type":"goToJointAngles",
@@ -1223,8 +1338,8 @@
 				"delay":false
 			},
 			{
-				"type":"hokeypokey",
-				"rot1":true
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot1.png"
 			},
 			{
 				"type":"goToJointAngles",
@@ -1245,7 +1360,8 @@
 		"id":"end",
 		"instructions":[
 			{
-				"type":"image"
+				"type":"displayImage",
+				"location":"images/Welcome.png"
 			},
 			{
 				"//":"And that's what it's all about! High two!",

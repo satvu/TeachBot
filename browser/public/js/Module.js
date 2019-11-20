@@ -1,7 +1,7 @@
 // Constants
 const DIR = 'https://localhost:8000/';    // Directory containing resources
 const JOINTS = 7;                         // Numer of joints in Sawyer arm
-const VERBOSE = true;                     // Whether or not to print everything
+const VERBOSE = false;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
 const ROBOT = 'sawyer';
 
@@ -587,7 +587,35 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'balls':
+			case 'initializeDisplay':
+				this.displayOff();
+				canvas_container.style.display = 'initial';
+				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+				this.start(self.getNextAddress(instructionAddr));
+				break;
+
+			case 'drawShape':
+				checkInstruction(instr, ['shape'], instructionAddr);
+
+				if (instr.shape=='ball') {
+					if (instr.hasOwnProperty('clearRec')){this.ctx.clearRect(0,0,100*this.cw,100*this.ch);};
+					var x_ball = instr.x_ratio*this.cw;
+					var y_ball = instr.y_ratio*this.ch;
+					var r_ball = instr.r_ratio*this.ch;
+					if (instr.hasOwnProperty('label')) {
+						this.ctx.font = Math.round(instr.labelsize_ratio*this.cw) + 'px Raleway';
+						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle, instr.label);
+					} else{
+						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
+					}
+				} else if (instr.shape=='bar') {
+					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
+				} 
+				this.start(self.getNextAddress(instructionAddr));
+
+				break;
+
+			case 'balls': // Unused, just for storing parameters.
 				var ballA = {x:25*this.cw, y:83*this.ch, fillStyle: 'BlueViolet'};
 				var ballB = {x:22*this.cw, y:47*this.ch, fillStyle: this.robot_color};
 				var ballC = {x:21*this.cw, y:18*this.ch, fillStyle: 'DarkGreen'};
@@ -636,6 +664,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				this.position.subscribe(async function(message) {
 					if (VERBOSE) console.log('Received: ' + message.j0, message.j5);
+					console.log(`Joint 0: ${message.j0}, Joint 5: ${message.j5}`);
 					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
 					draw_bar(self.ctx, (-message.j0*180/Math.PI+176)*0.9, 174, barL.axisLeft, barL.axisRight, barL.maxHeight, barL.antiWidth, barL.fillStyle);
 					draw_bar(self.ctx, message.j5*180/Math.PI+170, 340, barR.axisLeft, barR.axisRight, barR.maxHeight, barR.antiWidth, barR.fillStyle);
@@ -655,61 +684,65 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'bar_A':
-				var ballA = {x:25*this.cw, y:83*this.ch, fillStyle: 'BlueViolet'};
-				var barA = {axisLeft: 32*this.cw, axisRight: 41*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw};
+			case 'LOG':
+				console.log(Object.keys(instr.aDict))
+				for (var key in (instr.aDict)) {
+					console.log('individual key: '+key)
+				}
 
-				draw_bar(this.ctx,0.6,Math.PI,barA.axisLeft,barA.axisRight,barA.maxHeight,barA.antiWidth,ballA.fillStyle,'A');
-
-				this.start(self.getNextAddress(instructionAddr));
-
+				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'bar_B':
-				var ballB = {x:22*this.cw, y:47*this.ch, fillStyle: this.robot_color};
-				var barB = {axisLeft: 44*this.cw, axisRight: 53*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw};
+			case 'drawDynamic':
 
-				draw_bar(this.ctx,1,Math.PI,barB.axisLeft,barB.axisRight,barB.maxHeight,barB.antiWidth,ballB.fillStyle,'B');
+				checkInstruction(instr, ['shape','topics'], instructionAddr);
 
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
-			case 'bar_C':
-				var ballC = {x:21*this.cw, y:18*this.ch, fillStyle: 'DarkGreen'};
-				var barC = {axisLeft: 56*this.cw, axisRight: 65*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw};
-
-				draw_bar(this.ctx,1.2,Math.PI,barC.axisLeft,barC.axisRight,barC.maxHeight,barC.antiWidth,ballC.fillStyle,'C');
-
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
-			case 'bar_shoulder':
-				this.displayOff();
-
-				var barL = {axisLeft: 3*this.cw, axisRight: 12*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw, fillStyle: this.robot_color};
-
-				canvas_container.style.display = 'initial';
-				draw_bar(this.ctx, 0, 120, barL.axisLeft, barL.axisRight, barL.maxHeight, barL.antiWidth, barL.fillStyle);
-
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received: ' + message.j0);
-					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-					draw_bar(self.ctx, (-message.j0*180/Math.PI+176)*0.9, 174, barL.axisLeft, barL.axisRight, barL.maxHeight, barL.antiWidth, barL.fillStyle);
-				   });
+				for (var topic in instr.topics) {				// Loop through all topics.
+					var values = instr.topics[topic];
+					if (topic == 'position') {					// Check what type of topics it is.
+						this.position.subscribe(async function(message) {
+							if (instr.shape == 'bar') {
+								/** 
+								 *  The line below needs to be fixed.
+								 *  When multiple topics are fed, it clears previous topics.
+								 *  Not an issue for now.
+								 */
+								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
+									var joint = values[i]
+									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
+									var x = instr.x_ratio[i]*self.cw;
+									var y = instr.y_ratio[i]*self.ch;
+									var width = instr.width_ratio[i]*self.cw;
+									var max_height = instr.max_height_ratio[i]*self.ch;
+									var height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
+									if (instr.hasOwnProperty('label')) {
+										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
+									} else{
+										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i]);
+									};
+								};
+							} else if (instr.shape == 'ball'){
+								// Placeholder, doing nothing for now.
+							};
+						});
+					} else if (topic == 'velocity'){
+						// placeholder for another topic. Also serves as an example of what a topic can be.
+					}
+				};
 
 				this.pressed.subscribe(async function(message) {
 					if (VERBOSE) console.log('Pressed: ' + message.data);
 					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
+						for (topic in instr.topics){
+							eval('self.'+topic+'.unsubscribe();');
+							eval('self.'+topic+'.removeAllListeners();');
+						}
 						self.pressed.unsubscribe();
 						self.pressed.removeAllListeners();
 						self.displayOff();
 						self.start(self.getNextAddress(instructionAddr));
 					}
-					
 				});
 
 				break;
@@ -963,6 +996,13 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
+			case 'stopEncode':
+			// this is a temporary command to separate clearInterval from drawing command.
+			// It needs to be deleted eventually.
+				clearInterval(encoder);
+				this.start(self.getNextAddress(instructionAddr));
+				break;
+
 			case 'gripper':
 				checkInstruction(instr, ['grip'], instructionAddr);
 
@@ -1020,29 +1060,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'hokeypokey':
-				var hokeypokey_out_url = DIR + 'images/hokeypokey_out.png';
-				var hokeypokey_in_url = DIR + 'images/hokeypokey_in.png';
-				var hokeypokey_rot1_url = DIR + 'images/hokeypokey_rot1.png';
-				var hokeypokey_rot2_url = DIR + 'images/hokeypokey_rot2.png';
-
-				if (instr.hasOwnProperty('out')){
-					image.src = hokeypokey_out_url;
-				}
-				if (instr.hasOwnProperty('in')){
-					image.src = hokeypokey_in_url;
-				}
-				if (instr.hasOwnProperty('rot1')){
-					image.src = hokeypokey_rot1_url;
-				}
-				if (instr.hasOwnProperty('rot2')){
-					image.src = hokeypokey_rot2_url;
-				}
-
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
 			case 'if':
 				checkInstruction(instr, ['conditional','if_true'], instructionAddr);
 				console.log((this.hashTokeyVal(instr.conditional)))
@@ -1060,11 +1077,13 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'image':
-				var welcome_image_url = DIR + 'images/Welcome.png';
+			case 'displayImage':
+
+				var image_url = DIR + instr.location;
+
 				this.displayOff();
 
-				image.src = welcome_image_url;
+				image.src = image_url;
 				image.style.display = 'initial';
 
 				this.start(this.getNextAddress(instructionAddr));
@@ -1340,7 +1359,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 					
 				});
-
 
 				break;
 

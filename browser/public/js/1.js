@@ -10,9 +10,9 @@ var m = new Module(module_num, main, [image,animator,protractor_table,canvas_con
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'feedback';
+var start_seq = 'encoders';
 async function main() {
     m.displayOff();
     image.style.display = 'initial';
-    m.start([start_seq,0]);
+    m.start([start_seq,35]);
 }
