@@ -1,5 +1,6 @@
 import math
-
+import tf
+import numpy as np
 
 class Kinematics():
     ZERO_THRESH = 0.00000001
@@ -68,7 +69,7 @@ class Kinematics():
 
         return result
 
-    def inverse(cartesian_position, q6_des = 0.0):
+    def inverse_analytical(cartesian_position, q6_des = 0.0):
     '''
     @param Takes in 4x4 end effector pose in row-major ordering (array size 16)
     @param q6_des designates what the q6 value should be in case of infinite solution on that joint
@@ -222,4 +223,47 @@ class Kinematics():
                     q_sols[num_sols*6+5] = q6
 
         return q_sols 
+    
+    def inverse_kdl(current_position, target_position):
+        if len(target_position) < 6 || len(current_position) < 6: 
+            return False 
+        
+        tool_rpy = tf.transformations.euler_from_quaternion(current_position[3:7])
+        # Correct tool_rpy so that it is closest to first setpoint in trajectory
+        # i.e. if current tool roll is -pi and first setpoint in trajectory has roll +pi/2, should correct roll to be pi instead of -pi (equivalent, but "closer")
+        diff = np.array(target_position[0].setpoint[3:7])-np.array(tool_rpy)
+        tool_rpy = np.array(tool_rpy) + np.array((diff + np.sign(diff)*math.pi)/(2*math.pi),dtype=int)*2*math.pi
+        #what do with the below line
+        current_pos.setpoint = self.actual_tool_pos[0:3] + list(tool_rpy)
 
+        trajectory = [current_pos] + trajectory
+        for i in range(0,len(trajectory)-1):
+            if not self.checkContinuity(trajectory[i],trajectory[i+1]): 
+                print "Trajectory not continuous. Cannot move to that position."
+                return False 
+      
+        for i in range(0,len(trajectory)): # Convert euler angles to rotation vectors
+            rpy = trajectory[i].setpoint[3:6]
+            trajectory[i].setpoint = list(trajectory[i].setpoint[0:3]) + hp.quat_to_rotvec(tf.transformations.quaternion_from_euler(rpy[0],rpy[1],rpy[2]))
+        
+        return trajectory
+           
+        
+    def checkContinuity(self, sp1, sp2):
+        p1 = np.array(sp1.setpoint)
+        p2 = np.array(sp2.setpoint)
+        # Find position min limits and position max limits and velocity limits
+        if not np.all((p1 >= hp.CARTESIAN_POSITION_MIN_LIMITS)&(p1 <= hp.CARTESIAN_POSITION_MAX_LIMITS)):
+            print "Setpoint out of range"
+            return False
+        if not np.all((p2 >= hp.CARTESIAN_POSITION_MIN_LIMITS)&(p2 <= hp.CARTESIAN_POSITION_MAX_LIMITS)):
+            print "Setpoint out of range"
+            return False
+        if not np.all(np.abs(p2-p1)/(sp2.time-sp1.time) <= hp.CARTESIAN_VELOCITY_LIMITS):
+            print "Setpoint velocity out of range"
+            return False
+        
+        return True 
+        
+
+    
