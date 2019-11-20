@@ -36,11 +36,9 @@ Note that setting up an e-series robot has additional instructions.
 ## Running Teachbot
 First, make sure your UR robot is on, and that the external cap has been set to connect to your PC (<a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/install_urcap_e_series.md"> e-series instructions</a>). Do not press play yet for the robot program. 
 
-Set the speed slider (e-series) to 50%. It is outlined in red below. 
+You can adjust the speed that your robot moves at using the speed slider. It is outlined in red below. 
 
  ![Speed Slider on UR5e interface](./speed_slider.png)
-
- This step is a temporary precaution to keep the arm from moving at high speeds. 
 
 On your PC, open three terminals to `~/TeachBot/robot` and don't forget to `source devel/setup.bash`. 
 
