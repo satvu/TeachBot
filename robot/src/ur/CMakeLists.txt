@@ -18,7 +18,10 @@ find_package(catkin REQUIRED COMPONENTS
   intera_motion_msgs
   intera_interface
   trajectory_msgs
+  kdl_parser
 )
+
+find_package(orocos_kdl)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

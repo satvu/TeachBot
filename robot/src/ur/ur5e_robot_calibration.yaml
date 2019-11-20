@@ -1,4 +1,5 @@
 kinematics:
+  hash: calib_11973497343776657951
   shoulder:
     x: 0
     y: 0
@@ -41,4 +42,3 @@ kinematics:
     roll: 1.571953375829307
     pitch: 3.141592653589793
     yaw: 3.141592025954216
-  hash: calib_11973497343776657951

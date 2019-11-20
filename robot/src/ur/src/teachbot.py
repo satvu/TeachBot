@@ -5,20 +5,23 @@ import rospy, math
 import numpy as np
 import sys
 import roslib
-from ur_kinematics import *
 
 from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16, Empty
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from geometry_msgs.msg import WrenchStamped
 import actionlib
 import sensor_msgs
 import threading
 
+# Messages for communicating with module 
 from ur.msg import *
 from ur.srv import *
 
-from geometry_msgs.msg import WrenchStamped
+# Imports for kinematics
+import PyKDL as kdl
+import kdl_parser_py.urdf as kdl_parser
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
@@ -30,16 +33,23 @@ class Module():
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
 
+        # Variables for kinematics conversions
+        self.baselink = "shoulder_pan_joint"
+        self.endlink = "wrist_3_joint" 
+        self.tree = kdl_parser.treeFromParam("/robot_description")
+        chain_ee = self.tree.getChain(self.baselink, self.endlink)
+        self.fk_ee = kdl.ChainFkSolverPos_recursive(chain_ee)
+
         # Action Servers
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
         
         # Service Servers
         rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
 
-
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 
+        # TODO: Remove this soon, won't need anymore
         # Publish to browser so you know something is complete
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
 
@@ -50,16 +60,22 @@ class Module():
         self.devMode = False
         self.seqArr = []
 
+
     def rx_audio_duration(self,data):
+        '''
+        Audio duration of presentation/files
+        '''
         self.audio_duration = data.audio_duration
         return True
-    '''
-    When the subscriber to "GoToJointAngles" receives the name of a constant from the browser,
-    it is evaluated in this function and parsed into a "FollowTrajectoryGoal" object and sent to the
-    action client provided by Universal Robots driver. Upon completion, it publishes to "/command-complete"
-    to let the browser know that it has finished its task.
-    '''
+
+
     def cb_GoToJointAngles(self, goal):
+        '''
+        When the subscriber to "GoToJointAngles" receives the name of a constant from the browser,
+        it is evaluated in this function and parsed into a "FollowTrajectoryGoal" object and sent to the
+        action client provided by Universal Robots driver. Upon completion, it publishes to "/command-complete"
+        to let the browser know that it has finished its task.
+        '''
         self.joint_traj_client.wait_for_server()
 
         followJoint_msg = FollowJointTrajectoryGoal()
@@ -79,11 +95,11 @@ class Module():
         result.success = True
         self.GoToJointAnglesAct.set_succeeded(result)
 
-    '''
-    Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
-    operations.
-    '''
     def cb_GoToCartesianPose(self, req):
+        '''
+        Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
+        operations.
+        '''
         # Evaluate all of the paramters
         joint_angles = eval(req.joint_angles)
         relative_pose = eval(req.relative_pose)
@@ -126,6 +142,11 @@ class Module():
             return None 
 
     def create_traj_goal(self, array):
+        '''
+        Helper function that takes in an array corresponding with the positions of each joint (starting from
+        the base in the 0 index to wrist_3 in the last index) and returning a JointTrajectory() Message to use 
+        to send to an action server (the ROS UR driver) 
+        '''
         traj_msg = JointTrajectory()
         traj_msg.joint_names = JOINT_NAMES
 
