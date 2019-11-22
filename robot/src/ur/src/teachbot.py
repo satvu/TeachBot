@@ -32,26 +32,43 @@ class Module():
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
+        self.curr_pos # store current position, used in inverse kinematics
 
-        # Variables for kinematics conversions
+        ####### Variables for kinematics conversions ##########
+        #the base and the end-effector names
         self.baselink = "shoulder_pan_joint"
         self.endlink = "wrist_3_joint" 
+        #parse the robot_description
         self.tree = kdl_parser.treeFromParam("/robot_description")
+        #create a chain using defined start/end joints
         chain_ee = self.tree.getChain(self.baselink, self.endlink)
-        self.fk_ee = kdl.ChainFkSolverPos_recursive(chain_ee)
+        #create a forward kinematics solver
+        self.fk = kdl.ChainFkSolverPos_recursive(chain_ee)
+        #create an inverse kinematics solver
+        vik=ChainIkSolverVel_pinv(chain)
+        self.ik=ChainIkSolverPos_NR(chain_ee,self.fk,vik)
 
-        # Action Servers
+        ####### Servers, Subscribers, Clients, and Publishers ##########
+        # Action Servers - get action goals from browser 
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
-        
+        self.GoToCartesianPoseAct = actionlib.SimpleActionServer('/teachbot/GoToCartesianPose', GoToCartesianPoseAction, execute_cb=self.cb_GoToCartesianPose, auto_start=True)
+
         # Service Servers
         rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
 
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 
-        # TODO: Remove this soon, won't need anymore
-        # Publish to browser so you know something is complete
+        # Subscribers
+        #TODO: Check that this is the write subscription and message type
+        rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
+
+        # Publishers to browser so you know something is complete
+        # TODO: Do we still need command complete and others if we have actions? This is still on main repo 
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
+        self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
+		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
+		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
 
         # Global Vars
         self.audio_duration = 0
@@ -67,6 +84,24 @@ class Module():
         '''
         self.audio_duration = data.audio_duration
         return True
+    
+    def forwardJointState(self, data):
+        '''
+        Read the joint state information from the robot, parse, and store or publish to the appropriate topics.
+        '''
+        #publish info back to browser 
+    	position = JointInfo()
+		velocity = JointInfo()
+		effort = JointInfo()
+		for j in range(Module.JOINTS):
+			setattr(position, 'j'+str(j), data.position[j+1])
+			setattr(velocity, 'j'+str(j), data.velocity[j+1])
+			setattr(effort, 'j'+str(j), data.effort[j+1])
+		self.position_topic.publish(position)
+		self.velocity_topic.publish(velocity)
+		self.effort_topic.publish(effort)
+        #for inverse kinematics
+        self.curr_pos = position
 
 
     def cb_GoToJointAngles(self, goal):
@@ -94,18 +129,39 @@ class Module():
         result = ur.msg.GoToJointAnglesResult()
         result.success = True
         self.GoToJointAnglesAct.set_succeeded(result)
+        
+        return True 
 
     def cb_GoToCartesianPose(self, req):
         '''
         Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
         operations.
         '''
-        # Evaluate all of the paramters
+        # Evaluate all of the paramters (defined in this file, passed through as string in the action)
         joint_angles = eval(req.joint_angles)
         relative_pose = eval(req.relative_pose)
         endpoint_pose = eval(req.endpoint_pose)
         position = eval(req.position)
         orientation = eval(req.orientation)
+
+        # Other values defined in Sawyer (see limb_plus.py)
+        # TODO: See if we actually need these values 
+        in_tip_frame = False
+        joint_angles = None
+        tip_name = self.endlink
+        linear_speed = 0.6
+        linear_accel = 0.6
+        rotational_speed = 1.57
+        rotational_accel = 1.57 
+        timeout = None
+        endpoint_pose = None
+
+        # hold 6 values, all joint angles 
+        converted_joint_angles = []
+
+        # set up result 
+        result_GoToCartesianPose = GoToCartesianPoseResult()
+        result_GoToCartesianPose.is_done = False
 
         if joint_angles and len(joint_angles) != len(JOINT_NAMES):
             rospy.logerr('len(joint_angles) does not match len(JOINT_NAMES)!')
@@ -113,33 +169,97 @@ class Module():
 
         if (position is None and orientation is None and relative_pose is None and endpoint_pose is None):
             if joint_angles:
-                # Forward Kinematics <-- comment from the Sawyer package, but seems this is just a goToJointAngles
+                # Forward Kinematics <-- comment from the Sawyer package, this section should be fk, but seems this is just a goToJointAngles
                 joint_input = GoToJointAngles()
                 joint_input.name = req.joint_angles
                 self.cb_GoToJointAngles(joint_input)
 
-                # call to GoToJointAngles already sends a command_complete so we can return None to escape this function 
+                # successfully completed action, return to browser
+                result_GoToCartesianPose.is_done = True
+                self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
+
+                # escape function 
                 return None 
 
             else:
                 rospy.loginfo("No Cartesian pose or joint angles given.")
                 return None
         else:
-            # Inverse Kinematics 
-            converted_joint_angles = ur_kin.inverse(endpoint_pose)
-            joint_input = GoToJointAngles()
+            # TODO: Figure out what this chunk is about. There is not a 
+			# endpoint_state = self.tip_state(tip_name)
+			# if endpoint_state is None:
+			# 	rospy.logerr('Endpoint state not found with tip name %s', tip_name)
+			# 	return None
+			# pose = endpoint_state.pose
 
-            # Set the new joint angle to go to
-            joint_input.j0pos = converted_joint_angles[0]
-            joint_input.j1pos = converted_joint_angles[1]
-            joint_input.j2pos = converted_joint_angles[2]
-            joint_input.j3pos = converted_joint_angles[3]
-            joint_input.j4pos = converted_joint_angles[4]
-            joint_input.j5pos = converted_joint_angles[5]
+			if relative_pose is not None:
+				if len(relative_pose) != 6:
+					rospy.logerr('Relative pose needs to have 6 elements (x,y,z,roll,pitch,yaw)')
+					return None
+				# create kdl frame from relative pose
+				rot = kdl.Rotation.RPY(relative_pose[3],
+										 relative_pose[4],
+										 relative_pose[5])
+				trans = kdl.Vector(relative_pose[0],
+									 relative_pose[1],
+									 relative_pose[2])
+				f2 = kdl.Frame(rot, trans)
 
-            self.cb_GoToJointAngles(joint_input)
+                # TODO: base frame or end effector frame, figure out ik for this 
+				# and convert the result back to a pose message
+				if in_tip_frame:
+				  # end effector frame
+				  pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
+				else:
+				  # base frame
+				  pose = posemath.toMsg(f2 * posemath.fromMsg(pose))
 
-            return None 
+			else:
+				if endpoint_pose is None:
+					if position is not None and len(position) == 3:
+						pose.position.x = position[0]
+						pose.position.y = position[1]
+						pose.position.z = position[2]
+					if orientation is not None and len(orientation) == 4:
+						pose.orientation.x = orientation[0]
+						pose.orientation.y = orientation[1]
+						pose.orientation.z = orientation[2]
+						pose.orientation.w = orientation[3]
+				else:
+					pose.position.x = endpoint_pose['position'].x
+					pose.position.y = endpoint_pose['position'].y
+					pose.position.z = endpoint_pose['position'].z
+					pose.orientation.x = endpoint_pose['orientation'].x
+					pose.orientation.y = endpoint_pose['orientation'].y
+					pose.orientation.z = endpoint_pose['orientation'].z
+					pose.orientation.w = endpoint_pose['orientation'].w
+                    
+			poseStamped = PoseStamped()
+			poseStamped.pose = pose
+
+			if not joint_angles:
+				# using current joint angles for nullspace bais if not provided
+				joint_angles = self.joint_ordered_angles()
+				print(poseStamped.pose)
+				waypoint.set_cartesian_pose(poseStamped, tip_name, joint_angles)
+			else:
+				waypoint.set_cartesian_pose(poseStamped, tip_name, joint_angles)
+
+        # Set the new joint angle to go to
+        joint_input = GoToJointAngles()
+        joint_input.j0pos = converted_joint_angles[0]
+        joint_input.j1pos = converted_joint_angles[1]
+        joint_input.j2pos = converted_joint_angles[2]
+        joint_input.j3pos = converted_joint_angles[3]
+        joint_input.j4pos = converted_joint_angles[4]
+        joint_input.j5pos = converted_joint_angles[5]
+
+        self.cb_GoToJointAngles(joint_input)
+        
+        # successfully completed action, return to browser
+        result_GoToCartesianPose.is_done = True
+		self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
+        return None 
 
     def create_traj_goal(self, array):
         '''
