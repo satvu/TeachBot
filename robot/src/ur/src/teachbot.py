@@ -208,58 +208,56 @@ class Module():
                 # TODO: base frame or end effector frame, figure out ik for this 
 				# and convert the result back to a pose message
 				if in_tip_frame:
-				  # end effector frame
-				  pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
+                    # end effector frame
+                    pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
 				else:
-				  # base frame
-				  pose = posemath.toMsg(f2 * posemath.fromMsg(pose))
-
+				    # base frame
+                    q_out=JntArray(6)
+                    # TODO: do I need to do any checking w/ the value ik_result?
+                    ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
+                    converted_joint_angles = q_out
+                    
 			else:
 				if endpoint_pose is None:
+                    # create kdl frame from given
 					if position is not None and len(position) == 3:
-						pose.position.x = position[0]
-						pose.position.y = position[1]
-						pose.position.z = position[2]
+                        trans = kdl.Vector(position[0], position[1], position[2])
 					if orientation is not None and len(orientation) == 4:
-						pose.orientation.x = orientation[0]
-						pose.orientation.y = orientation[1]
-						pose.orientation.z = orientation[2]
-						pose.orientation.w = orientation[3]
-				else:
-					pose.position.x = endpoint_pose['position'].x
-					pose.position.y = endpoint_pose['position'].y
-					pose.position.z = endpoint_pose['position'].z
-					pose.orientation.x = endpoint_pose['orientation'].x
-					pose.orientation.y = endpoint_pose['orientation'].y
-					pose.orientation.z = endpoint_pose['orientation'].z
-					pose.orientation.w = endpoint_pose['orientation'].w
+                        rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
+                        # TODO: Figure out where to put wrench (orientation[3])
+                    f2 = kdl.Frame(rot, trans)
+                    q_out=JntArray(6)
+                    # TODO: do I need to do any checking w/ value of ik_result?
+                    ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
+                    converted_joint_angles = q_out
                     
-			poseStamped = PoseStamped()
-			poseStamped.pose = pose
+
+				else:
+					trans = kdl.Vector(position[0], position[1], position[2])
+                    rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
+                    # TODO: Figure out where to put wrench (orientation[3])
+                    q_out=JntArray(6)
+                    # TODO: do I need to do any checking w/ value of ik_result?
+                    ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
+                    converted_joint_angles = q_out
 
 			if not joint_angles:
-				# using current joint angles for nullspace bais if not provided
-				joint_angles = self.joint_ordered_angles()
-				print(poseStamped.pose)
-				waypoint.set_cartesian_pose(poseStamped, tip_name, joint_angles)
-			else:
-				waypoint.set_cartesian_pose(poseStamped, tip_name, joint_angles)
+                # Set the new joint angle to go to
+                joint_input = GoToJointAngles()
+                joint_input.j0pos = converted_joint_angles[0]
+                joint_input.j1pos = converted_joint_angles[1]
+                joint_input.j2pos = converted_joint_angles[2]
+                joint_input.j3pos = converted_joint_angles[3]
+                joint_input.j4pos = converted_joint_angles[4]
+                joint_input.j5pos = converted_joint_angles[5]
 
-        # Set the new joint angle to go to
-        joint_input = GoToJointAngles()
-        joint_input.j0pos = converted_joint_angles[0]
-        joint_input.j1pos = converted_joint_angles[1]
-        joint_input.j2pos = converted_joint_angles[2]
-        joint_input.j3pos = converted_joint_angles[3]
-        joint_input.j4pos = converted_joint_angles[4]
-        joint_input.j5pos = converted_joint_angles[5]
-
-        self.cb_GoToJointAngles(joint_input)
-        
-        # successfully completed action, return to browser
-        result_GoToCartesianPose.is_done = True
-		self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
-        return None 
+                self.cb_GoToJointAngles(joint_input)
+                
+                # successfully completed action, return to browser
+                result_GoToCartesianPose.is_done = True
+                self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
+                
+            return None 
 
     def create_traj_goal(self, array):
         '''
