@@ -12,6 +12,9 @@ catkin_make
 cd ..
 python edit_intera.py
 chmod +x robot/intera.sh
+chmod +x robot/start.sh
+cp robot/start.sh ~/Desktop/start_TeachBot.sh
+chmod +x ~/Desktop/start_TeachBot.sh
 
 # NPM Installs
 cd browser

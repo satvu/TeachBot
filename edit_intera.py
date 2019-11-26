@@ -13,3 +13,10 @@ intera = intera.replace("ros_version=\"indigo\"","ros_version=\"kinetic\"", 1)
 f = open("robot/intera.sh","w")
 f.write(intera)
 f.close()
+
+# Repeat for startup scripts
+intera = intera.replace("ros_version=\"kinetic\"", "ros_version=\"kinetic\"\n\nxrandr --output HDMI-2 --brightness 1 --mode 1366x768 --same-as eDP-1 --output eDP-1 --mode 1366x768\nfirefox https://localhost:8000 &\ncd ~/TeachBot/robot/", 1)
+intera = intera.replace("\nEOF\n","\npython start.py\n\nEOF\n")
+f = open("robot/start.sh","w")
+f.write(intera)
+f.close()
