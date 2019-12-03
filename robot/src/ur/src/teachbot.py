@@ -32,7 +32,7 @@ class Module():
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
-        self.curr_pos # store current position, used in inverse kinematics
+        self.curr_pos  = JointInfo() # store current position, used in inverse kinematics
 
 
         ####### Variables for kinematics conversions ##########
@@ -40,14 +40,14 @@ class Module():
         self.baselink = "shoulder_pan_joint"
         self.endlink = "wrist_3_joint" 
         #parse the robot_description
-        self.tree = kdl_parser.treeFromParam("/robot_description")
+        flag, self.tree = kdl_parser.treeFromParam("/robot_description")
         #create a chain using defined start/end joints
         chain_ee = self.tree.getChain(self.baselink, self.endlink)
         #create a forward kinematics solver
         self.fk = kdl.ChainFkSolverPos_recursive(chain_ee)
         #create an inverse kinematics solver
-        vik=ChainIkSolverVel_pinv(chain)
-        self.ik=ChainIkSolverPos_NR(chain_ee,self.fk,vik)
+        vik= kdl.ChainIkSolverVel_pinv(chain_ee)
+        self.ik= kdl.ChainIkSolverPos_NR(chain_ee,self.fk,vik)
 
 
         ####### Servers, Subscribers, Clients, and Publishers ##########
@@ -69,8 +69,8 @@ class Module():
         # TODO: Do we still need command complete and others if we have actions? This is still on main repo 
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
         self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
-		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
-		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
+        self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
+        self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
 
 
         ##### Global Vars #####
@@ -93,16 +93,16 @@ class Module():
         Read the joint state information from the robot, parse, and store or publish to the appropriate topics.
         '''
         #publish info back to browser 
-    	position = JointInfo()
-		velocity = JointInfo()
-		effort = JointInfo()
-		for j in range(Module.JOINTS):
-			setattr(position, 'j'+str(j), data.position[j+1])
-			setattr(velocity, 'j'+str(j), data.velocity[j+1])
-			setattr(effort, 'j'+str(j), data.effort[j+1])
-		self.position_topic.publish(position)
-		self.velocity_topic.publish(velocity)
-		self.effort_topic.publish(effort)
+        position = JointInfo()
+        velocity = JointInfo()
+        effort = JointInfo()
+        for j in range(Module.JOINTS):
+            setattr(position, 'j'+str(j), data.position[j+1])
+            setattr(velocity, 'j'+str(j), data.velocity[j+1])
+            setattr(effort, 'j'+str(j), data.effort[j+1])
+        self.position_topic.publish(position)
+        self.velocity_topic.publish(velocity)
+        self.effort_topic.publish(effort)
         #for inverse kinematics
         self.curr_pos = position
 
@@ -195,26 +195,23 @@ class Module():
 			# 	return None
 			# pose = endpoint_state.pose
 
-			if relative_pose is not None:
-				if len(relative_pose) != 6:
-					rospy.logerr('Relative pose needs to have 6 elements (x,y,z,roll,pitch,yaw)')
-					return None
-				# create kdl frame from relative pose
-				rot = kdl.Rotation.RPY(relative_pose[3],
-										 relative_pose[4],
-										 relative_pose[5])
-				trans = kdl.Vector(relative_pose[0],
-									 relative_pose[1],
-									 relative_pose[2])
-				f2 = kdl.Frame(rot, trans)
+            if relative_pose is not None:
+                if len(relative_pose) != 6:
+                    rospy.logerr('Relative pose needs to have 6 elements (x,y,z,roll,pitch,yaw)')
+                    return None
+                # create kdl frame from relative pose
+                rot = kdl.Rotation.RPY(relative_pose[3], relative_pose[4], relative_pose[5])
+                trans = kdl.Vector(relative_pose[0], relative_pose[1], relative_pose[2])
+                f2 = kdl.Frame(rot, trans)
 
                 # TODO: base frame or end effector frame, figure out ik for this 
-				# and convert the result back to a pose message
-				if in_tip_frame:
+                # and convert the result back to a pose message
+                if in_tip_frame:
                     # end effector frame - line below is from Sawyer limb_plus so not sure what this translates to
-                    pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
-				else:
-				    # base frame
+                    # pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
+                    return
+                else:
+                    # base frame
                     q_out=JntArray(6)
                     # TODO: how to check the result and make sure it's fine, there was no checking in the limb_plus version
                     # http://docs.ros.org/jade/api/orocos_kdl/html/classKDL_1_1ChainIkSolverPos__NR.html 
@@ -222,12 +219,12 @@ class Module():
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
-			else:
-				if endpoint_pose is None:
+            else:
+                if endpoint_pose is None:
                     # create kdl frame from given
-					if position is not None and len(position) == 3:
+                    if position is not None and len(position) == 3:
                         trans = kdl.Vector(position[0], position[1], position[2])
-					if orientation is not None and len(orientation) == 4:
+                    if orientation is not None and len(orientation) == 4:
                         rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
                         # TODO: Figure out where to put wrench (orientation[3])
                     f2 = kdl.Frame(rot, trans)
@@ -236,9 +233,8 @@ class Module():
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
-
-				else:
-					trans = kdl.Vector(position[0], position[1], position[2])
+                else:
+                    trans = kdl.Vector(position[0], position[1], position[2])
                     rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
                     # TODO: Figure out where to put wrench (orientation[3])
                     q_out=JntArray(6)
@@ -246,7 +242,7 @@ class Module():
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
 
-			if not joint_angles:
+            if not joint_angles:
                 # Set the new joint angle to go to
                 joint_input = GoToJointAngles()
                 joint_input.j0pos = converted_joint_angles[0]
