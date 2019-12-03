@@ -34,6 +34,7 @@ class Module():
         self.VERBOSE = True
         self.curr_pos # store current position, used in inverse kinematics
 
+
         ####### Variables for kinematics conversions ##########
         #the base and the end-effector names
         self.baselink = "shoulder_pan_joint"
@@ -47,6 +48,7 @@ class Module():
         #create an inverse kinematics solver
         vik=ChainIkSolverVel_pinv(chain)
         self.ik=ChainIkSolverPos_NR(chain_ee,self.fk,vik)
+
 
         ####### Servers, Subscribers, Clients, and Publishers ##########
         # Action Servers - get action goals from browser 
@@ -70,7 +72,8 @@ class Module():
 		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
 		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
 
-        # Global Vars
+
+        ##### Global Vars #####
         self.audio_duration = 0
         self.finished = False
         self.startPos = 0
@@ -134,10 +137,10 @@ class Module():
 
     def cb_GoToCartesianPose(self, req):
         '''
-        Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
+        Receives "GoToCartesianPose" message and based on which paramters are given, perform different kinematic
         operations.
         '''
-        # Evaluate all of the paramters (defined in this file, passed through as string in the action)
+        # Evaluate all of the parameters (defined in this file, passed through as string in the action)
         joint_angles = eval(req.joint_angles)
         relative_pose = eval(req.relative_pose)
         endpoint_pose = eval(req.endpoint_pose)
@@ -208,12 +211,14 @@ class Module():
                 # TODO: base frame or end effector frame, figure out ik for this 
 				# and convert the result back to a pose message
 				if in_tip_frame:
-                    # end effector frame
+                    # end effector frame - line below is from Sawyer limb_plus so not sure what this translates to
                     pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
 				else:
 				    # base frame
                     q_out=JntArray(6)
-                    # TODO: do I need to do any checking w/ the value ik_result?
+                    # TODO: how to check the result and make sure it's fine, there was no checking in the limb_plus version
+                    # http://docs.ros.org/jade/api/orocos_kdl/html/classKDL_1_1ChainIkSolverPos__NR.html 
+                    # above is the C++
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
@@ -227,7 +232,7 @@ class Module():
                         # TODO: Figure out where to put wrench (orientation[3])
                     f2 = kdl.Frame(rot, trans)
                     q_out=JntArray(6)
-                    # TODO: do I need to do any checking w/ value of ik_result?
+                    # TODO: do I need to do any checking w/ value of ik_result? See comment at line 219 above
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
