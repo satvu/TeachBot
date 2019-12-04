@@ -103,8 +103,7 @@ class Module():
         self.velocity_topic.publish(velocity)
         self.effort_topic.publish(effort)
         #for inverse kinematics
-        self.curr_pos = position
-
+        self.curr_pos = list(data.position)
 
     def cb_GoToJointAngles(self, goal):
         '''
@@ -147,16 +146,14 @@ class Module():
         orientation = eval(req.orientation)
 
         # Other values defined in Sawyer (see limb_plus.py)
-        # TODO: See if we actually need these values 
+        # TODO: See if we actually need these values (then check if accurate) and how to use when we don't have velocity interface
         in_tip_frame = False
-        joint_angles = None
         tip_name = self.endlink
         linear_speed = 0.6
         linear_accel = 0.6
         rotational_speed = 1.57
         rotational_accel = 1.57 
         timeout = None
-        endpoint_pose = None
 
         # hold 6 values, all joint angles 
         converted_joint_angles = []
@@ -174,20 +171,22 @@ class Module():
                 # Forward Kinematics <-- comment from the Sawyer package, this section should be fk, but seems this is just a goToJointAngles
                 joint_input = GoToJointAngles()
                 joint_input.name = req.joint_angles
+                # TODO: do I have to do an action here or can I just pass in input as I am currently doing?
                 self.cb_GoToJointAngles(joint_input)
 
                 # successfully completed action, return to browser
                 result_GoToCartesianPose.is_done = True
                 self.GoToCartesianPoseAct.set_succeeded(result_GoToCartesianPose)
 
-                # escape function 
+                # escape function
                 return None 
 
             else:
                 rospy.loginfo("No Cartesian pose or joint angles given.")
                 return None
         else:
-            # TODO: Figure out what this chunk is about. There is not a 
+            # TODO: Figure out what this chunk is about. There is not a self.tip_state as far as I can see
+
 			# endpoint_state = self.tip_state(tip_name)
 			# if endpoint_state is None:
 			# 	rospy.logerr('Endpoint state not found with tip name %s', tip_name)
@@ -215,7 +214,6 @@ class Module():
                     # TODO: how to check the result and make sure it's fine, there was no checking in the limb_plus version
                     # http://docs.ros.org/jade/api/orocos_kdl/html/classKDL_1_1ChainIkSolverPos__NR.html 
                     # above is the C++
-                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
@@ -224,23 +222,25 @@ class Module():
                     # create kdl frame from given
                     if position is not None and len(position) == 3:
                         trans = kdl.Vector(position[0], position[1], position[2])
+                        
                     if orientation is not None and len(orientation) == 4:
                         rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
-                        # TODO: Figure out where to put wrench (orientation[3])
+                        # TODO: Figure out where to put wrench (orientation[3]) from KDL docs 
+                        # only operation I can find with wrench is that you multiply it with frame? it represents force/torque so maybe s
+                        # should be used with a velocity interface instead of a position interface?
+
                     f2 = kdl.Frame(rot, trans)
                     q_out=JntArray(6)
                     # TODO: do I need to do any checking w/ value of ik_result? See comment at line 219 above
-                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
                 else:
-                    trans = kdl.Vector(position[0], position[1], position[2])
-                    rot = kdl.Rotation.RPY(orientation[0], orientation[1], orientation[2])
+                    trans = kdl.Vector(endpoint_pose['position'][0], endpoint_pose['position'][1], endpoint_pose['position'][2])
+                    rot = kdl.Rotation.RPY(endpoint_pose['orientation'][0], endpoint_pose['orientation'][1], endpoint_pose['orientation'][2])
                     # TODO: Figure out where to put wrench (orientation[3])
                     q_out=JntArray(6)
                     # TODO: do I need to do any checking w/ value of ik_result?
-                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
 
@@ -316,6 +316,13 @@ if __name__ == '__main__':
     joint_dof_elbow = [-1.57, DSP, .30, 0,-j4max,0]
     joint_dof_wrist = [-1.57, DSP,j2scara,0, 0.45,0]
     joint_dof_up = [-1.57, DSP, j2scara,0,-j4max,0]
+
+    # Testing IK and Cartesian Pose 
+    zero_kin_pos = [0.00254123466239, -0.232704877486, 1.07964791769]
+    zero_kin_orientation = [-0.00218950522372, 0.706552303331, -0.707625021518]
+    zero_kin_endpoint_pose =  {'position': zero_kin_pos[:], 'orientation': zero_kin_orientation[:]}
+    zero_kin_rel_base = [0.00254123466239, -0.232704877486, 1.0796479176, -0.00218950522372, 0.706552303331, -0.707625021518] #pos followed by orientation
+ 
 
     m = Module()
 

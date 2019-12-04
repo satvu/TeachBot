@@ -19,27 +19,55 @@ JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
 class PositionClient:
 
     def __init__(self):
-        self.initialized = False 
 
         rospy.Subscriber('/ur_hardware_interface/robot_program_running', Bool, self.cb_robot_ready)
-        rospy.Subscriber('/joint_states', JointState, self.send_command)
 
-        self.client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self.cart_client = actionlib.SimpleActionClient('/teachbot/GoToCartesianPose', GoToCartesianPoseAction)
         
     def cb_robot_ready(self, res):
-        if not self.initialized:
-            self.initialized = res.data
-            if self.initialized:
-                print "inside ready and initialized"
-                rospy.wait_for_service("set_speed_slider")
-                print "connected to service"
-                try:
-                    send_speed = rospy.ServiceProxy("set_speed_slider", Float64)
-                    send_speed(0.5)
-                    print send_speed.success
+        if res.data:
+
+            raw_input("Press Enter to test joint angles...")
+            cart_msg = GoToCartesianPoseGoal()
+            cart_msg.position = "None"
+            cart_msg.orientation = "None"
+            cart_msg.relative_pose = "None"
+            cart_msg.joint_angles = "None"
+            cart_msg.endpoint_pose = "None"
+            self.joint_traj_client.send_goal(followJoint_msg)
+            self.joint_traj_client.wait_for_result()
+
+            raw_input("Press Enter to test position and orientation given...")
+            cart_msg = GoToCartesianPoseGoal()
+            cart_msg.position = "zero_kin_pos"
+            cart_msg.orientation = "zero_kin_orientation"
+            cart_msg.relative_pose = "None"
+            cart_msg.joint_angles = "None"
+            cart_msg.endpoint_pose = "None"
+            self.joint_traj_client.send_goal(followJoint_msg)
+            self.joint_traj_client.wait_for_result()
+
+            raw_input("Press Enter to test relative pose...")
+            cart_msg = GoToCartesianPoseGoal()
+            cart_msg.position = "None"
+            cart_msg.orientation = "None"
+            cart_msg.relative_pose = "zero_kin_rel_base"
+            cart_msg.joint_angles = "None"
+            cart_msg.endpoint_pose = "None"
+            self.joint_traj_client.send_goal(followJoint_msg)
+            self.joint_traj_client.wait_for_result()
+
+            raw_input("Press Enter to test endpoint pose...")
+            cart_msg = GoToCartesianPoseGoal()
+            cart_msg.position = "None"
+            cart_msg.orientation = "None"
+            cart_msg.relative_pose = "None"
+            cart_msg.joint_angles = "None"
+            cart_msg.endpoint_pose = "zero_kin_endpoint_pose"
+            self.joint_traj_client.send_goal(followJoint_msg)
+            self.joint_traj_client.wait_for_result()
+
                 
-                except:
-                    print "could not connect to service"
                 
 if __name__ == '__main__':
     rospy.init_node('request')
