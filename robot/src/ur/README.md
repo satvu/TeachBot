@@ -34,7 +34,9 @@ To set up a UR robot for the ur_robot_driver, follow the instructions provided f
 Note that setting up an e-series robot has additional instructions. 
 
 ## Running Teachbot
-First, make sure your UR robot is on, and that the external cap has been set to connect to your PC (<a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/install_urcap_e_series.md"> e-series instructions</a>). Do not press play yet for the robot program. 
+First, make sure your UR robot is on. Turn it on using the pendant. 
+
+Then, make sure the external cap you installed in the previous set of instructions has been set to connect to your PC (<a href="https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/install_urcap_e_series.md"> e-series instructions</a>). This means putting in your IP adress into the UR  Do not press play yet for the robot program. 
 
 You can adjust the speed that your robot moves at using the speed slider. It is outlined in red below. 
 
@@ -44,7 +46,7 @@ On your PC, open three terminals to `~/TeachBot/robot` and don't forget to `sour
 
 In the first terminal, run the following command with your parameters:
 
-    $ roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.157.0 \ kinematics_config:="$(HOME/TeachBot/robot/src/ur/ur5e_robot_calibration.yaml)
+    $ roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.157.0 \ kinematics_config:="$(HOME/TeachBot/robot/src/ur/ur5e_robot_calibration.yaml)"
 
 For `robot_ip:=`, put the IP address of your UR robot to replace the IP address of this example. 
 
