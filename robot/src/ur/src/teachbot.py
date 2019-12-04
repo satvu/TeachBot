@@ -50,6 +50,9 @@ class Module():
         self.devMode = False
         self.seqArr = []
 
+        rospy.loginfo('TeachBot is initialized and ready to go.')
+
+
     def rx_audio_duration(self,data):
         self.audio_duration = data.audio_duration
         return True
