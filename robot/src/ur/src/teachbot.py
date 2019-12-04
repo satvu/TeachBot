@@ -62,8 +62,7 @@ class Module():
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 
         # Subscribers
-        #TODO: Check that this is the write subscription and message type
-        rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
+        rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
 
         # Publishers to browser so you know something is complete
         # TODO: Do we still need command complete and others if we have actions? This is still on main repo 
@@ -97,9 +96,9 @@ class Module():
         velocity = JointInfo()
         effort = JointInfo()
         for j in range(Module.JOINTS):
-            setattr(position, 'j'+str(j), data.position[j+1])
-            setattr(velocity, 'j'+str(j), data.velocity[j+1])
-            setattr(effort, 'j'+str(j), data.effort[j+1])
+            setattr(position, 'j'+str(j), data.position[j])
+            setattr(velocity, 'j'+str(j), data.velocity[j])
+            setattr(effort, 'j'+str(j), data.effort[j])
         self.position_topic.publish(position)
         self.velocity_topic.publish(velocity)
         self.effort_topic.publish(effort)
@@ -216,6 +215,7 @@ class Module():
                     # TODO: how to check the result and make sure it's fine, there was no checking in the limb_plus version
                     # http://docs.ros.org/jade/api/orocos_kdl/html/classKDL_1_1ChainIkSolverPos__NR.html 
                     # above is the C++
+                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
@@ -230,6 +230,7 @@ class Module():
                     f2 = kdl.Frame(rot, trans)
                     q_out=JntArray(6)
                     # TODO: do I need to do any checking w/ value of ik_result? See comment at line 219 above
+                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
                     
@@ -239,6 +240,7 @@ class Module():
                     # TODO: Figure out where to put wrench (orientation[3])
                     q_out=JntArray(6)
                     # TODO: do I need to do any checking w/ value of ik_result?
+                    # TODO: self.curr_pos is a JointInfo object turn it into the correct input
                     ik_result = self.ik.CartToJnt(self.curr_pos, f2, q_out)
                     converted_joint_angles = q_out
 
