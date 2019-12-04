@@ -169,6 +169,7 @@ class Module():
         if (position is None and orientation is None and relative_pose is None and endpoint_pose is None):
             if joint_angles:
                 # Forward Kinematics <-- comment from the Sawyer package, this section should be fk, but seems this is just a goToJointAngles
+                # actually need to do kinematics, used in Sawyer b/c 7th degree of freedom
                 joint_input = GoToJointAngles()
                 joint_input.name = req.joint_angles
                 # TODO: do I have to do an action here or can I just pass in input as I am currently doing?
