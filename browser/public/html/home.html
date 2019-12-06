@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Module 1</title>
+	<title>Home Page</title>
 
 	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/main.css">
 	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/sawyer.css">
@@ -31,47 +31,46 @@
 </head>
 
 <script type="text/javascript">
-	function begin() {
-		document.getElementById("adjustable").innerHTML = "Loading..."
-		var script = document.createElement("script");
-		script.setAttribute('type', "text/javascript");
-		script.setAttribute('src', "https://localhost:8000/js/1.js");
-		document.getElementsByTagName("head")[0].appendChild(script);
+	function displayModuleSelection() {
+		document.getElementById("menu").style.display = "none";
+		document.getElementById("moduleSelection").style.display = "initial";
 	}
-
+	function backToHome() {
+		document.getElementById("menu").style.display = "initial";
+		document.getElementById("moduleSelection").style.display = "none";
+	}
 </script>
 
 <body>
-	<!-- Welcome image -->
-	<img id="image" class="module1" src="https://localhost:8000/images/Welcome.png" alt="Welcome" height = "90%">
-	
-	<!-- Canvas -->
-	<div id="canvas_container">
-		<canvas id="canvas_obj"></canvas>
+	<div align="center">
+		<img class="home" src="https://localhost:8000/images/teachbot_logo.png" alt="image missing">
 	</div>
 
-	<!-- Audio text -->
-	<div id='adjustable'>
-		<div align="center">
-			<button onclick="begin()">Begin Module 1</button>
-		</div>
+	<div id="menu" align="center">
+		<p class="home">Welcome to TeachBot Education System!</p>
+		<table align="center">
+			<tr><td align="center"><button class="home" onclick="displayModuleSelection()">Select Modules</button></td></tr>
+			<tr><td align="center"><button class="home">Exit</button></td></tr>
+  		</table>
 	</div>
 
-	<!-- Speech -->
-	<audio id="player"></audio>
+	<div id="moduleSelection" align="center">
+		<p class="home">Please select a module to begin.</p>
+		<table align="center">
+			<tr><td align="center">
+				<form style="display: inline" action="https://localhost:8000/module1" method="get">
+					<button class="module">Module 1
+					</button></form>
+				<form style="display: inline" action="https://localhost:8000/module2" method="get">
+					<button class="module">Module 2
+					</button></form>
+				<form style="display: inline" action="https://localhost:8000/test" method="get">
+					<button class="module">Test page
+					</button></form></td></tr>
+			<tr><td align="center"><button class="home" onclick="backToHome()">Back</button></form></td></tr>
+  		</table>
+	</div>
 
-	<!-- Animation -->
-	<video id="animator" class="centered" preload>
-		<source src="https://localhost:8000/videos/motor_animation.mp4" type="video/mp4">
-	</video>
-
-
-	<!-- Run JS Module -->
-	<script type="text/javascript" src="https://localhost:8000/js/Module.js"></script>
-	<script type="text/javascript" src="https://localhost:8000/js/1.js"></script>
-
-	<!-- Display Pointer Position
-	<script type="text/javascript" src="https://localhost:8000/js/utils/displayPointerPosition.js"></script>
-	 -->
 </body>
+	
 </html>

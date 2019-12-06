@@ -177,7 +177,7 @@ function Module(module_num, main, content_elements) {
 	 *   HTML Elements   *
 	 *********************/
 	this.ctx = canvas_obj.getContext('2d');
-	canvas_obj.width = window.innerWidth*0.98;
+	canvas_obj.width = window.innerWidth*0.96;
 	canvas_obj.height = window.innerHeight*0.76;
 	this.ch = canvas_obj.height/100.0;
 	this.cw = canvas_obj.width/100.0;
