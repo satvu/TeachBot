@@ -41,6 +41,9 @@ app.get('/home', function(req, res) {
 app.get('/selectmodules', function(req, res) {
   res.sendFile(path.join(__dirname + '/public/html/home_modules.html'));
 })
+app.get('/robotconfiguration', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/robot_configuration.html'));
+})
 app.get('/test', function(req, res) {
   res.sendFile(path.join(__dirname + '/public/html/test_module_page.html'));
 })

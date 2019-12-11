@@ -12,7 +12,7 @@
 
 <script type="text/javascript">
 	function resizeCanvas() {
-		canvas_obj.width = window.innerWidth * 0.98;
+		canvas_obj.width = window.innerWidth * 0.96;
 		canvas_obj.height = window.innerHeight * 0.76;
 	}
 	function drawCircle() {
@@ -31,7 +31,7 @@
 <body>
 
 	<div id="canvas" class="container">
-		<canvas id="canvas_obj" style="border-style: solid; border-width: 1px;"></canvas>
+		<canvas id="canvas_obj" ></canvas>
 		<script type="text/javascript">
 			resizeCanvas();
 			window.addEventListener('resize', resizeCanvas, false);

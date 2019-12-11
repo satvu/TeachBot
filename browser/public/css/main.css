@@ -21,11 +21,25 @@ p.home {
 }
 
 #menu {
-	display: none;
+	display: initial;
 }
 
 #moduleSelection {
-	display: initial;
+	display: none;
+}
+td {
+	text-align: center;
+}
+p.joints {
+	font-size: 4vh;
+	margin-top: 0;
+	margin-bottom: 0;
+	margin-left: 3vw;
+	margin-right: 3vw;
+}
+p.angle {
+	font-size: 3vh;
+	margin: 0;
 }
 
 button.home {
@@ -67,10 +81,10 @@ button.module {
 	margin-right: 1vw;
 }
 
-img.module1 {
+img.welcome {
 	object-fit: contain;
 	max-width: 95%;
-	max-height: 75%;
+	max-height: 70%;
 	position: absolute;
 	left: 50%;
 	top: 10%;

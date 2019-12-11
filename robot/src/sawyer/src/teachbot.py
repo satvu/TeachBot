@@ -272,7 +272,7 @@ class Module():
 	def joint_safety_check(self, resetFn, returnFn):
 		#rospy.loginfo('in safety zone')
 		pos = self.limb.endpoint_pose()['position']
-		if pos.z<0 or pos.y<-0.2:
+		if pos.z<0 or pos.x<0.1:
 			rospy.loginfo('oops outside safety zone')
 			self.limb.position_mode()
 			rospy.loginfo('position_mode entered')
@@ -877,13 +877,16 @@ class Sequence():
 ## DEFINE IMPORTANT CONSTANTS ##
 if __name__ == '__main__':
 	# Commonly used objects
-	joint_buttons = [-0.0393427734375+math.pi/2,-0.71621875,0.022359375,1.811921875,-0.116017578125,2.77036035156,-4.48708789063]
-	default = [math.pi/2, -0.9, 0.0, 1.8, 0.0, -0.9, 0.0]
+	default = [0.0, -0.78, 0.0, 1.57, 0, -0.79, 0.2]
+	joint_buttons = [0.0, -0.78, 0.0, 1.57, 0, -2.99, -1.37]
 
 	BIAS_SHOULDER = 0#-0.5
-	BIAS_WRIST = -0.2
+	BIAS_WRIST = 0.2
 	#shoulder_wrist_bias = {shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}
 	#shoulder_wrist_thresh = {shoulder: 1.0, wrist: 0.5}
+
+	# Joint offset angles in order to align properly
+	j6_offset = 0.2
 
 	# Joint Names
 	shoulder = 'right_j0'
@@ -891,15 +894,23 @@ if __name__ == '__main__':
 	wrist = 'right_j5'
 
 	# Joint Positions
-	no_hit = -0.04 # Maximum j1 to avoid scraping table in SCARA
-	DSP = -0.10    # Default shoulder position in SCARA
-	j4max = 2.99   # The maximum joint angle achievable by right_j4 and _j5
+	scara_j1_clearance = -0.06	# Adjust j1 to avoid scraping table in SCARA
+	no_hit = -0.04
+	scara_j6_gripper = 1.80		# constant j6 during SCARA mode to keep the gripper horizontal
+	DSP = -0.10		# Default shoulder position in SCARA
+	j2max = 3.04	# Angle limit
+	j4max = 2.99	# The maximum joint angle achievable by right_j4 and _j5
+	j5min = -2.99
+	j5max = 1.57	# Prevent from stretching the tube
 	j2scara = math.pi/2 - math.pi+j4max
 	j6scara = -3*math.pi/2 + math.pi-j4max
 
+	dof_demo_rotation = math.pi/8.0
+
 	# 1
 	joint_motor_animation_0 = [0]*Module.JOINTS
-	joint_motor_animation_0[0] = math.pi/2
+	joint_motor_animation_0[0] = 0.3
+	joint_motor_animation_0[6] = j6_offset
 	joint_motor_animation_1 = joint_motor_animation_0[:]
 	joint_motor_animation_1[4] = j4max
 
@@ -907,31 +918,43 @@ if __name__ == '__main__':
 	joint_test = [0]*Module.JOINTS
 	for j in range(0,Module.JOINTS):
 		joint_angle_arr = joint_motor_animation_0[:]
-		if (j==0):
-			joint_angle_arr[j] = 0.5+math.pi/2
-		elif (j==1 or j==3):
-			joint_angle_arr[j] = -1.0
+		if (j==1 or j==3 or j==5):
+			joint_angle_arr[j] = -0.7
 		else:
-			joint_angle_arr[j] = 1.0
+			joint_angle_arr[j] = 0.7
 		joint_test[j] = joint_angle_arr
 	
 	# 6-15
-	joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0,j6scara]
-	joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0,j6scara]
-	joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0,j6scara]
-	joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45,j6scara]
+	joint_dof_start = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
+	# joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0,j6scara]
+	joint_dof_shoulder = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
+	joint_dof_shoulder[0] += dof_demo_rotation
+	# joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0,j6scara]
+	joint_dof_elbow = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
+	joint_dof_elbow[3] += dof_demo_rotation
+	# joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0,j6scara]
+	joint_dof_wrist = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
+	joint_dof_wrist[5] += dof_demo_rotation
+	# joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45,j6scara]
 	joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0,j6scara]
 
+	# In between these two parts, showing the encoder video
+	pos_encoder_video = [0.0, -1.57, 0.0, 1.57, 0, 0, 0.2]
+
 	# 18-24
-	point_a = joint_dof_start[:]
-	point_b = joint_dof_start[:]
-	point_c = joint_dof_start[:]
-	point_a[0] = 0.12
-	point_b[0] = -0.06
-	point_c[0] = -0.21
+	point_a = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	#point_a = joint_dof_start[:]
+	point_b = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	# point_b = joint_dof_start[:]
+	point_c = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	# point_c = joint_dof_start[:]
+	# point_a[0] = 0.12
+	point_b[3] = -1.87
+	point_c[3] = -2.10
 
 	# 25
-	joint_push_down = [math.pi/2,0,0,math.pi/2,0,0,0]
+	joint_push_down = [0, 0, 0, -math.pi/2, 0, 0, 0+j6_offset]
+	#joint_push_down = [math.pi/2,0,0,math.pi/2,0,0,0]
 
 	# 32-37
 	joint_dot_1 = [DSP,no_hit,j2scara,0,-j4max,-1.83,j6scara]

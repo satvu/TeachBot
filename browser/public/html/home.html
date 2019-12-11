@@ -50,6 +50,11 @@
 		<p class="home">Welcome to TeachBot Education System!</p>
 		<table align="center">
 			<tr><td align="center"><button class="home" onclick="displayModuleSelection()">Select Modules</button></td></tr>
+			<tr>
+				<td align="center"><form style="display: inline" action="https://localhost:8000/robotconfiguration" method="get">
+					<button class="home">Robot Configuration
+					</button></form></td>
+			</tr>
 			<tr><td align="center"><button class="home">Exit</button></td></tr>
   		</table>
 	</div>
@@ -64,10 +69,11 @@
 				<form style="display: inline" action="https://localhost:8000/module2" method="get">
 					<button class="module">Module 2
 					</button></form>
-				<form style="display: inline" action="https://localhost:8000/test" method="get">
-					<button class="module">Test page
-					</button></form></td></tr>
-			<tr><td align="center"><button class="home" onclick="backToHome()">Back</button></form></td></tr>
+				</td>
+			</tr>
+			<tr>
+				<td align="center"><button class="home" onclick="backToHome()">Back</button></td>
+			</tr>
   		</table>
 	</div>
 

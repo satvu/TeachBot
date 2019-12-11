@@ -216,12 +216,6 @@
 		"id":"encoders",
 		"instructions":[
 			{
-				"type":"LOG",
-				"name": "hello",
-				"test": "if you see me then it is success!",
-				"aDict": {"key1": 1, "key2": "Two"}
-			},
-			{
 				"type":"goToJointAngles",
 				"joint_angles":"default"
 			},
@@ -307,7 +301,7 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"default"
+				"joint_angles":"pos_encoder_video"
 			},
 			{
 				"type":"encode"
@@ -386,10 +380,6 @@
 				"type":"play",
 				"audio_index":8,
 				"delay":true
-			},
-			{
-				"type":"goToJointAngles",
-				"joint_angles":"joint_dof_up"
 			},
 			{
 				"type":"goToJointAngles",
@@ -509,8 +499,8 @@
 			},
 			{
 				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self : self.limb.joint_angle(shoulder)<point_b[0]",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)<point_b[0]",
 				"resetPOS":"point_a",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",
@@ -554,8 +544,8 @@
 			},
 			{
 				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self : self.limb.joint_angle(shoulder)>point_b[0]",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)>point_b[0]",
 				"resetPOS":"point_c",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",

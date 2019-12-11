@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Robot Configuration</title>
+
+	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/main.css">
+	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/sawyer.css">
+	<link rel="icon" href="https://localhost:8000/images/favicon.png">
+
+	<!-- Structural Utilities -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script type="text/javascript" src='https://lib.smartsparrow.com/simcapi-js-3.0.6.min.js'></script>
+	<script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+	<script type="text/javascript" src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/jquery-textfill/jquery-textfill@0.6.0/source/jquery.textfill.min.js"></script>
+
+	<!-- TeachBot Utilities -->
+	<script src="https://localhost:8000/js/utils/arc3pt.js"></script>
+	<script src="https://localhost:8000/js/utils/display_choices.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_ball.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_bar.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_goal.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_pos_orien.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_odometer.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_spring.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_encoder.js"></script>
+	<script src="https://localhost:8000/js/utils/JSONcopy.js"></script>
+	<script src="https://localhost:8000/js/utils/sleep.js"></script>
+</head>
+
+<script type="text/javascript">
+	const ROBOT = 'sawyer';
+	const DIR = 'https://localhost:8000/';
+	var current_angles = [];
+
+	const home_angles = [0.0, -0.78, 0.0, 1.57, 0, -0.79, 0.2];
+	const upright_angles = [0, -1.57, 0, 0, 0, 0, 0.2];
+	const scara_initial = [0.78, -0.06, 1.57, -1.57, 2.99, -0.78, 1.80];
+
+	var ros = new ROSLIB.Ros({ url: 'wss://localhost:9090' });
+	ros.on('connection', function() { console.log('Connected to websocket server.'); });
+	ros.on('error', function(error) { console.log('Error connecting to websocket server: ', error); window.alert('Error connecting to websocket server'); });
+	ros.on('close', function() { console.log('Connection to websocket server closed.'); });
+
+	var position = new ROSLIB.Topic({
+		ros: ros,
+		name: '/teachbot/position',
+		messageType: ROBOT + '/JointInfo'
+	});
+
+	var endpoint = new ROSLIB.Topic({
+		ros: ros,
+		name: '/teachbot/EndpointInfo',
+		messageType: ROBOT + '/EndpointInfo'
+	});
+
+	var GoToJointAnglesAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/GoToJointAngles',
+		actionName: ROBOT + '/GoToJointAnglesAction'
+	});
+
+	position.subscribe(async function(message) {
+		document.getElementById("j0").innerHTML = message.j0.toFixed(2);
+		document.getElementById("j1").innerHTML = message.j1.toFixed(2);
+		document.getElementById("j2").innerHTML = message.j2.toFixed(2);
+		document.getElementById("j3").innerHTML = message.j3.toFixed(2);
+		document.getElementById("j4").innerHTML = message.j4.toFixed(2);
+		document.getElementById("j5").innerHTML = message.j5.toFixed(2);
+		document.getElementById("j6").innerHTML = message.j6.toFixed(2);
+		current_angles = [message.j0.toFixed(2), message.j1.toFixed(2), message.j2.toFixed(2), message.j3.toFixed(2), message.j4.toFixed(2), message.j5.toFixed(2), message.j6.toFixed(2)];
+	});
+
+	endpoint.subscribe(async function(message) {
+		document.getElementById("pos_x").innerHTML = message.position.x.toFixed(2);
+		document.getElementById("pos_y").innerHTML = message.position.y.toFixed(2);
+		document.getElementById("pos_z").innerHTML = message.position.z.toFixed(2);
+		document.getElementById("orien_x").innerHTML = message.orientation.x.toFixed(2);
+		document.getElementById("orien_y").innerHTML = message.orientation.y.toFixed(2);
+		document.getElementById("orien_z").innerHTML = message.orientation.z.toFixed(2);
+		document.getElementById("orien_w").innerHTML = message.orientation.w.toFixed(2);
+	});
+
+	function clearInputFields() {
+		document.getElementById("g_j0").value = "";
+		document.getElementById("g_j1").value = "";
+		document.getElementById("g_j2").value = "";
+		document.getElementById("g_j3").value = "";
+		document.getElementById("g_j4").value = "";
+		document.getElementById("g_j5").value = "";
+		document.getElementById("g_j6").value = "";
+	}
+
+	function homePosition() {
+		var goHomeGoal = new ROSLIB.Goal({
+			actionClient: GoToJointAnglesAct,
+			goalMessage: {
+				j0pos: home_angles[0],
+				j1pos: home_angles[1],
+				j2pos: home_angles[2],
+				j3pos: home_angles[3],
+				j4pos: home_angles[4],
+				j5pos: home_angles[5],
+				j6pos: home_angles[6],
+				speed_ratio: 0.5
+			}
+		});
+		goHomeGoal.on('result', function(result) {
+			clearInputFields();
+		});
+		goHomeGoal.send();
+	};
+
+	function uprightPosition() {
+		var goHomeGoal = new ROSLIB.Goal({
+			actionClient: GoToJointAnglesAct,
+			goalMessage: {
+				j0pos: upright_angles[0],
+				j1pos: upright_angles[1],
+				j2pos: upright_angles[2],
+				j3pos: upright_angles[3],
+				j4pos: upright_angles[4],
+				j5pos: upright_angles[5],
+				j6pos: upright_angles[6],
+				speed_ratio: 0.5
+			}
+		});
+		goHomeGoal.on('result', function(result) {
+			clearInputFields();
+		});
+		goHomeGoal.send();
+	};
+
+	function scaraInitial() {
+		var goHomeGoal = new ROSLIB.Goal({
+			actionClient: GoToJointAnglesAct,
+			goalMessage: {
+				j0pos: scara_initial[0],
+				j1pos: scara_initial[1],
+				j2pos: scara_initial[2],
+				j3pos: scara_initial[3],
+				j4pos: scara_initial[4],
+				j5pos: scara_initial[5],
+				j6pos: scara_initial[6],
+				speed_ratio: 0.5
+			}
+		});
+		goHomeGoal.on('result', function(result) {
+			clearInputFields();
+		});
+		goHomeGoal.send();
+	};
+
+	function sendJointAngles(g0, g1, g2, g3, g4, g5, g6) {
+		var desired_angles = [g0, g1, g2, g3, g4, g5, g6];
+		for(var i=0;i<desired_angles.length;i++) {
+			if (desired_angles[i]=="") {
+				desired_angles[i] = parseFloat(current_angles[i]);
+			} else {
+				desired_angles[i] = parseFloat(desired_angles[i]);
+			}
+		};
+		var newPositionGoal = new ROSLIB.Goal({
+			actionClient: GoToJointAnglesAct,
+			goalMessage: {
+				j0pos: desired_angles[0],
+				j1pos: desired_angles[1],
+				j2pos: desired_angles[2],
+				j3pos: desired_angles[3],
+				j4pos: desired_angles[4],
+				j5pos: desired_angles[5],
+				j6pos: desired_angles[6],
+				speed_ratio: 0.2
+			}
+		});
+		newPositionGoal.on('result', function(result) {
+			clearInputFields();
+		});
+		newPositionGoal.send();
+	};
+	
+</script>
+
+<body>
+	<div align="center">
+		<br>
+		<p style="font-weight: bold; margin: 0; font-size: 4vh;">Endpoint info.</p>
+		<table align="center" style="font-size: 3vh;">
+			<tr>
+				<td>Position</td>
+				<td style="width: 70px;">x</td>
+				<td style="width: 70px;">y</td>
+				<td style="width: 70px;">z</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td id="pos_x"></td>
+				<td id="pos_y"></td>
+				<td id="pos_z"></td>
+			<tr>
+				<td>Orientation</td>
+				<td>x</td>
+				<td>y</td>
+				<td>z</td>
+				<td  style="width: 70px;">w</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td id="orien_x"></td>
+				<td id="orien_y"></td>
+				<td id="orien_z"></td>
+				<td id="orien_w"></td>
+			<tr>
+		</table>
+	</div>
+
+	<div align="center">
+		<br>
+		<p style="font-weight: bold; margin: 0; font-size: 4vh;">Display and adjust joint angles.</p>
+	</div>
+
+	<div id="jointAngles" align="center">
+		<table align="center">
+			<tr>
+				<td><p class="joints">Joint</p></td>
+				<td><p class="joints">j0</p></td>
+				<td><p class="joints">j1</p></td>
+				<td><p class="joints">j2</p></td>
+				<td><p class="joints">j3</p></td>
+				<td><p class="joints">j4</p></td>
+				<td><p class="joints">j5</p></td>
+				<td><p class="joints">j6</p></td>
+			</tr>
+			<tr>
+				<td><p class="joints">Current</p></td>
+				<td><p class="angle" id="j0"></p></td>
+				<td><p class="angle" id="j1"></p></td>
+				<td><p class="angle" id="j2"></p></td>
+				<td><p class="angle" id="j3"></p></td>
+				<td><p class="angle" id="j4"></p></td>
+				<td><p class="angle" id="j5"></p></td>
+				<td><p class="angle" id="j6"></p></td>
+			</tr>
+			<tr>
+				<td><p class="joints">Desired</p></td>
+				<td><input id = "g_j0" type="text" size="1"></td>
+				<td><input id = "g_j1" type="text" size="1"></td>
+				<td><input id = "g_j2" type="text" size="1"></td>
+				<td><input id = "g_j3" type="text" size="1"></td>
+				<td><input id = "g_j4" type="text" size="1"></td>
+				<td><input id = "g_j5" type="text" size="1"></td>
+				<td><input id = "g_j6" type="text" size="1"></td>
+			</tr>
+  		</table>
+  		<button onclick="sendJointAngles(
+			document.getElementById('g_j0').value,
+			document.getElementById('g_j1').value,
+			document.getElementById('g_j2').value,
+			document.getElementById('g_j3').value,
+			document.getElementById('g_j4').value,
+			document.getElementById('g_j5').value,
+			document.getElementById('g_j6').value,)">Go to angles</button>
+	</div>
+
+	<div align="center">
+		<br>
+		Commonly used positions
+		<br>
+		<button onclick="homePosition()">Home</button>
+		<button onclick="uprightPosition()">Upright</button>
+  		<button onclick="scaraInitial()">SCARA</button>
+	</div>
+
+	<div align="center">
+		<form style="display: inline" action="https://localhost:8000/" method="get">
+			<button class="home">Back</button>
+		</form>
+	</div>
+
+</body>
+	
+</html>
