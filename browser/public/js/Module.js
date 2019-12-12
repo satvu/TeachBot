@@ -1,7 +1,7 @@
 // Constants
 const DIR = 'https://localhost:8000/';    // Directory containing resources
 const JOINTS = 7;                         // Numer of joints in Sawyer arm
-const VERBOSE = false;                     // Whether or not to print everything
+const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
 const ROBOT = 'sawyer';
 
@@ -532,15 +532,20 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 		this.start(this.getNextAddress(instructionAddr));
 	} else {
 		switch(instr.type) {
+			case 'pause':
+
+				console.log("module paused here.")
+
+				break
 			case 'arc':
 				if (instr.hasOwnProperty('shoulder_arc')){
 					canvas_container.style.display = 'initial';
-					arc3pt(this.ctx,33*this.cw,95*this.ch,27*this.cw,48*this.ch,28*this.cw,2*this.ch,false);
+					arc3pt(this.ctx,38*this.cw,95*this.ch,32*this.cw,48*this.ch,33*this.cw,2*this.ch,false);
 				}
 
 				if (instr.hasOwnProperty('wrist_arc')){
 					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-					arc3pt(this.ctx,28*this.cw,13*this.ch,38*this.cw,57*this.ch,64*this.cw,46*this.ch,true);
+					arc3pt(this.ctx,67*this.cw,72*this.ch,52*this.cw,90*this.ch,33*this.cw,65*this.ch,false);
 				}
 
 				if (instr.hasOwnProperty('shoulderNew_arc')){
@@ -1459,6 +1464,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'while':
 				checkInstruction(instr, ['conditional'], instructionAddr);
+				console.log(this.hashTokeyVal(instr.conditional));
 		
 				if (eval(this.hashTokeyVal(instr.conditional))) {
 					console.log('conditions')

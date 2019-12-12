@@ -466,7 +466,7 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 25,
+				"x_ratio": 50,
 				"y_ratio": 83,
 				"r_ratio": 10,
 				"fillStyle": "BlueViolet",
@@ -476,8 +476,8 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 22,
-				"y_ratio": 47,
+				"x_ratio": 39,
+				"y_ratio": 45,
 				"r_ratio": 10,
 				"fillStyle": "#7c2629",
 				"label": "B",
@@ -500,7 +500,7 @@
 			{
 				"type":"joint_move",
 				"joints":"elbow",
-				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)<point_b[0]",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)<point_b[3]",
 				"resetPOS":"point_a",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",
@@ -529,8 +529,8 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 21,
-				"y_ratio": 18,
+				"x_ratio": 37,
+				"y_ratio": 15,
 				"r_ratio": 10,
 				"fillStyle": "DarkGreen",
 				"label": "C",
@@ -545,7 +545,7 @@
 			{
 				"type":"joint_move",
 				"joints":"elbow",
-				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)>point_b[0]",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)>point_b[3]",
 				"resetPOS":"point_c",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",
@@ -564,9 +564,9 @@
 			{
 				"type":"drawShape",
 				"shape":"bar",
-				"x_ratio": 36,
+				"x_ratio": 5,
 				"y_ratio": 85,
-				"width_ratio": 8,
+				"width_ratio": 6,
 				"max_height_ratio": 40,
 				"height_percent": 0.3,
 				"fillStyle": "BlueViolet",
@@ -585,9 +585,9 @@
 			{
 				"type":"drawShape",
 				"shape":"bar",
-				"x_ratio": 48,
+				"x_ratio": 15,
 				"y_ratio": 85,
-				"width_ratio": 8,
+				"width_ratio": 6,
 				"max_height_ratio": 40,
 				"height_percent": 0.5,
 				"fillStyle": "#7c2629",
@@ -606,9 +606,9 @@
 			{
 				"type":"drawShape",
 				"shape":"bar",
-				"x_ratio": 60,
+				"x_ratio": 25,
 				"y_ratio": 85,
-				"width_ratio": 8,
+				"width_ratio": 6,
 				"max_height_ratio": 40,
 				"height_percent": 0.6,
 				"fillStyle": "DarkGreen",
@@ -744,7 +744,7 @@
 			},
 			{
 				"type":"goToJointAngles", 
-				"joint_angles":"joint_dof_start",
+				"joint_angles":"kinematics_init_pos",
 				"wait":true
 			},
 			{
@@ -759,11 +759,11 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"joint_dof_shoulder"
+				"joint_angles":"kinematics_shoulder_arc"
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"joint_dof_start"
+				"joint_angles":"kinematics_init_pos"
 			},
 			{
 				"//":"I can only reach points along this curve. So, if I want to reach this point,",
@@ -774,8 +774,8 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 53,
-				"y_ratio": 89,
+				"x_ratio": 55,
+				"y_ratio": 75,
 				"r_ratio": 10,
 				"fillStyle": "#7c2629",
 				"clearRec": true
@@ -802,7 +802,7 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"joint_dof_start"
+				"joint_angles":"kinematics_init_pos"
 			},
 			{
 				"//":"If I want to reach that point, I only need to move one motor, my wrist.",
@@ -813,8 +813,8 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 22,
-				"y_ratio": 47,
+				"x_ratio": 35,
+				"y_ratio": 70,
 				"r_ratio": 10,
 				"fillStyle": "#7c2629",
 				"clearRec": true
@@ -827,9 +827,9 @@
 			},
 			{
 				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self : self.limb.joint_angle(shoulder)<joint_dot_2[0]",
-				"resetPOS":"point_a",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)>joint_dot_2[3]",
+				"resetPOS":"kinematics_init_pos",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",
 				"listen":true
@@ -874,7 +874,7 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"joint_arc_shoulder"
+				"joint_angles":"joint_arc_elbow"
 			},
 			{
 				"type":"goToJointAngles",
@@ -883,8 +883,8 @@
 			{
 				"type":"drawShape",
 				"shape":"ball",
-				"x_ratio": 27,
-				"y_ratio": 88,
+				"x_ratio": 30,
+				"y_ratio": 28,
 				"r_ratio": 10,
 				"fillStyle": "#7c2629",
 				"clearRec": true
@@ -897,9 +897,9 @@
 			},
 			{
 				"type":"joint_move",
-				"joints":"shoulder",
+				"joints":"elbow",
 				"terminatingCondition":"lambda self : self.finished",
-				"resetPOS":"joint_dot_2",
+				"resetPOS":"joint_ortho_kin",
 				"min_thresh":"1.0",
 				"bias":"BIAS_SHOULDER",
 				"listen":false,
@@ -914,30 +914,30 @@
 			{
 				"type":"set",
 				"key":"x",
-				"val":1.00
+				"val":0.36
 			},
 			{
 				"type":"set",
 				"key":"y",
-				"val":0.31
+				"val":-0.17
 			},
 			{
 				"type":"set",
 				"key":"z",
-				"val":0.06
+				"val":0.02
 			},
 			{
 				"type":"update"
 			},
 			{
 				"type":"while",
-				"conditional":"Math.abs(#position_x-#x)>0.05 || Math.abs(#position_y-#y)>0.05 || Math.abs(#position_z-#z)>0.05",
+				"conditional":"Math.abs(#position_x-#x)>0.03 || Math.abs(#position_y-(#y))>0.03 || Math.abs(#position_z-#z)>0.03",
 				"instructions":[
 					{
 						"type":"joint_move",
 						"joints":"wrist",
 						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
-						"resetPOS":"joint_dot_2",
+						"resetPOS":"joint_ortho_kin",
 						"min_thresh":"0.5",
 						"bias":"BIAS_WRIST",
 						"listen":true
@@ -947,9 +947,9 @@
 					},
 					{
 						"type":"joint_move",
-						"joints":"shoulder",
+						"joints":"elbow",
 						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
-						"resetPOS":"joint_dot_2",
+						"resetPOS":"joint_ortho_kin",
 						"min_thresh":"0.5",
 						"bias":"BIAS_SHOULDER",
 						"listen":true

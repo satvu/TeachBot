@@ -942,66 +942,79 @@ if __name__ == '__main__':
 	pos_encoder_video = [0.0, -1.57, 0.0, 1.57, 0, 0, 0.2]
 
 	# 18-24
-	point_a = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	point_a = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
 	#point_a = joint_dof_start[:]
-	point_b = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	point_b = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
 	# point_b = joint_dof_start[:]
-	point_c = [0.60, -0.06, 1.57, -1.57, 2.99, 0.0, 1.80]
+	point_c = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
 	# point_c = joint_dof_start[:]
 	# point_a[0] = 0.12
 	point_b[3] = -1.87
-	point_c[3] = -2.10
+	point_c[3] = -2.17
 
 	# 25
-	joint_push_down = [0, 0, 0, -math.pi/2, 0, 0, 0+j6_offset]
+	joint_push_down = [0, 0, 0, -math.pi/4, 0, j5min, -math.pi/2+j6_offset]
 	#joint_push_down = [math.pi/2,0,0,math.pi/2,0,0,0]
 
+	kinematics_init_pos = [0.39, -0.06, 1.57, -1.90, 2.99, 0, 1.8]
+	kinematics_shoulder_arc = [0.39, -0.06, 1.57, -1.50, 2.99, 0, 1.8]
+
 	# 32-37
-	joint_dot_1 = [DSP,no_hit,j2scara,0,-j4max,-1.83,j6scara]
-	joint_dot_2 = [-0.21,no_hit,j2scara,0,-j4max,0,j6scara]
-	joint_arc_wrist = [joint_dot_2[0],no_hit,j2scara,0,-j4max,-j4max,j6scara]
+	joint_dot_1 = kinematics_init_pos[:]
+	joint_dot_1[5] = -1.8
+	# joint_dot_1 = [DSP,no_hit,j2scara,0,-j4max,-1.83,j6scara]
+	joint_dot_2 = kinematics_init_pos[:]
+	joint_dot_2[3] = -1.6
+	# joint_dot_2 = [-0.21,no_hit,j2scara,0,-j4max,0,j6scara]
+	joint_arc_wrist = joint_dot_2[:]
+	joint_arc_wrist[5] = -1.2
+	# joint_arc_wrist = [joint_dot_2[0],no_hit,j2scara,0,-j4max,-j4max,j6scara]
 	joint_ortho_kin = joint_arc_wrist[:]
-	joint_ortho_kin[5] = -math.pi/2
-	joint_arc_shoulder = joint_ortho_kin[:]
-	joint_arc_shoulder[0] = -0.45
+	# joint_ortho_kin[5] = -math.pi/2
+	joint_arc_elbow = joint_ortho_kin[:]
+	joint_arc_elbow[3] = -2.0
+	# joint_arc_shoulder = joint_ortho_kin[:]
+	# joint_arc_shoulder[0] = -0.45
 
 	# 42
-	dot_3 = {'position': intera_interface.Limb.Point(x=1.00,y=0.31,z=0.06)}
-	joint_dot_3 = [0.13,no_hit,j2scara,0,-j4max,-0.07,j6scara]
+	dot_3 = {'position': intera_interface.Limb.Point(x=0.36,y=-0.17,z=0.02)}
+	joint_dot_3 = [0.39, -0.06, 1.57, -1.98, 2.99, 0.0, 1.80]
+	# joint_dot_3 = [0.13,no_hit,j2scara,0,-j4max,-0.07,j6scara]
 	joint_dot_3_2_1 = joint_ortho_kin[:]
-	joint_dot_3_2_1[0] = joint_dot_3[0]
+	joint_dot_3_2_1[3] = joint_dot_3[3]
 
 	# 46
 	joint_dot_3_4_2 = joint_ortho_kin[:]
-	joint_dot_3_4_2[0] = (joint_ortho_kin[0]+joint_dot_3[0])/2
+	joint_dot_3_4_2[3] = (joint_ortho_kin[3]+joint_dot_3[3])/2
 	joint_dot_3_4_2[5] = (joint_ortho_kin[5]+joint_dot_3[5])/2
 	joint_dot_3_4_1 = joint_ortho_kin[:]
-	joint_dot_3_4_1[0] = joint_dot_3_4_2[0]
+	joint_dot_3_4_1[3] = joint_dot_3_4_2[3]
 	joint_dot_3_4_3 = joint_dot_3_4_2[:]
-	joint_dot_3_4_3[0] = joint_dot_3[0]
+	joint_dot_3_4_3[3] = joint_dot_3[3]
 
 	# 47
 	joint_dot_3_8_4 = joint_dot_3_4_2[:]
 	joint_dot_3_8_2 = joint_ortho_kin[:]
-	joint_dot_3_8_2[0] = (joint_ortho_kin[0]+joint_dot_3_8_4[0])/2
+	joint_dot_3_8_2[3] = (joint_ortho_kin[3]+joint_dot_3_8_4[3])/2
 	joint_dot_3_8_2[5] = (joint_ortho_kin[5]+joint_dot_3_8_4[5])/2
 	joint_dot_3_8_6 = joint_dot_3_8_4[:]
-	joint_dot_3_8_6[0] = (joint_dot_3_8_4[0]+joint_dot_3[0])/2
+	joint_dot_3_8_6[3] = (joint_dot_3_8_4[3]+joint_dot_3[3])/2
 	joint_dot_3_8_6[5] = (joint_dot_3_8_4[5]+joint_dot_3[5])/2
 	joint_dot_3_8_1 = joint_ortho_kin[:]
-	joint_dot_3_8_1[0] = joint_dot_3_8_2[0]
+	joint_dot_3_8_1[3] = joint_dot_3_8_2[3]
 	joint_dot_3_8_3 = joint_dot_3_8_2[:]
-	joint_dot_3_8_3[0] = joint_dot_3_8_4[0]
+	joint_dot_3_8_3[3] = joint_dot_3_8_4[3]
 	joint_dot_3_8_5 = joint_dot_3_8_4[:]
-	joint_dot_3_8_5[0] = joint_dot_3_8_6[0]
+	joint_dot_3_8_5[3] = joint_dot_3_8_6[3]
 	joint_dot_3_8_7 = joint_dot_3_8_6[:]
-	joint_dot_3_8_7[0] = joint_dot_3[0]
+	joint_dot_3_8_7[3] = joint_dot_3[3]
 
 	# 49-
 	waypoints = []
 
 	# 58
-	joint_high_two = [1.39222949219,0.655348632812,-0.064970703125,-1.86494433594,0.156983398438,-0.364296875,3.24111523438]
+	joint_high_two = [0.0, 0.3, 0.0, -1.08, 0.0, -0.78, 0.2]
+	# joint_high_two = [1.39222949219,0.655348632812,-0.064970703125,-1.86494433594,0.156983398438,-0.364296875,3.24111523438]
 
 	## MODULE 2 ##
 	init_joint_arg                = [1.133,-0.678481445312,-0.433721679687,1.33986621094,-0.763953125,-1.132484375,0.959416015625]
