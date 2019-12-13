@@ -734,6 +734,15 @@
 		"id":"kinematics",
 		"instructions":[
 			{
+				"type":"joint_move",
+				"joints":"wrist",
+				"terminatingCondition":"lambda self : self.finished",
+				"resetPOS":"default",
+				"min_thresh":"0.5",
+				"bias":"-0.4",
+				"listen":true
+			},
+			{
 				"type":"reset"
 			},
 			{
@@ -748,7 +757,7 @@
 				"wait":true
 			},
 			{
-				"//":"Having so many motors is really important. If I can only move my shoulder,",
+				"//":"Having so many motors is really important. If I can only move my elbow,",
 				"type":"play",
 				"audio_index":1,
 				"delay":true
@@ -791,7 +800,7 @@
 				"joint_angles":"joint_dot_1"
 			},
 			{
-				"//":"I'm going to move my hand back to where it was and use the projector to show the same arc as before.",
+				"//":"I'm going to move my hand back to where it was and use the display to show the same arc as before.",
 				"type":"play",
 				"audio_index":4,
 				"delay":true
@@ -835,7 +844,7 @@
 				"listen":true
 			},
 			{
-				"//":"I only needed to use one motor, but it was my shoulder, not my wrist.",
+				"//":"I only needed to use one motor, but it was my elbow, not my wrist.",
 				"type":"play",
 				"audio_index":7,
 				"delay":true
@@ -863,7 +872,7 @@
 				"joint_angles":"joint_ortho_kin"
 			},
 			{
-				"//":"But with my shoulder motor, I can move along this curve.",
+				"//":"But with my elbow motor, I can move along this curve.",
 				"type":"play",
 				"audio_index":9,
 				"delay":true
@@ -890,7 +899,7 @@
 				"clearRec": true
 			},
 			{
-				"//":"Let's try another. If I want to move to this point, how many movements will I have to make if I can only move one motor at a time? Just like before, I'm going to unlock my shoulder motor for you to push my hand toward the point. If you want to switch to moving my wrist motor, press the scroll wheel button.",
+				"//":"Let's try another. If I want to move to this point, how many movements will I have to make if I can only move one motor at a time? Just like before, I'm going to unlock my elbow motor for you to push my hand toward the point. If you want to switch to moving my wrist motor, press the scroll wheel button.",
 				"type":"play",
 				"audio_index":10,
 				"delay":false
@@ -906,7 +915,7 @@
 				"wait":true
 			},
 			{
-				"//":"Now I've locked my shoulder and unlocked my wrist. You can switch back and forth at any time by pressing the scroll wheel button.",
+				"//":"Now I've locked my elbow and unlocked my wrist. You can switch back and forth at any time by pressing the scroll wheel button.",
 				"type":"play",
 				"audio_index":11,
 				"delay":false
@@ -981,7 +990,7 @@
 				"//":"I took two steps to get there.",
 				"type":"play",
 				"audio_index":13,
-				"delay":false
+				"delay":true
 			},
 			{
 				"type":"goToJointAngles",  
@@ -1012,7 +1021,7 @@
 				"//":"I can also travel in four steps",
 				"type":"play",
 				"audio_index":16,
-				"delay":false
+				"delay":true
 			},
 			{
 				"type":"goToJointAngles",
@@ -1039,7 +1048,7 @@
 				"//":"or eight steps.",
 				"type":"play",
 				"audio_index":17,
-				"delay":false
+				"delay":true
 			},
 			{
 				"type":"goToJointAngles",
@@ -1079,10 +1088,10 @@
 				"joint_angles":"joint_dot_3"
 			},
 			{
-				"//":"Notice how, the more steps I take, the shorter each step is and the less time I spend using my wrist before switching to my shoulder. If I keep increasing the number of steps, eventually there won't be any time at all between when I am using my wrist and when I am using my shoulder, like this.",
+				"//":"Notice how, the more steps I take, the shorter each step is and the less time I spend using my wrist before switching to my elbow. If I keep increasing the number of steps, eventually there won't be any time at all between when I am using my wrist and when I am using my elbow, like this.",
 				"type":"play",
 				"audio_index":18,
-				"delay":false
+				"delay":true
 			},
 			{
 				"type":"goToJointAngles",

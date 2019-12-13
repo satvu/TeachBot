@@ -713,6 +713,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 								 *  Not an issue for now.
 								 */
 								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+								self.ctx.font = Math.round(3*self.cw) + 'px Raleway';
 								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
 									var joint = values[i]
 									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
@@ -913,7 +914,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				switch (instr.number) {
 					case 1:
 						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);
-						this.ctx.strokeRect(62*this.cw, 40*this.ch, binW, binH);
+						this.ctx.strokeRect(66*this.cw, 33*this.ch, binW, binH);
 						break;
 					case 2:
 						this.ctx.strokeRect(83*this.cw, 33*this.cw, binW, binH);
@@ -926,7 +927,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'drawBox':
 				checkInstruction(instr, ['number'], instructionAddr);
 				console.log('Drawing box')
-				var boxW = 14*this.cw;
+				var boxW = 11*this.cw;
 				var boxH = 10*this.ch;
 				var corner_size = 0.01561*this.cw;
 				this.ctx.fillStyle = "#7c2629";
@@ -938,22 +939,22 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 77*this.ch;
 						// x = 77*this.cw;
 						// y = 73*this.ch;
-						x = 79*this.cw;
-						y = 88*this.ch;
+						x = 72*this.cw;
+						y = 75*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 					case 2:
 						// x = 70*this.cw;
 						// y = 74*this.ch;
-						x = 65*this.cw;
-						y = 74*this.ch;
+						x = 59*this.cw;
+						y = 69*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 3:
 						// x = 47*this.cw;
 						// y = 82*this.ch;
-						x = 49*this.cw;
-						y = 74*this.ch;
+						x = 42*this.cw;
+						y = 69*this.ch;
 						this.ctx.strokeRect(x, y, boxH, boxW);
 						break;
 					case 4:
@@ -961,8 +962,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						// y = 40*this.ch;
 						// x = 39*this.cw;
 						// y = 40*this.ch;
-						x = 63*this.cw;
-						y = 13*this.ch;
+						x = 43*this.cw;
+						y = 35*this.ch;
 						this.ctx.strokeRect(x, y, boxW, boxH);
 						break;
 				}

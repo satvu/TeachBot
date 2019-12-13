@@ -32,7 +32,7 @@ class Module():
 	JOINTS = 7
 	BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4}	# Triangle is the X button. An earlier version of Sawyer had a triangle and Rethink never updated the SDK.
 	CUFF_BUTTON = {'upper': 0, 'lower': 1}
-	Z_TABLE = 0.12
+	Z_TABLE = 0.11
 	BOX_HEIGHT = 0.11
 	BIN_HEIGHT = 0.005
 
@@ -881,7 +881,7 @@ if __name__ == '__main__':
 	joint_buttons = [0.0, -0.78, 0.0, 1.57, 0, -2.99, -1.37]
 
 	BIAS_SHOULDER = 0#-0.5
-	BIAS_WRIST = 0.2
+	BIAS_WRIST = -0.2
 	#shoulder_wrist_bias = {shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}
 	#shoulder_wrist_thresh = {shoulder: 1.0, wrist: 0.5}
 
@@ -926,16 +926,12 @@ if __name__ == '__main__':
 	
 	# 6-15
 	joint_dof_start = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
-	# joint_dof_start = [DSP,no_hit,j2scara,0,-j4max,0,j6scara]
 	joint_dof_shoulder = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
 	joint_dof_shoulder[0] += dof_demo_rotation
-	# joint_dof_shoulder = [-0.3,no_hit,j2scara,0,-j4max,0,j6scara]
 	joint_dof_elbow = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
 	joint_dof_elbow[3] += dof_demo_rotation
-	# joint_dof_elbow = [DSP,no_hit,j2scara,-0.46,-j4max,0,j6scara]
 	joint_dof_wrist = [0.78, scara_j1_clearance, 1.57, -1.57, 2.99, -0.78, scara_j6_gripper]
 	joint_dof_wrist[5] += dof_demo_rotation
-	# joint_dof_wrist = [DSP,no_hit,j2scara,0,-j4max,1.45,j6scara]
 	joint_dof_up = [DSP,-0.3,j2scara,0,-j4max,0,j6scara]
 
 	# In between these two parts, showing the encoder video
@@ -943,17 +939,13 @@ if __name__ == '__main__':
 
 	# 18-24
 	point_a = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
-	#point_a = joint_dof_start[:]
 	point_b = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
-	# point_b = joint_dof_start[:]
 	point_c = [0.60, scara_j1_clearance, 1.57, -1.40, 2.99, 0.0, 1.80]
-	# point_c = joint_dof_start[:]
-	# point_a[0] = 0.12
 	point_b[3] = -1.87
 	point_c[3] = -2.17
 
 	# 25
-	joint_push_down = [0, 0, 0, -math.pi/4, 0, j5min, -math.pi/2+j6_offset]
+	joint_push_down = [0, 0, 0, -2.2, 0, 0, -math.pi/2+j6_offset]
 	#joint_push_down = [math.pi/2,0,0,math.pi/2,0,0,0]
 
 	kinematics_init_pos = [0.39, -0.06, 1.57, -1.90, 2.99, 0, 1.8]
@@ -1014,20 +1006,20 @@ if __name__ == '__main__':
 
 	# 58
 	joint_high_two = [0.0, 0.3, 0.0, -1.08, 0.0, -0.78, 0.2]
-	# joint_high_two = [1.39222949219,0.655348632812,-0.064970703125,-1.86494433594,0.156983398438,-0.364296875,3.24111523438]
 
 	## MODULE 2 ##
-	init_joint_arg                = [1.133,-0.678481445312,-0.433721679687,1.33986621094,-0.763953125,-1.132484375,0.959416015625]
-	fail_init_joint_arg           = [0.934929668903,0.21894530952,-1.86988866329,1.08379101753,-1.21311235428,-1.71679496765,1.97222]
-	success_pickup_box1           = [0.934929668903,0.21894530952,-1.86988866329,1.08379101753,-1.21311235428,-1.71679496765,3.25700879097]
+	# init_joint_arg                = [1.133,-0.678481445312,-0.433721679687,1.33986621094,-0.763953125,-1.132484375,0.959416015625]
+	avoid_collision				  = [0.518766601562,-1.0511640625,-0.335872070312,1.55974902344,0.219381835937,0.0715888671875,0.264600585938]
+	fail_init_joint_arg           = [0.694200195312,0.151624023438,-1.62918945312,1.25514550781,1.71237792969,1.52560644531,-0.452587890625]
+	success_pickup_box1           = [0.670061523438,0.0745322265625,-1.60001660156,1.16257421875,1.60287988281,1.55708300781,1.26729003906]
 
-	above_first_bin_joint_arg     = [0.407034188509,0.148331061006,-1.81420600414,0.988864243031,-1.31577932835,-1.66601657867,2.78698539734]
+	above_first_bin_joint_arg     = [1.09989160156,0.121916015625,-1.46716503906,1.90496679687,1.68655566406,1.52375976562,0.94653125]
 
-	above_second_box_joint_arg    = [0.570015609264,0.121503904462,-1.91593551636,0.632845699787,-1.22943162918,-1.65171098709,3.31128621101]
-	above_third_box_joint_arg     = [0.236366212368,0.0262167975307,-1.7436337471,-0.0858056619763,-1.42195904255,-1.49928414822,2.0856685]
-	above_fourth_box_joint_arg    = [0.109769530594,0.200036138296,-1.93925189972,1.00660443306,-1.18624413013,-1.72986137867,2.499067143]
+	above_second_box_joint_arg    = [0.4650546875,0.193868164062,-1.75326171875,1.50254003906,1.76816601563,1.68238378906,0.73523046875]
+	above_third_box_joint_arg     = [0.224969726562,0.0770986328125,-1.47504199219,1.54189160156,1.63429199219,1.42166015625,-1.23206054688]
+	above_fourth_box_joint_arg    = [0.469981445313,0.122841796875,-1.47416699219,2.10656835938,1.62458300781,1.5307578125,0.081123046875]
 
-	camera_pos                    = [0.314609375, 0.19108984375, -1.9322587890625, 1.64379296875, 1.7396455078125, 0.37216796875, 0.183701171875]
+	camera_pos                    = default # Temporary pose. This is not working yet.
 	# fail_init_joint_arg           = [1.033235,-0.629208007812,-1.01547070313,1.05442871094,-2.38241699219,-1.48850390625,-1.18359277344]
 	# fail_pickup_cart_arg          = [1.08375488281,0.175158203125,-1.53774609375,1.02942480469,-1.45563085938,-1.45510351563,1.86297558594]
 	# fail_above_pickup_cart_arg    = [1.06155175781,-0.26884765625,-1.4501015625,0.838840820312,-1.88630175781,-1.62122851562,1.9701875]

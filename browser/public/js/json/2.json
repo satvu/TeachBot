@@ -39,7 +39,7 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"init_joint_arg"
+				"joint_angles":"avoid_collision"
 			},
 			{
 				"type":"goToJointAngles",
@@ -49,7 +49,7 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT-0.02"
 			},
 			{
 				"type":"gripper",
@@ -105,7 +105,7 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
 				"type":"gripper",
@@ -123,7 +123,7 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
 				"type":"gripper",
@@ -248,8 +248,8 @@
 						"orientation_x":false,
 						"orientation_y":false,
 						"orientation_z":false,
-						"position_x":true,
-						"position_y":false,
+						"position_x":false,
+						"position_y":true,
 						"position_z":false,
 						"in_end_point_frame":false,
 						"PASS":true,
@@ -402,15 +402,11 @@
 				"type":"adjustPoseBy",
 				"geometry":"position",
 				"axis":"y",
-				"amount":"0.1"
+				"amount":"0.22"
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"type":"adjustPoseTo",
@@ -423,12 +419,8 @@
 				"grip":false
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"//":"1: Can you move the bin back where it was? When it's ready, press the scroll wheel button.",
@@ -440,7 +432,7 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"2: Now let’s try moving this 3rd box into the 2nd bin.",
+				"//":"2: Now let’s try moving this 3rd box into the bin.",
 				"type":"play",
 				"audio_index":2,
 				"delay": true
@@ -560,12 +552,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.07"
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"//":"10: Can you please put Box 3 back into its designated position? Press the scroll wheel button once you've done so.",
@@ -621,6 +609,9 @@
 				"geometry":"position",
 				"axis":"z",
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.07"
+			},
+			{
+				"type":"pause"
 			},
 			{
 				"type":"proceed",
