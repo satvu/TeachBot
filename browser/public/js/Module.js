@@ -615,77 +615,14 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 				} else if (instr.shape=='bar') {
 					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
-				} 
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
-			case 'balls': // Unused, just for storing parameters.
-				var ballA = {x:25*this.cw, y:83*this.ch, fillStyle: 'BlueViolet'};
-				var ballB = {x:22*this.cw, y:47*this.ch, fillStyle: this.robot_color};
-				var ballC = {x:21*this.cw, y:18*this.ch, fillStyle: 'DarkGreen'};
-				var ballR = 10*this.ch;
-
-				if (instr.hasOwnProperty('ballAB')) {
-					this.displayOff();
-					canvas_container.style.display = 'initial';
-					this.ctx.font = Math.round(5*this.cw) +  'px Raleway';
-					draw_ball(this.ctx,ballA.x,ballA.y,ballR,ballA.fillStyle,'A');  // A
-					draw_ball(this.ctx,ballB.x,ballB.y,ballR,ballB.fillStyle,'B');  // B
-				} 
-
-				if (instr.hasOwnProperty('ballC')) {
-					draw_ball(this.ctx,ballC.x,ballC.y,ballR,ballC.fillStyle,'C');
-				} 
-
-				if (instr.hasOwnProperty('ballR')) {
-					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-					draw_ball(this.ctx, 53*this.cw, 89*this.ch, ballR, this.robot_color);
-				} 
-
-				if (instr.hasOwnProperty('ballMotor')) {
-					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-					draw_ball(this.ctx, 21*this.cw, 18*this.ch, ballR, this.robot_color);
-				}
-
-				if (instr.hasOwnProperty('ballR_new')) {
-					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-					draw_ball(this.ctx, 27*this.cw, 88*this.ch, ballR, this.robot_color);
-				} 
-
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
-			case 'bar_both':
-				this.displayOff();
-
-				var barL = {axisLeft: 3*this.cw, axisRight: 12*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw, fillStyle: this.robot_color};
-				var barR = {axisLeft: 15*this.cw, axisRight: 24*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw, fillStyle: 'BlueViolet'};
-
-				canvas_container.style.display = 'initial';
-				draw_bar(this.ctx, 0, 120, barL.axisLeft, barL.axisRight, barL.maxHeight, barL.antiWidth, barL.fillStyle);
-				draw_bar(this.ctx, 0, 120, barR.axisLeft, barR.axisRight, barR.maxHeight, barR.antiWidth, barR.fillStyle);
-
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received: ' + message.j0, message.j5);
-					console.log(`Joint 0: ${message.j0}, Joint 5: ${message.j5}`);
-					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-					draw_bar(self.ctx, (-message.j0*180/Math.PI+176)*0.9, 174, barL.axisLeft, barL.axisRight, barL.maxHeight, barL.antiWidth, barL.fillStyle);
-					draw_bar(self.ctx, message.j5*180/Math.PI+170, 340, barR.axisLeft, barR.axisRight, barR.maxHeight, barR.antiWidth, barR.fillStyle);
-				});
-
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
+				} else if (instr.shape=='rectangle') {
+					if (instr.hasOwnProperty('label')){
+						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate, instr.label)
+					} else {
+						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate)
 					}
-				});
+				}
+				this.start(self.getNextAddress(instructionAddr));
 
 				break;
 
@@ -749,36 +686,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						self.displayOff();
 						self.start(self.getNextAddress(instructionAddr));
 					}
-				});
-
-				break;
-
-			case 'bar_wrist':
-				clearInterval(encoder);
-				this.displayOff();
-
-				var barR = {axisLeft: 15*this.cw, axisRight: 24*this.cw, maxHeight: 87*this.ch, antiWidth: 0.8*this.cw, fillStyle: 'BlueViolet'};
-
-				canvas_container.style.display = 'initial';
-				draw_bar(this.ctx, 0, 120, barR.axisLeft, barR.axisRight, barR.maxHeight, barR.antiWidth, barR.fillStyle);
-
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received: ' + message.j5);
-					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-					draw_bar(self.ctx, message.j5*180/Math.PI+170, 340, barR.axisLeft, barR.axisRight, barR.maxHeight, barR.antiWidth, barR.fillStyle);
-				});
-
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
-					}
-					
 				});
 
 				break;
@@ -905,75 +812,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				goal.send();
 
-				break;
-
-			case 'drawBin':
-				checkInstruction(instr, ['number'], instructionAddr);
-				var binW = 17*this.cw;
-				var binH = 13*this.ch;
-				switch (instr.number) {
-					case 1:
-						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);
-						this.ctx.strokeRect(66*this.cw, 33*this.ch, binW, binH);
-						break;
-					case 2:
-						this.ctx.strokeRect(83*this.cw, 33*this.cw, binW, binH);
-						break;
-				}
-
-				this.start(this.getNextAddress(instructionAddr));
-				break;
-
-			case 'drawBox':
-				checkInstruction(instr, ['number'], instructionAddr);
-				console.log('Drawing box')
-				var boxW = 11*this.cw;
-				var boxH = 10*this.ch;
-				var corner_size = 0.01561*this.cw;
-				this.ctx.fillStyle = "#7c2629";
-				var x;
-				var y;
-				switch (instr.number) {
-					case 1:
-						// x = 83*this.cw;
-						// y = 77*this.ch;
-						// x = 77*this.cw;
-						// y = 73*this.ch;
-						x = 72*this.cw;
-						y = 75*this.ch;
-						this.ctx.strokeRect(x, y, boxW, boxH);
-						break;
-					case 2:
-						// x = 70*this.cw;
-						// y = 74*this.ch;
-						x = 59*this.cw;
-						y = 69*this.ch;
-						this.ctx.strokeRect(x, y, boxH, boxW);
-						break;
-					case 3:
-						// x = 47*this.cw;
-						// y = 82*this.ch;
-						x = 42*this.cw;
-						y = 69*this.ch;
-						this.ctx.strokeRect(x, y, boxH, boxW);
-						break;
-					case 4:
-						// x = 41*this.cw;
-						// y = 40*this.ch;
-						// x = 39*this.cw;
-						// y = 40*this.ch;
-						x = 43*this.cw;
-						y = 35*this.ch;
-						this.ctx.strokeRect(x, y, boxW, boxH);
-						break;
-				}
-
-				this.ctx.fillRect(x, y , corner_size, corner_size);
-				this.ctx.fillRect(x+ boxW - corner_size, y, corner_size, corner_size);
-				this.ctx.fillRect(x, y + boxH - corner_size, corner_size, corner_size);
-				this.ctx.fillRect(x +boxW - corner_size, y + boxH - corner_size, corner_size, corner_size);
-
-				this.start(this.getNextAddress(instructionAddr));
 				break;
 
 			case 'drawPosOrien':

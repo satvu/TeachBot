@@ -26,6 +26,9 @@ from sawyer.msg import *
 from sawyer.srv import *
 from cv_bridge import CvBridge, CvBridgeError
 
+from signal import signal, SIGINT
+from sys import exit
+
 class Module():
 	FORCE2VELOCITY = {'right_j0': 0.06, 'right_j1': 0.06, 'right_j2': 0.4, 'right_j3': 0.2, 'right_j4': 1, 'right_j5': 0.9, 'right_j6': 2}
 	VERBOSE = True
@@ -57,6 +60,7 @@ class Module():
 		rospy.Subscriber('/robot/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
+		rospy.Subscriber('/teachbot/allowCuffInteraction', Bool, self.cb_allowCuffInteraction)
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
@@ -85,6 +89,7 @@ class Module():
 		self.startPos = 0
 		self.devMode = False
 		self.seqArr = []
+		self.allowCuffInteraction = False
 
 		self.p_command = lambda self: self.pub_num(180/math.pi*self.limb.joint_angle(shoulder))
 		wheel = self.finished
@@ -132,7 +137,8 @@ class Module():
 		rospy.loginfo('Ready.')
 		r = rospy.Rate(10)
 		while not rospy.is_shutdown():
-			suppress_cuff_interaction.publish()
+			if not self.allowCuffInteraction:
+				suppress_cuff_interaction.publish()
 			r.sleep()
 
 	## HELPER FUNCTIONS ##
@@ -166,7 +172,7 @@ class Module():
 	def joint_move(self,joints,terminatingCondition,resetPos,pCMD=lambda self: None, rateNom=10, tics=15, min_thresh=0, bias=0):
 		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
 		rate = rospy.Rate(rateNom)																		# Define rate to send commands
-		self.finished = False																			# Initialized finished variable for terminating condition
+		# self.finished = False																			# Initialized finished variable for terminating condition
 
 		# Initialize joint dicts of all zeros
 		zeroVec = self.limb.joint_velocities()
@@ -196,6 +202,7 @@ class Module():
 		# Main loop
 		i = 0
 		while not terminatingCondition(self):
+			print('inside while')
 			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
 			pCMD(self)																					# Publish whatever the user wants
 
@@ -486,6 +493,9 @@ class Module():
 				self.DevModeSrv(1)
 				self.lights.set_light_state('head_blue_light',True)
 				if self.VERBOSE: rospy.loginfo('Entering dev mode')
+
+	def cb_allowCuffInteraction(self, data):
+		self.allowCuffInteraction = data.data
 
 	def subscribe_to_wheel_move(self):
 		def rx_wheel_move(data):
@@ -1049,6 +1059,5 @@ if __name__ == '__main__':
 	# low_fourth_box_joint_arg      = [0.0681884735823,0.202602535486,-1.48116016388,0.113159179688,-1.62357616425,-1.34329497814,3.34635257721]
 
 	# success_pickup_box1           = [1.033235,-0.629208007812,-1.01547070313,1.05442871094,-2.38241699219,-1.48850390625,0.38779632679]
-
 
 	Module()

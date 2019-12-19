@@ -27,18 +27,26 @@ p.home {
 #moduleSelection {
 	display: none;
 }
-td {
+table {
 	text-align: center;
 }
+table.robotinfo {
+	border-collapse: collapse;
+	border: 1px solid black;
+}
+td.separate {
+	border-right: 1px solid black;
+	border-collapse: collapse;
+}
 p.joints {
-	font-size: 4vh;
+	font-size: 2.5vh;
 	margin-top: 0;
 	margin-bottom: 0;
 	margin-left: 3vw;
 	margin-right: 3vw;
 }
 p.angle {
-	font-size: 3vh;
+	font-size: 2.5vh;
 	margin: 0;
 }
 

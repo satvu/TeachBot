@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Robot Configuration</title>
+	<title>Cuff Interaction</title>
 
 	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/main.css">
 	<link rel="stylesheet" type="text/css" href="https://localhost:8000/css/sawyer.css">
@@ -32,10 +32,21 @@
 	<script src="https://localhost:8000/js/Home.js"></script>
 </head>
 
+<script type="text/javascript">
+	enableCuffInteraction();
+	window.onbeforeunload = function() {
+		disableCuffInteraction();
+	}
+</script>
+
 <body>
-	<h1 align="center">Robot Configuration</h1>
+	<div style="font-size: 2vw;" align="center">
+		<h1>Cuff Interaction mode</h1>
+		<p><font color="black">Cuff interaction activated for configuring robot poses.</p>
+		<p><font color="black">Exiting this page automatically disables cuff interaction mode.</p>
+	</div>
+	
 	<div align="center">
-		<p style="font-weight: bold; margin: 0; font-size: 3vh;">Endpoint info.</p>
 		<table class="robotinfo" align="center" style="font-size: 2.5vh;">
 			<tr>
 				<td class="separate" colspan="3">Position</td>
@@ -60,75 +71,30 @@
 				<td id="orien_w"></td>
 			</tr>
 		</table>
+		<br>
+		<table class="robotinfo" style="font-size: 2.5vh;">
+			<tr><td colspan="7">Joint Angles</td></tr>
+			<tr>
+				<td style="width: 70px;"><p class="angle" id="j0"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j1"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j2"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j3"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j4"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j5"></p></td>
+				<td style="width: 70px;"><p class="angle" id="j6"></p></td>
+			</tr>
+		</table>
 	</div>
 
 	<div align="center">
 		<br>
-		<p style="font-weight: bold; margin: 0; font-size: 3vh;">Display and adjust joint angles.</p>
-	</div>
-
-	<div id="jointAngles" align="center">
-		<table align="center">
-			<tr>
-				<td><p class="joints">Joint</p></td>
-				<td><p class="joints">j0</p></td>
-				<td><p class="joints">j1</p></td>
-				<td><p class="joints">j2</p></td>
-				<td><p class="joints">j3</p></td>
-				<td><p class="joints">j4</p></td>
-				<td><p class="joints">j5</p></td>
-				<td><p class="joints">j6</p></td>
-			</tr>
-			<tr>
-				<td><p class="joints">Current</p></td>
-				<td><p class="angle" id="j0"></p></td>
-				<td><p class="angle" id="j1"></p></td>
-				<td><p class="angle" id="j2"></p></td>
-				<td><p class="angle" id="j3"></p></td>
-				<td><p class="angle" id="j4"></p></td>
-				<td><p class="angle" id="j5"></p></td>
-				<td><p class="angle" id="j6"></p></td>
-			</tr>
-			<tr>
-				<td><p class="joints">Desired</p></td>
-				<td><input id = "g_j0" type="text" size="1"></td>
-				<td><input id = "g_j1" type="text" size="1"></td>
-				<td><input id = "g_j2" type="text" size="1"></td>
-				<td><input id = "g_j3" type="text" size="1"></td>
-				<td><input id = "g_j4" type="text" size="1"></td>
-				<td><input id = "g_j5" type="text" size="1"></td>
-				<td><input id = "g_j6" type="text" size="1"></td>
-			</tr>
-  		</table>
-  		<button onclick="sendJointAngles(
-			document.getElementById('g_j0').value,
-			document.getElementById('g_j1').value,
-			document.getElementById('g_j2').value,
-			document.getElementById('g_j3').value,
-			document.getElementById('g_j4').value,
-			document.getElementById('g_j5').value,
-			document.getElementById('g_j6').value,)">Go to angles</button>
-	</div>
-
-	<div align="center">
+		<button onclick="anglesToClipboard()" onmouseout="outFunc()">Copy current angles</button>
 		<br>
-		Commonly used positions
-		<br>
-		<button onclick="goToPosition('home')">Home</button>
-		<button onclick="goToPosition('upright')">Upright</button>
-  		<button onclick="goToPosition('scara_initial')">SCARA</button>
-	</div>
-
-	<div align="center">
+		<p id="copy_complete" style="font-size: 2vh;"></p>
 		<table>
 			<tr><td>
-				<form style="display: inline" action="https://localhost:8000/cuffinteraction" method="get">
-					<button class="home">Activate Cuff Interaction</button>
-				</form>
-			</td></tr>
-			<tr><td>
-				<form style="display: inline" action="https://localhost:8000/" method="get">
-					<button class="home">Back</button>
+				<form style="display: inline" action="https://localhost:8000/robotconfiguration" method="get">
+					<button class="home" onclick="disableCuffInteraction()">Back</button>
 				</form>
 			</td></tr>
 		</table>

@@ -3,27 +3,49 @@
 		"id": "intro",
 		"instructions": [
 			{
-				"type":"clearRect"
+				"type":"initializeDisplay"
 			},
 			{
-				"type":"drawBox",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":72,
+				"y_ratio":75,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBox",
-				"number":2
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":59,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":true
 			},
 			{
-				"type":"drawBox",
-				"number":3
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":42,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":true
 			},
 			{
-				"type":"drawBox",
-				"number":4
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":43,
+				"y_ratio":35,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBin",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":66,
+				"y_ratio":33,
+				"w_ratio":17,
+				"h_ratio":13
 			},
 			{
 				"//":"0: Today, we will be learning about the gripper. Many of today's activities will involve the boxes and bins on the table.",
