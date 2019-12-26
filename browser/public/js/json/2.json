@@ -8,8 +8,8 @@
 			{
 				"type":"drawShape",
 				"shape":"rectangle",
-				"x_ratio":72,
-				"y_ratio":75,
+				"x_ratio":76,
+				"y_ratio":69,
 				"w_ratio":11,
 				"h_ratio":10
 			},
@@ -20,7 +20,7 @@
 				"y_ratio":69,
 				"w_ratio":11,
 				"h_ratio":10,
-				"rotate":true
+				"rotate":90
 			},
 			{
 				"type":"drawShape",
@@ -29,7 +29,7 @@
 				"y_ratio":69,
 				"w_ratio":11,
 				"h_ratio":10,
-				"rotate":true
+				"rotate":90
 			},
 			{
 				"type":"drawShape",

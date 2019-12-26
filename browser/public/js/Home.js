@@ -57,7 +57,7 @@ position.subscribe(async function(message) {
 	document.getElementById("j5").innerHTML = message.j5.toFixed(2);
 	document.getElementById("j6").innerHTML = message.j6.toFixed(2);
 	current_angles = [message.j0.toFixed(2), message.j1.toFixed(2), message.j2.toFixed(2), message.j3.toFixed(2), message.j4.toFixed(2), message.j5.toFixed(2), message.j6.toFixed(2)];
-	current_angles_raw = [message.j0, message.j1, message.j2, message.j3, message.j4, message.j5, message.j6];
+	current_angles_raw = [message.j0.toFixed(5), message.j1.toFixed(5), message.j2.toFixed(5), message.j3.toFixed(5), message.j4.toFixed(5), message.j5.toFixed(5), message.j6.toFixed(5)];
 });
 
 endpoint.subscribe(async function(message) {
