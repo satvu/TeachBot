@@ -10,9 +10,10 @@ var m = new Module(module_num, main, [image, animator]);
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'encoders';
+var start_seq = 'kinematics';
+var start_location = 0;
 async function main() {
     m.displayOff();
     image.style.display = 'none';
-    m.start([start_seq,12]);
+    m.start([start_seq,start_location]);
 }

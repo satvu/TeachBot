@@ -734,15 +734,6 @@
 		"id":"kinematics",
 		"instructions":[
 			{
-				"type":"joint_move",
-				"joints":"wrist",
-				"terminatingCondition":"lambda self : self.finished",
-				"resetPOS":"default",
-				"min_thresh":"0.5",
-				"bias":"-0.4",
-				"listen":true
-			},
-			{
 				"type":"reset"
 			},
 			{
@@ -763,8 +754,16 @@
 				"delay":true
 			},
 			{
-				"type":"arc",
-				"shoulder_arc":true
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":38,
+				"y1":95,
+				"x2":32,
+				"y2":48,
+				"x3":33,
+				"y3":2,
+				"ccw":false,
+				"label":"shoulder"
 			},
 			{
 				"type":"goToJointAngles",
@@ -806,8 +805,16 @@
 				"delay":true
 			},
 			{
-				"type":"arc",
-				"shoulder_arc":true
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":38,
+				"y1":95,
+				"x2":32,
+				"y2":48,
+				"x3":33,
+				"y3":2,
+				"ccw":false,
+				"label":"shoulder"
 			},
 			{
 				"type":"goToJointAngles",
@@ -860,8 +867,16 @@
 				"delay":true
 			},
 			{
-				"type":"arc",
-				"wrist_arc":true
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":67,
+				"y1":72,
+				"x2":52,
+				"y2":90,
+				"x3":33,
+				"y3":65,
+				"ccw":false,
+				"label":"wrist"
 			},
 			{
 				"type":"goToJointAngles",
@@ -878,8 +893,16 @@
 				"delay":true
 			},
 			{
-				"type":"arc",
-				"shoulderNew_arc":true
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":49,
+				"y1":94,
+				"x2":43,
+				"y2":64,
+				"x3":42,
+				"y3":14,
+				"ccw":false,
+				"label":"shoulderNew"
 			},
 			{
 				"type":"goToJointAngles",

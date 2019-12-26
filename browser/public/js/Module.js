@@ -537,24 +537,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				console.log("module paused here.")
 
 				break
-			case 'arc':
-				if (instr.hasOwnProperty('shoulder_arc')){
-					canvas_container.style.display = 'initial';
-					arc3pt(this.ctx,38*this.cw,95*this.ch,32*this.cw,48*this.ch,33*this.cw,2*this.ch,false);
-				}
-
-				if (instr.hasOwnProperty('wrist_arc')){
-					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-					arc3pt(this.ctx,67*this.cw,72*this.ch,52*this.cw,90*this.ch,33*this.cw,65*this.ch,false);
-				}
-
-				if (instr.hasOwnProperty('shoulderNew_arc')){
-					arc3pt(this.ctx,49*this.cw,94*this.ch,43*this.cw,64*this.ch,42*this.cw,14*this.ch,false);
-				}
-
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
 
 			case 'adjustPoseBy':
 				checkInstruction(instr, ['geometry', 'axis', 'amount'], instructionAddr);
@@ -613,6 +595,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					} else{
 						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
 					}
+				} else if (instr.shape=='arc') {
+					canvas_container.style.display = 'initial';
+					arc3pt(this.ctx,instr.x1*this.cw,instr.y1*this.ch,instr.x2*this.cw,instr.y2*this.ch,instr.x3*this.cw,instr.y3*this.ch,instr.ccw);
 				} else if (instr.shape=='bar') {
 					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
 				} else if (instr.shape=='rectangle') {

@@ -28,6 +28,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from signal import signal, SIGINT
 from sys import exit
+import threading
 
 class Module():
 	FORCE2VELOCITY = {'right_j0': 0.06, 'right_j1': 0.06, 'right_j2': 0.4, 'right_j3': 0.2, 'right_j4': 1, 'right_j5': 0.9, 'right_j6': 2}
@@ -199,10 +200,9 @@ class Module():
 		lastEffort = zeroVec.copy()																		# Initialize two effort dicts
 		thisEffort = zeroVec.copy()
 		
-		# Main loop
 		i = 0
-		while not terminatingCondition(self):
-			print('inside while')
+		while not terminatingCondition(self) and not rospy.is_shutdown():
+			print(threading.activeCount())
 			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
 			pCMD(self)																					# Publish whatever the user wants
 
@@ -229,8 +229,10 @@ class Module():
 			self.limb.set_joint_velocities(velocities)
 
 			rate.sleep()
+
 		rospy.loginfo('Joint move completed')
 		self.limb.exit_control_mode()
+		exit()
 
 	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
 		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
