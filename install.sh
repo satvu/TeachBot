@@ -54,7 +54,8 @@ fi
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py --user
 rm get-pip.py
-pip install --upgrade --user gTTS gTTS-token pyttsx3 pygame apriltag
+export PATH=$PATH:/home/$(uname -n)/.local/bin
+pip install --upgrade --user gTTS gTTS-token pyttsx3 pygame apriltag pexpect
 
 # Setup Intera Resources and NPM Dependencies
 ./setup.sh
