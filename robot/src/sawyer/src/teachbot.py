@@ -202,7 +202,6 @@ class Module():
 		
 		i = 0
 		while not terminatingCondition(self) and not rospy.is_shutdown():
-			print(threading.activeCount())
 			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
 			pCMD(self)																					# Publish whatever the user wants
 
@@ -232,7 +231,6 @@ class Module():
 
 		rospy.loginfo('Joint move completed')
 		self.limb.exit_control_mode()
-		exit()
 
 	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
 		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
@@ -894,8 +892,9 @@ if __name__ == '__main__':
 	default = [0.0, -0.78, 0.0, 1.57, 0, -0.79, 0.2]
 	joint_buttons = [0.0, -0.78, 0.0, 1.57, 0, -2.99, -1.37]
 
-	BIAS_SHOULDER = 0#-0.5
-	BIAS_WRIST = -0.2
+	BIAS_SHOULDER = -0.55#-0.5
+	BIAS_ELBOW = 0.4
+	BIAS_WRIST = 0.75
 	#shoulder_wrist_bias = {shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}
 	#shoulder_wrist_thresh = {shoulder: 1.0, wrist: 0.5}
 
@@ -959,54 +958,57 @@ if __name__ == '__main__':
 	point_c[3] = -2.17
 
 	# 25
-	joint_push_down = [0, 0, 0, -2.2, 0, 0, -math.pi/2+j6_offset]
+	joint_push_down = [0, 0, 0, -2.2, -2.97, 0, -math.pi/2+j6_offset]
 	#joint_push_down = [math.pi/2,0,0,math.pi/2,0,0,0]
 
-	kinematics_init_pos = [0.39, -0.06, 1.57, -1.90, 2.99, 0, 1.8]
-	kinematics_shoulder_arc = [0.39, -0.06, 1.57, -1.50, 2.99, 0, 1.8]
+	kinematics_init_pos = [0.90060,-0.05870,1.57015,-1.56932,2.97598,-1.57,1.79896]
+	kinematics_shoulder_arc = [0.90060,-0.05870,1.57015,-2.2,2.97598,-1.57,1.79896]
 
 	# 32-37
 	joint_dot_1 = kinematics_init_pos[:]
-	joint_dot_1[5] = -1.8
+	joint_dot_1[5] = -0.3
 	# joint_dot_1 = [DSP,no_hit,j2scara,0,-j4max,-1.83,j6scara]
 	joint_dot_2 = kinematics_init_pos[:]
-	joint_dot_2[3] = -1.6
+	joint_dot_2[3] = -2.2
 	# joint_dot_2 = [-0.21,no_hit,j2scara,0,-j4max,0,j6scara]
 	joint_arc_wrist = joint_dot_2[:]
-	joint_arc_wrist[5] = -1.2
+	joint_arc_wrist[5] = -0.6
 	# joint_arc_wrist = [joint_dot_2[0],no_hit,j2scara,0,-j4max,-j4max,j6scara]
 	joint_ortho_kin = joint_arc_wrist[:]
 	# joint_ortho_kin[5] = -math.pi/2
 	joint_arc_elbow = joint_ortho_kin[:]
-	joint_arc_elbow[3] = -2.0
+	joint_arc_elbow[3] = -1.6
 	# joint_arc_shoulder = joint_ortho_kin[:]
 	# joint_arc_shoulder[0] = -0.45
 
+	joint_dot_3_init = kinematics_init_pos[:]
+	joint_dot_3_init[0] = 1.1
+
 	# 42
-	dot_3 = {'position': intera_interface.Limb.Point(x=0.36,y=-0.17,z=0.02)}
-	joint_dot_3 = [0.39, -0.06, 1.57, -1.98, 2.99, 0.0, 1.80]
+	dot_3 = {'position': intera_interface.Limb.Point(x=0.59,y=0.56,z=0.05)}
+	joint_dot_3 = [1.10041,-0.05880,1.56815,-0.99882,2.97123,-0.00150,1.79917]
 	# joint_dot_3 = [0.13,no_hit,j2scara,0,-j4max,-0.07,j6scara]
-	joint_dot_3_2_1 = joint_ortho_kin[:]
+	joint_dot_3_2_1 = joint_dot_3_init[:]
 	joint_dot_3_2_1[3] = joint_dot_3[3]
 
 	# 46
-	joint_dot_3_4_2 = joint_ortho_kin[:]
-	joint_dot_3_4_2[3] = (joint_ortho_kin[3]+joint_dot_3[3])/2
-	joint_dot_3_4_2[5] = (joint_ortho_kin[5]+joint_dot_3[5])/2
-	joint_dot_3_4_1 = joint_ortho_kin[:]
+	joint_dot_3_4_2 = joint_dot_3_init[:]
+	joint_dot_3_4_2[3] = (joint_dot_3_init[3]+joint_dot_3[3])/2
+	joint_dot_3_4_2[5] = (joint_dot_3_init[5]+joint_dot_3[5])/2
+	joint_dot_3_4_1 = joint_dot_3_init[:]
 	joint_dot_3_4_1[3] = joint_dot_3_4_2[3]
 	joint_dot_3_4_3 = joint_dot_3_4_2[:]
 	joint_dot_3_4_3[3] = joint_dot_3[3]
 
 	# 47
 	joint_dot_3_8_4 = joint_dot_3_4_2[:]
-	joint_dot_3_8_2 = joint_ortho_kin[:]
-	joint_dot_3_8_2[3] = (joint_ortho_kin[3]+joint_dot_3_8_4[3])/2
-	joint_dot_3_8_2[5] = (joint_ortho_kin[5]+joint_dot_3_8_4[5])/2
+	joint_dot_3_8_2 = joint_dot_3_init[:]
+	joint_dot_3_8_2[3] = (joint_dot_3_init[3]+joint_dot_3_8_4[3])/2
+	joint_dot_3_8_2[5] = (joint_dot_3_init[5]+joint_dot_3_8_4[5])/2
 	joint_dot_3_8_6 = joint_dot_3_8_4[:]
 	joint_dot_3_8_6[3] = (joint_dot_3_8_4[3]+joint_dot_3[3])/2
 	joint_dot_3_8_6[5] = (joint_dot_3_8_4[5]+joint_dot_3[5])/2
-	joint_dot_3_8_1 = joint_ortho_kin[:]
+	joint_dot_3_8_1 = joint_dot_3_init[:]
 	joint_dot_3_8_1[3] = joint_dot_3_8_2[3]
 	joint_dot_3_8_3 = joint_dot_3_8_2[:]
 	joint_dot_3_8_3[3] = joint_dot_3_8_4[3]

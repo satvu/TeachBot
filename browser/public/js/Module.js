@@ -501,7 +501,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 	if (this.thisSection === undefined) {
 		throw `There is no section with id ${instructionAddr[0]}`;
 	}
-
+ 
 	var instructions = this.thisSection.instructions;
 	this.instructionSets = [JSONcopy(instructions)];
 
@@ -537,6 +537,34 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				console.log("module paused here.")
 
 				break
+
+			// case 'shadow':
+
+			// 	const Kx = 72.73;
+			// 	const bx = 51.45;
+			// 	const Ky = 157.89;
+			// 	const by = -30;
+
+			// 	this.endpoint.subscribe(async function(message) {
+			// 		self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+			// 		var x_center = Kx * message.position.y + bx;
+			// 		var y_center = Ky * message.position.x + by;
+			// 		draw_ball(self.ctx, x_center, y_center, 8, '#7c2629');
+			// 	});
+
+			// 	this.pressed.subscribe(async function(message) {
+			// 		if (VERBOSE) console.log('Pressed: ' + message.data);
+			// 		if (message.data == true) {
+			// 			self.endpoint.unsubscribe();
+			// 			self.endpoint.removeAllListeners();
+			// 			self.pressed.unsubscribe();
+			// 			self.pressed.removeAllListeners();
+			// 			self.displayOff();
+			// 			self.start(self.getNextAddress(instructionAddr));
+			// 		}
+			// 	});
+
+			// 	break
 
 			case 'adjustPoseBy':
 				checkInstruction(instr, ['geometry', 'axis', 'amount'], instructionAddr);
@@ -643,7 +671,12 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 									var y = instr.y_ratio[i]*self.ch;
 									var width = instr.width_ratio[i]*self.cw;
 									var max_height = instr.max_height_ratio[i]*self.ch;
-									var height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
+									var height_percent;
+									if (joint == 'j6') {
+										height_percent = (eval('message.'+joint)+1.5*Math.PI)/(3*Math.PI);
+									} else {
+										height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
+									}
 									if (instr.hasOwnProperty('label')) {
 										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
 									} else{
@@ -1064,6 +1097,36 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				}
 
 				break;
+
+			case 'shadow_projection':
+
+				console.log("Entered projection mode.");
+
+				checkInstruction(instr, ["joints","terminatingCondition","resetPOS","min_thresh","bias"], instructionAddr);
+
+				var goal = this.getJointMoveGoal(instr.joints, instr.terminatingCondition, instr.resetPOS, instr.min_thresh, instr.bias);
+
+				const Kx = 72.73;
+				const bx = 51.45;
+				const Ky = 157.89;
+				const by = -30;
+
+				this.endpoint.subscribe(async function(message) {
+					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+					var x_center = (Kx * message.position.y + bx) * self.cw;
+					var y_center = (Ky * message.position.x + by) * self.ch;
+					draw_ball(self.ctx, x_center, y_center, 8*self.ch, '#7c2629');
+				});
+
+				goal.on('result', function(result) {
+					self.endpoint.unsubscribe();
+					self.endpoint.removeAllListeners();
+					self.displayOff();
+					self.start(self.getNextAddress(instructionAddr));
+				});
+				goal.send();
+
+			break
 
 			case 'log':
 				checkInstruction(instr, ['message'], instructionAddr);

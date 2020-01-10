@@ -2,11 +2,14 @@ const ROBOT = 'sawyer';
 const DIR = 'https://localhost:8000/';
 var current_angles = [];
 var current_angles_raw = [];
+var current_position = [];
+var current_orientation = [];
 
 const common_positions = {
 	'home': [0.0, -0.78, 0.0, 1.57, 0, -0.79, 0.2],
 	'upright': [0, -1.57, 0, 0, 0, 0, 0.2],
-	'scara_initial': [0.78, -0.06, 1.57, -1.57, 2.99, -0.78, 1.80]
+	'scara_initial': [0.78, -0.06, 1.57, -1.57, 2.99, -0.78, 1.80],
+	'2dPos': [0.90060,-0.05870,1.56901,-1.56918,2.97392,-1.57146,1.79917]
 }
 
 var ros = new ROSLIB.Ros({ url: 'wss://localhost:9090' });
@@ -68,6 +71,8 @@ endpoint.subscribe(async function(message) {
 	document.getElementById("orien_y").innerHTML = message.orientation.y.toFixed(2);
 	document.getElementById("orien_z").innerHTML = message.orientation.z.toFixed(2);
 	document.getElementById("orien_w").innerHTML = message.orientation.w.toFixed(2);
+	current_position = [message.position.x.toFixed(5), message.position.y.toFixed(5), message.position.z.toFixed(5)];
+	current_orientation = [message.orientation.x.toFixed(5),message.orientation.y.toFixed(5),message.orientation.z.toFixed(5),message.orientation.w.toFixed(5)];
 });
 
 function clearInputFields() {
