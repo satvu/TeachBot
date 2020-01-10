@@ -1,0 +1,12 @@
+## Wait for the specified action in the goal
+
+## Goal: the action from user to wait for
+string what
+int32 timeout
+
+---
+## Result
+bool success
+---
+## Feedback
+bool feedback

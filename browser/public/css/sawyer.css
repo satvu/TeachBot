@@ -1,15 +1,14 @@
 :root {
-	--robot-color: #7c2629;/*#EF1116;*/
+	--robot-color: #7C2629;/*#EF1116;*/
 	--accent-color: #;
 }
 
 body{
-	/*background is all the border maroon color*/
-	/*gray "background" is actually "content" */
-	background-color: #7c2629;
-	color: #373737;
+	/*background is gray and border is the color*/
+	/*of the robot. */
+	border-color: #7C2629;
+	background-color: #949494;
 }
-
 
 p {
 	color: #373737;
@@ -23,21 +22,6 @@ h2{
 	color: #cccccc;
 }
 
-.content{
-	background-color:#949494;
-}
-
 video {
 	border-color: #cccccc;
-}
-
-.protractor {
-    background: #d3d3d3;
-    color: black;
-}
-.protractor::-moz-range-thumb {
-    background: var(--robot-color);
-}
-.protractor::-moz-range-track {
-	background: black;
 }
