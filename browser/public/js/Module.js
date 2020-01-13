@@ -31,6 +31,7 @@ function Module(module_num, main, content_elements) {
 	this.main = main;
 	this.content_elements = content_elements;
 	this.loaded = {'audio':false, 'text':false, 'json':false};
+	this.robot = {position: [], velocity: [], effort: [], endpoint: {}};
 	
 	// Initialize self to module for use in event callbacks
 	self = this;
@@ -52,6 +53,7 @@ function Module(module_num, main, content_elements) {
 
 	// Subscribing topics
 	this.command_complete = new ROSLIB.Topic({
+		// Deprecated, but still used by 'camera' and 'camera_off'
 		ros: ros,
 		name: '/teachbot/command_complete',
 		messageType: 'std_msgs/Empty'
@@ -62,30 +64,42 @@ function Module(module_num, main, content_elements) {
 		messageType: 'std_msgs/Int32'
 	})
 	this.scroll_wheel_button_receiver = new ROSLIB.Topic({
+		// Deprecated, but still used by 'scrollWheelInput'
 		ros: ros,
 		name: '/teachbot/scroll_wheel_button_topic',
 		messageType: 'std_msgs/Empty'
 	})
+	this.pressed = new ROSLIB.Topic({
+		// Deprecated, but still used by 'drawDynamic', 'interaction_projection', 'pressed_button', 'projection', and 'scrollWheelInput'
+		ros: ros,
+		name: '/teachbot/scroll_wheel_pressed',
+		messageType: 'std_msgs/Bool'
+	});
+
 	this.position = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/position',
 		messageType: ROBOT + '/JointInfo'
 	});
-	this.pressed = new ROSLIB.Topic({
+	this.position.subscribe(self.positionCallback);
+	this.velocity = new ROSLIB.Topic({
 		ros: ros,
-		name: '/teachbot/scroll_wheel_pressed',
-		messageType: 'std_msgs/Bool'
+		name: '/teachbot/velocity',
+		messageType: ROBOT + '/JointInfo'
 	});
+	this.velocity.subscribe(self.velocityCallback);
 	this.effort = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/effort',
 		messageType: ROBOT + '/JointInfo'
 	});
+	this.effort.subscribe(self.effortCallback);
 	this.endpoint = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/EndpointInfo',
 		messageType: ROBOT + '/EndpointInfo'
 	});
+	this.endpoint.subscribe(self.endpointCallback);
 
 	// Service Servers
 	var DevModeSrv = new ROSLIB.Service({
@@ -173,6 +187,9 @@ function Module(module_num, main, content_elements) {
 	this.dictionary = {};
 	this.getEndpoint();
 
+	// Initialize dynamics
+	this.dynamics = {};
+
 	/*********************
 	 *   HTML Elements   *
 	 *********************/
@@ -212,6 +229,45 @@ function Module(module_num, main, content_elements) {
 		self.loaded['json'] = true;
 		if (self.allLoaded()) { self.main(); }
 	});
+}
+
+// Callbacks
+Module.prototype.positionCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.robot.position[j] = msg[`j${j}`];
+	}
+}
+Module.prototype.velocityCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.robot.velocity[j] = msg[`j${j}`];
+	}
+}
+Module.prototype.effortCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.robot.effort[j] = msg[`j${j}`];
+	}
+}
+Module.prototype.endpointCallback = function(msg) {
+	self.robot.endpoint = msg;
+}
+
+Module.prototype.unsubscribeFrom = function(topic) {
+	topic.unsubscribe();
+	topic.removeAllListeners();
+	switch (topic.name) {
+		case '/teachbot/position':
+			topic.subscribe(self.positionCallback);
+			break;
+		case '/teachbot/velocity':
+			topic.subscribe(self.velocityCallback);
+			break;
+		case '/teachbot/effort':
+			topic.subscribe(self.effortCallback);
+			break;
+		case '/teachbot/endpoint':
+			topic.subscribe(self.endpointCallback);
+			break;
+	}
 }
 
 /**
@@ -475,6 +531,30 @@ Module.prototype.devRxCallback = function(req, resp) {
 }
 
 /**
+ * Coordinate transform from robot-space to 
+ */
+Module.prototype.robot2canvas = async function(x, y, robot='sawyer') {
+	const Kx = 72.73;
+	const bx = 51.45;
+	const Ky = 157.89;
+	const by = -30;
+
+	switch (robot) {
+		case 'sawyer':
+			x_canvas = (Kx * y + bx) * this.cw;
+			y_canvas = (Ky * x + by) * this.ch;
+
+		default:
+			throw `Robot ${robot} not supported.`;
+	} 
+
+	return {
+		x: x_canvas,
+		y: y_canvas
+	};
+}
+
+/**
  * Runs a command from the JSON file.
  *
  * Finds a command from a given address in the JSON file and performs it, then advances to the next command.
@@ -648,9 +728,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'drawDynamic':
-
-				checkInstruction(instr, ['shape','topics'], instructionAddr);
+			case 'draw_dynamic':
+				
 
 				for (var topic in instr.topics) {				// Loop through all topics.
 					var values = instr.topics[topic];
@@ -1106,17 +1185,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				var goal = this.getJointMoveGoal(instr.joints, instr.terminatingCondition, instr.resetPOS, instr.min_thresh, instr.bias);
 
-				const Kx = 72.73;
-				const bx = 51.45;
-				const Ky = 157.89;
-				const by = -30;
+				
 
-				this.endpoint.subscribe(async function(message) {
-					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-					var x_center = (Kx * message.position.y + bx) * self.cw;
-					var y_center = (Ky * message.position.x + by) * self.ch;
-					draw_ball(self.ctx, x_center, y_center, 8*self.ch, '#7c2629');
-				});
+				
 
 				goal.on('result', function(result) {
 					self.endpoint.unsubscribe();
@@ -1317,9 +1388,46 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				} else {
 					this.dictionary[instr.key] = instr.val;
 				}
-				//console.log(self.dictionary)
+				
 				this.start(this.getNextAddress(instructionAddr));
 				break;
+
+			case 'set_graphic_mode':
+				checkInstruction(instr, ['mode'], instructionAddr);
+				this.displayOff();
+
+				switch (instr.mode) {
+					case 'image':
+						checkInstruction(instr, ['location'], instructionAddr);
+
+						image.src = DIR + instr.location;
+						image.style.display = 'initial';
+
+						break;
+
+					case 'video':
+						animator.style.display = 'initial';
+						animator.play();
+						
+						break;
+
+					case 'canvas':
+						canvas_container.style.display = 'initial';
+						if (instr.hasOwnProperty('clear') && instr.clear) {
+							this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+						}
+						
+						break;
+
+					default:
+						throw `Graphic mode ${instr.mode} is not supported.`;
+				}
+				
+				this.start(this.getNextAddress(instructionAddr));
+				break;
+
+			case 'set_robot_mode':
+
 
 			case 'show_camera':
 				// this.displayOff();

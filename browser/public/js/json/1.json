@@ -35,7 +35,8 @@
 				"skippable": true
 			},
 			{
-				"type":"playVideo",
+				"type":"set_graphic_mode",
+				"mode":"video",
 				"skippable":true
 			},
 			{

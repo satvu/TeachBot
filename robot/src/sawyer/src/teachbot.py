@@ -119,14 +119,17 @@ class Module():
 		self.navigator.register_callback(self.rx_cheat_code, 'head_button_ok')
 
 		# Gripper
-		self.gripper = intera_interface.get_current_gripper_interface()
-		if isinstance(self.gripper, intera_interface.SimpleClickSmartGripper):
-			if self.gripper.needs_init():
-				self.gripper.initialize()
-		else:
-			if not (self.gripper.is_calibrated() or self.gripper.calibrate() == True):
-				raise
-		self.open_gripper()
+		try:
+			self.gripper = intera_interface.get_current_gripper_interface()
+			if isinstance(self.gripper, intera_interface.SimpleClickSmartGripper):
+				if self.gripper.needs_init():
+					self.gripper.initialize()
+			else:
+				if not (self.gripper.is_calibrated() or self.gripper.calibrate() == True):
+					raise
+			self.open_gripper()
+		except OSError as e:
+			rospy.logwarn('Failed to get gripper. No gripper attached on the robot. This may result in errors later.')
 
 		# Cuff
 		self.cuff = intera_interface.Cuff()
