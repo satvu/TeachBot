@@ -31,6 +31,11 @@ add_message_files(
   GoToCartesianPose.msg
   adjustPoseBy.msg
   Image.msg
+  ButtonSendAction.msg
+  ButtonSendActionGoal.msg
+  ButtonSendActionResult.msg
+  ButtonSendGoal.msg
+  ButtonSendResult.msg
 )
 
 add_service_files(
@@ -56,6 +61,7 @@ add_action_files(
   HighTwo.action
   WaitForPush.action
   JointImpedance.action
+  Button.action
 )
 
 generate_messages(

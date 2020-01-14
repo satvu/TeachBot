@@ -6,6 +6,8 @@ import rospy, actionlib, numpy, math
 from pygame import mixer
 import cv2
 import apriltag
+import serial
+import re
 # Intera
 import intera_interface
 from std_msgs.msg import (

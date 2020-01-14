@@ -4,6 +4,7 @@ const JOINTS = 7;                         // Numer of joints in Sawyer arm
 const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
 const ROBOT = 'sawyer';
+const ARDUINO = 'button_box';
 
 /**
  * A learning module for TeachBot.
@@ -99,6 +100,12 @@ function Module(module_num, main, content_elements) {
 		serviceType: ROBOT + '/DevMode'
 	});
 	DevModeSrv.advertise(this.devRxCallback);
+	var ButtonReceiverSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/buttons',
+		serviceType: ARDUINO + '/ButtonInfo'
+	});
+	ButtonReceiverSrv.advertise(this.buttonCallback);
 
 	// Service Clients
 	this.UpdateAudioDurationSrv = new ROSLIB.Service({
@@ -178,6 +185,14 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/JointImpedance',
 		actionName: ROBOT + '/JointImpedanceAction'
 	});
+	this.ButtonPressAct = new ROSLIB.ActionClient({
+		ros: ros,
+		serverName: '/teachbot/ButtonSend',
+		actionName: ROBOT + '/ButtonSendAction'
+	})
+
+	this.button = 'none';
+
 
 	// Initialize dictionary
 	this.dictionary = {};
@@ -485,6 +500,48 @@ Module.prototype.devRxCallback = function(req, resp) {
 }
 
 /**
+ * Detects if button was pressed
+ * If the switch value changes, it toggles development mode
+ *
+ * Callback for the ButtonReceiverSrv service.
+ * Turns development mode on if the message is 'On', off if 'Off'.
+ * Also detects if a button was pressed and changes the value of this.button
+ *
+ * @param {object}	req 	ROS message in the form of a string
+ * @param {object}  resp    A string confirming that the button was received
+ */
+Module.prototype.buttonCallback = function(req, resp) {
+	switch (req.button) {
+		case 'Off':
+			self.devMode = false
+			for (let s=0; s<self.sections.length; s++) {
+				self.sections[s]._audio_duration = self.sections[s]._audio_duration_copy.slice();
+			}
+			resp['response'] = 'Exiting dev mode';
+			if (VERBOSE) console.log('Exiting dev mode.');
+			break;
+
+		case 'On':
+			self.devMode = true
+			for (let s=0; s<self.sections.length; s++) {
+				for (let d=0; d<self.sections[s]._audio_duration.length; d++) {
+				self.sections[s]._audio_duration[d] = 0;
+				}
+			}
+			resp['response'] = 'Entering dev mode';
+			if (VERBOSE) console.log('Entering dev mode.');
+			break;
+
+		default:
+			self.button = req.button
+			resp['response'] = 'Button pressed';
+	}
+
+    
+    return true;
+}
+
+/**
  * Runs a command from the JSON file.
  *
  * Finds a command from a given address in the JSON file and performs it, then advances to the next command.
@@ -751,6 +808,21 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 					
 				});
+
+				break;
+
+			case 'buttons':
+				var goal_ButtonPress = new ROSLIB.Goal({
+					actionClient: this.ButtonPressAct,
+					goalMessage:{press: true}
+				});
+
+				goal_ButtonPress.on('result', function(result) {
+					if (VERBOSE) console.log(self.button)
+					self.start(self.getNextAddress(instructionAddr));
+				});
+
+				goal_ButtonPress.send();
 
 				break;
 
