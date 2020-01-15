@@ -62,7 +62,4 @@ teachbot_ws/src/intera_sdk
 teachbot_ws/src/sawyer_robot
 teachbot_ws/build
 teachbot_ws/devel
-
-# Files you need to replace #
-#############################
-robot/src/teachbot/src/test.py
+robot/start.sh

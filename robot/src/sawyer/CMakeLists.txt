@@ -58,10 +58,9 @@ add_action_files(
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
-  HighTwo.action
-  WaitForPush.action
   JointImpedance.action
   Button.action
+  Wait.action
 )
 
 generate_messages(

@@ -1,4 +1,4 @@
-Like most of my human coworkers, I also have a shoulder, an elbow, and a wrist. In fact, my arm has seven motors! For simplicity, I'll call this one my shoulder,
+Like most of my human coworkers, I also have a shoulder, an elbow, and a wrist. For simplicity, I'll call this one my shoulder,
 this one my elbow,
 and this one my wrist.
 But how do I tell where my arm is? How do I know how far I've rotated each motor? I'm going to unlock my shoulder. Try pushing my arm. I'll display how much I think you've turned it on the screen. When you're finished, press the scroll wheel button to let me know.

@@ -1,11 +1,7 @@
 # .action file for manipulating the gripper
 
 # goal definition
-
-# 'open': open the gripper
-# 'close': close the gripper
-
-string todo
+bool grip
 ---
 
 # result definition

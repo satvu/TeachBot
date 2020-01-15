@@ -18,6 +18,7 @@ function arc3pt(ctx_in, x1, y1, x2, y2, x3, y3, ccw) {
     var r = Math.sqrt(Math.pow(x1-xc,2)+Math.pow(y1-yc,2));
     console.log('C = ( ' + xc + ' , ' + yc + ' );\nr = ' + r)
     ctx_in.beginPath();
+    ctx_in.strokeStyle = '#000000';
     ctx_in.arc(xc,yc,r,Math.atan2(y1-yc,x1-xc),Math.atan2(y3-yc,x3-xc),ccw);
     ctx_in.stroke();
     ctx_in.closePath();

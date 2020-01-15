@@ -9,16 +9,13 @@
 				"delay":true
 			},
 			{
-				"type": "buttons"
-			},
-			{
 				"type": "proceed",
-				"to_section": "motors"
+				"to_section": "OneMotor"
 			}
 		]
 	},
 	{
-		"id": "motors",
+		"id": "OneMotor",
 		"instructions": [
 			{
 				"//":"Please stand back so I can show you something.",
@@ -39,10 +36,19 @@
 			},
 			
 			{
+				"type": "proceed",
+				"to_section": "MultipleMotors"
+			}
+		]
+	},
+	{
+		"id": "MultipleMotors",
+		"instructions": [
+			{
 				"//":"Just by looking, how many motors do you think I have in my arm? To input your answer, wait for me to move my arm. Next, turn the scroll wheel on my arm to scroll through numbers. Then press on the scroll wheel to select your answer.",
 				"type":"play",
-				"audio_index":2,
-				"delay":true
+				"audio_index":0,
+				"delay":false
 			},
 			{
 				"type":"scrollWheelInput",
@@ -51,20 +57,1395 @@
 			{
 				"//":"Step back and we'll count them together.",
 				"type":"play",
-				"audio_index":3,
+				"audio_index":1,
 				"delay":true
 			},
 			{
 				"//":"Pay close attention while I move each motor individually. Try to count how many motors I have.",
 				"type":"play",
-				"audio_index":"4",
+				"audio_index":2,
 				"delay":true
 			},
 			{
 				"//":"How many motors did you count?",
 				"type":"play",
+				"audio_index":3,
+				"delay":false
+			},
+			{
+				"type":"scrollWheelInput",
+				"store_answer_in":"wheelVal"
+			},
+			{
+				"type":"if",
+				"conditional":"#wheelVal==7",
+				"if_true":[
+					{
+						"//":"Good job! Now, please stand back so I can show you something else.",
+						"type":"play",
+						"audio_index":4,
+						"delay":true
+					}
+				],
+				"if_false":[
+					{
+						"type":"if",
+						"conditional":"#wheelVal==14",
+						"if_true":[
+							{
+								"//":"Not quite. Remember that each motor can move in two directions: clockwise and counterclockwise.",
+								"type":"play",
+								"audio_index":5,
+								"delay":true
+							}
+						],
+						"if_false":[
+							{
+								"//":"Not quite.",
+								"type":"play",
+								"audio_index":6,
+								"delay":true
+							}
+						]
+					},
+					{
+						"//":"Let's count them together. Please stand back.",
+						"type":"play",
+						"audio_index":7,
+						"delay":true
+					},
+					{
+						"type":"goToJointAngles",
+						"joint_angles":"joint_motor_animation_0"
+					},
+					{
+						"type":"set",
+						"key":"j",
+						"val":0
+					},
+					{
+						"type":"while",
+						"conditional":"#j<JOINTS",
+						"instructions":[
+							{
+								"//":"#<the number I'm on>",
+								"type":"play",
+								"audio_index":"#j+10",
+								"delay":false
+							},
+							{
+								"type":"goToJointAngles",
+								"joint_angles":"joint_test[#j]",
+								"skippable":true
+							},
+							{
+								"type":"goToJointAngles",
+								"joint_angles":"joint_motor_animation_0",
+								"skippable":true
+							},
+							{
+								"type":"set",
+								"key":"j",
+								"val":"#j+1"
+							}
+						]
+					},
+					{
+						"//":"I have seven motors. Now, please stand back so I can show you something else.",
+						"type":"play",
+						"audio_index":15,
+						"delay":true
+					}
+				]
+			},
+			{
+				"type":"proceed",
+				"to_section":"encoders"
+			}
+		]
+	},
+	{
+		"id":"encoders",
+		"instructions":[
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_start"
+			},
+			{
+				"//":"Like most of my human coworkers, I also have a shoulder, an elbow, and a wrist. For simplicity, I'll call this one my shoulder,",
+				"type":"play",
+				"audio_index":0,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_shoulder"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_start"
+			},
+			{
+				"//":"this one my elbow,",
+				"type":"play",
+				"audio_index":1,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_elbow"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_start"
+			},
+			{
+				"//":"and this one my wrist.",
+				"type":"play",
+				"audio_index":2,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_wrist"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_start"
+			},
+			{
+				"//":"But how do I tell where my arm is? How do I know how far I've rotated each motor? I'm going to unlock my shoulder. Try pushing my arm. I'll display how much I think you've turned it on the screen. When you're finished, press the scroll wheel button to let me know.",
+				"type":"play",
+				"audio_index":3,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"shoulder",
+				"terminatingCondition":"lambda self: self.finished",
+				"resetPOS":"joint_dof_start",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":false
+			},
+			{
+				"type": "initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position":["j0"]},
+				"x_ratio": [4],
+				"y_ratio": [85],
+				"width_ratio": [9],
+				"max_height_ratio": [80],
+				"fillStyle": ["#7c2629"]
+			},
+			{
+				"//":"Let me show you how I know. Please stand back.",
+				"type":"play",
+				"audio_index":4,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"pos_encoder_video"
+			},
+			{
+				"type":"encode"
+			},
+			{
+				"//":"This device is called an encoder. Every motor in my arm has one. These encoders can measure the angles of each of my motors.",
+				"type":"play",
+				"audio_index":5,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dof_start"
+			},
+			{
+				"type": "stopEncode"
+			},
+			{
+				"//":"Now I'm going to lock my shoulder and unlock my wrist. Try pushing my hand. When you're done, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":6,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"wrist",
+				"terminatingCondition":"lambda self: self.finished",
+				"resetPOS":"joint_dof_start",
+				"min_thresh":"0.5",
+				"bias":"BIAS_WRIST",
+				"listen":false
+			},
+			{
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position":["j5"]},
+				"x_ratio": [15],
+				"y_ratio": [85],
+				"width_ratio": [9],
+				"max_height_ratio": [80],
+				"fillStyle": ["BlueViolet"]
+			},
+			{
+				"//":"So far I've only unlocked one motor at a time. Let's try unlocking both my shoulder and wrist motors. Push on my arm again and see what happens. When you're done, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":7,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"[shoulder,wrist]",
+				"terminatingCondition":"lambda self: self.finished",
+				"resetPOS":"joint_dof_start",
+				"min_thresh":"{shoulder: 1.0, wrist: 0.5}",
+				"bias":"{shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}",
+				"listen":false
+			},
+			{
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position": ["j0","j5"]},
+				"x_ratio": [4, 13],
+				"y_ratio": [85, 85],
+				"width_ratio": [7, 7],
+				"max_height_ratio": [80, 80],
+				"fillStyle": ["#7c2629", "BlueViolet"]
+			},
+			{
+				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can move my arm for you to use the scroll wheel.",
+				"type":"play",
+				"audio_index":8,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_buttons"
+			},
+			{
+				"type":"scrollWheelInput",
+				"store_answer_in":"wheelVal"
+			},
+			{
+				"type":"if",
+				"conditional":"#wheelVal==7",
+				"if_true":[
+					{
+						"//":"Good job!",
+						"type":"play",
+						"audio_index":9,
+						"delay":true
+					}
+				],
+				"if_false":[
+					{
+						"//":"Not quite. If I have one encoder for every motor, how many encoders do I have?",
+						"type":"play",
+						"audio_index":10,
+						"delay":true
+					},
+					{
+						"type":"scrollWheelInput"
+					}
+				]
+			},
+			{
+				"//":"Now grab and move my arm again. I've unlocked all of my motors, so my arm might drift around a little. Go ahead and grab it anyway while watching the projection to see what I sense as you move each motor. When you're done, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":11,
+				"delay":false
+			},
+			{
+				"type":"interaction_control",
+				"position_only":false,
+				"orientation_x":true,
+				"orientation_y":true,
+				"orientation_z":true,
+				"position_x":true,
+				"position_y":true,
+				"position_z":true,
+				"in_end_point_frame":false,
+				"PASS":false,
+				"ways":false
+			},
+			{
+				"type":"initializeDisplay"
+			},
+			{
+				"type": "drawDynamic",
+				"shape": "bar",
+				"topics": {"position": ["j0","j1","j2","j3","j4","j5","j6"]},
+				"x_ratio": [4,18,32,46,60,74,88],
+				"y_ratio": [80,80,80,80,80,80,80],
+				"width_ratio": [9,9,9,9,9,9,9],
+				"max_height_ratio": [70,70,70,70,70,70,70],
+				"fillStyle": ["#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629"],
+				"label": ["Joint 1","Joint 2","Joint 3","Joint 4","Joint 5","Joint 6","Joint 7"]
+			},
+			{
+				"//":"Using my encoders, I can measure the angles of all seven of my motors. Please stand back so I can reset my position.",
+				"type":"play",
+				"audio_index":12,
+				"delay":true
+			},
+			{
+				"type":"proceed",
+				"to_section":"2dPosition"
+			}
+		]
+	},
+		{
+		"id":"2dPosition",
+		"instructions":[
+			{
+				"type":"reset"
+			},
+			{
+				"//":"Now let's talk about why I have so many motors.",
+				"type":"play",
+				"audio_index":0,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles", 
+				"joint_angles":"kinematics_init_pos",
+				"wait":true
+			},
+			{
+				"//":"Having so many motors is really important. If I can only move my elbow,",
+				"type":"play",
+				"audio_index":1,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":99,
+				"y1":66,
+				"x2":85,
+				"y2":72,
+				"x3":63,
+				"y3":46,
+				"ccw":false,
+				"label":"shoulder"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"kinematics_shoulder_arc"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"kinematics_init_pos"
+			},
+			{
+				"//":"I can only reach points along this curve. So, if I want to reach this point,",
+				"type":"play",
+				"audio_index":2,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 62,
+				"y_ratio": 83,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
+			},
+			{
+				"//":"I'll need to move another motor, too!",
+				"type":"play",
+				"audio_index":3,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_1"
+			},
+			{
+				"//":"I'm going to move my hand back to where it was and use the display to show the same arc as before.",
+				"type":"play",
+				"audio_index":4,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":99,
+				"y1":66,
+				"x2":85,
+				"y2":72,
+				"x3":63,
+				"y3":46,
+				"ccw":false,
+				"label":"shoulder"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"kinematics_init_pos"
+			},
+			{
+				"//":"If I want to reach that point, I only need to move one motor, my wrist.",
+				"type":"play",
+				"audio_index":5,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 65,
+				"y_ratio": 50,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
+			},
+			{
+				"//":"How many motors will I need to use to reach this new point? When you think you know the answer, push my arm to the point to see if you were right.",
+				"type":"play",
+				"audio_index":6,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)<joint_dot_2[3]",
+				"resetPOS":"kinematics_init_pos",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":true
+			},
+			{
+				"//":"I only needed to use one motor, but it was my elbow, not my wrist.",
+				"type":"play",
+				"audio_index":7,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_2"
+			},
+			{
+				"//":"With my wrist motor, I could move along this curve,",
+				"type":"play",
+				"audio_index":8,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":76,
+				"y1":36,
+				"x2":60,
+				"y2":53,
+				"x3":48,
+				"y3":42,
+				"ccw":false,
+				"label":"wrist"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_arc_wrist"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_ortho_kin"
+			},
+			{
+				"//":"But with my elbow motor, I can move along this curve.",
+				"type":"play",
+				"audio_index":9,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"arc",
+				"x1":93,
+				"y1":98,
+				"x2":63,
+				"y2":80,
+				"x3":46,
+				"y3":32,
+				"ccw":false,
+				"label":"shoulderNew"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_arc_elbow"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_ortho_kin"
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 93,
+				"y_ratio": 86,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"clearRec": true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_init"
+			},
+			{
+				"//":"Let's try another. If I want to move to this point, how many movements will I have to make if I can only move one motor at a time? Just like before, I'm going to unlock my elbow motor for you to push my hand toward the point. If you want to switch to moving my wrist motor, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":10,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.finished",
+				"resetPOS":"joint_dot_3_init",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":false,
+				"wait":true
+			},
+			{
+				"//":"Now I've locked my elbow and unlocked my wrist. You can switch back and forth at any time by pressing the scroll wheel button.",
+				"type":"play",
+				"audio_index":11,
+				"delay":false
+			},
+			{
+				"type":"set",
+				"key":"x",
+				"val":0.59
+			},
+			{
+				"type":"set",
+				"key":"y",
+				"val":0.56
+			},
+			{
+				"type":"set",
+				"key":"z",
+				"val":0.05
+			},
+			{
+				"type":"update"
+			},
+			{
+				"type":"while",
+				"conditional":"Math.abs(#position_x-#x)>0.03 || Math.abs(#position_y-(#y))>0.03 || Math.abs(#position_z-#z)>0.03",
+				"instructions":[
+					{
+						"type":"joint_move",
+						"joints":"wrist",
+						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
+						"resetPOS":"joint_dot_3_init",
+						"min_thresh":"0.8",
+						"bias":"BIAS_WRIST",
+						"listen":true
+					},
+					{
+						"type":"update"
+					},
+					{
+						"type":"joint_move",
+						"joints":"elbow",
+						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
+						"resetPOS":"joint_dot_3_init",
+						"min_thresh":"0.8",
+						"bias":"BIAS_SHOULDER",
+						"listen":true
+					},
+					{
+						"type":"update"
+					}
+				]
+			},
+			{
+				"//":"Great! Now let me try.",
+				"type":"play",
+				"audio_index":12,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_init"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_2_1"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3"
+			},
+			{
+				"//":"I took two steps to get there.",
+				"type":"play",
+				"audio_index":13,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",  
+				"joint_angles":"joint_dot_3_init",
+				"wait":true 
+			},
+			{
+				"//":"First, I moved this motor,",
+				"type":"play",
+				"audio_index":14,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_2_1"
+			},
+			{
+				"//":"then this one.",
+				"type":"play",
+				"audio_index":15,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3"
+			},
+			{
+				"//":"I can also travel in four steps",
+				"type":"play",
+				"audio_index":16,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_init",
+				"wait":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_4_1"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_4_2"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_4_3"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3"
+			},
+			{
+				"//":"or eight steps.",
+				"type":"play",
+				"audio_index":17,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_init",
+				"wait":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_1"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_2"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_3"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_4"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_5"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_6"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_8_7"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3"
+			},
+			{
+				"//":"Notice how, the more steps I take, the shorter each step is and the less time I spend using my wrist before switching to my elbow. If I keep increasing the number of steps, eventually there won't be any time at all between when I am using my wrist and when I am using my elbow, like this.",
+				"type":"play",
+				"audio_index":18,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3_init",
+				"wait":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_dot_3"
+			},
+			{
+				"type":"clearRect"
+			},
+			{
+				"//":"By combining all of the motions I can make with just one of my motors, I can move my hand freely through a large space!",
+				"type":"play",
+				"audio_index":19,
+				"delay":true
+			},
+			{
+				"//":"Grab my hand and see how large my range of motion is. I've unlocked all my motors, so my arm might drift around again. Go ahead and grab it anyway. When you're done, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":20,
+				"delay":false
+			},
+			{
+				"type":"interaction_control",
+				"position_only":false,
+				"orientation_x":true,
+				"orientation_y":true,
+				"orientation_z":true,
+				"position_x":true,
+				"position_y":true,
+				"position_z":true,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":false,
+				"wait":true
+			},
+			{
+				"//":"Please stand back so that I can reset my position.",
+				"type":"play",
+				"audio_index":21,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"type":"proceed",
+				"to_section":"1dOrientation"
+			}
+		]
+	},
+	{
+		"id":"1dOrientation",
+		"instructions":[
+			{
+				"//":"Now that you've learned the concept of position, let's talk about orientation.",
+				"type":"play",
+				"audio_index":0,
+				"delay":true
+			},
+			{
+				"//":"Pay attention to my gripper and see how it moves.",
+				"type":"play",
+				"audio_index":1,
+				"delay":true
+			},
+			{
+				"type":"proceed",
+				"to_section":"feedback"
+			}
+		]
+	},
+	{
+		"id":"feedback",
+		"instructions":[
+			{
+				"type": "initializeDisplay"
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 50,
+				"y_ratio": 83,
+				"r_ratio": 10,
+				"fillStyle": "BlueViolet",
+				"label": "A",
+				"labelsize_ratio": 5
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 39,
+				"y_ratio": 45,
+				"r_ratio": 10,
+				"fillStyle": "#7c2629",
+				"label": "B",
+				"labelsize_ratio": 5
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_a"
+			},
+			{
+				"//":"Now let's talk about a new concept, feedback. I've projected some points onto the table. Push my arm so that my shadow is on point B.",
+				"type":"play",
+				"audio_index":0,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)<point_b[3]",
+				"resetPOS":"point_a",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":true
+			},
+			{
+				"//":"Great! Thanks. Now I'm going to move to point B on my own.",
+				"type":"play",
+				"audio_index":1,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_a"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_c"
+			},
+			{
+				"//":"Oops! This time I overshot to a new point, C.",
+				"type":"play",
+				"audio_index":2,
+				"delay":true
+			},
+			{
+				"type":"drawShape",
+				"shape":"ball",
+				"x_ratio": 37,
+				"y_ratio": 15,
+				"r_ratio": 10,
+				"fillStyle": "DarkGreen",
+				"label": "C",
+				"labelsize_ratio": 5
+			},
+			{
+				"//":"Can you correct my position back to point B?",
+				"type":"play",
+				"audio_index":3,
+				"delay":false
+			},
+			{
+				"type":"joint_move",
+				"joints":"elbow",
+				"terminatingCondition":"lambda self : self.limb.joint_angle(elbow)>point_b[3]",
+				"resetPOS":"point_c",
+				"min_thresh":"1.0",
+				"bias":"BIAS_SHOULDER",
+				"listen":true
+			},
+			{
+				"//":"Thank you! At any point, I know the position of my arm because of my encoder. Here is position A,",
+				"type":"play",
+				"audio_index":4,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_a"
+			},
+			{
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 5,
+				"y_ratio": 85,
+				"width_ratio": 6,
+				"max_height_ratio": 40,
+				"height_percent": 0.3,
+				"fillStyle": "BlueViolet",
+				"label": "A"
+			},
+			{
+				"//":"here is position B,",
+				"type":"play",
+				"audio_index":5,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_b"
+			},
+			{
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 15,
+				"y_ratio": 85,
+				"width_ratio": 6,
+				"max_height_ratio": 40,
+				"height_percent": 0.5,
+				"fillStyle": "#7c2629",
+				"label": "B"
+			},
+			{
+				"//":"and here is position C.",
+				"type":"play",
+				"audio_index":6,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"point_c"
+			},
+			{
+				"type":"drawShape",
+				"shape":"bar",
+				"x_ratio": 25,
+				"y_ratio": 85,
+				"width_ratio": 6,
+				"max_height_ratio": 40,
+				"height_percent": 0.6,
+				"fillStyle": "DarkGreen",
+				"label": "C"
+			},
+			{
+				"//":"I compare my encoder reading at my current position, C, against the destination encoder position, B. If C is smaller than B, I push right. If C is longer than B, I push left. The 'feedback' from my encoders helps me decide which way to go to get to my destination. Now, please stand back.",
+				"type":"play",
+				"audio_index":7,
+				"delay":true
+			},
+			{
+				"type":"reset"
+			},
+			{
+				"type":"displayImage",
+				"location":"images/Welcome.png"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_push_down",
+				"wait":true
+			},
+			{
+				"//":"But that's only one demonstration of feedback. Let me show you another one. Try gently pushing down on my arm. Can you notice the difference?",
+				"type":"play",
+				"audio_index":8,
+				"delay":false
+			},
+			{
+				"type":"wait",
+				"what":"effort",
+				"timeout": 1000,
+				"store_answer_in":"wait_output"
+			},
+			{
+				"//":"Watch the projection as you push my arm. I've put up a little display showing how far you've pushed my arm and how much force I'm using to push back. The further you push my arm, the harder I tell my motors to push back. It should feel a little bit like a rubber band: the more you displace it, the harder it will want to spring back into its original position. When you're done, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":9,
+				"delay":false
+			},
+			{
+				"type":"joint_impedance",
+				"terminatingCondition":"lambda self: self.finished",
+				"tics":2
+			},
+			{
+				"type":"projection"
+			},
+			{
+				"//":"Before, I was using the feedback from my encoders to go somewhere new. Now, I'm using feedback to stay in one place. What am I using to know when my arm is moving?",
+				"type":"play",
+				"audio_index":10,
+				"delay":false
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_buttons"
+			},
+			{
+				"type":"multiple_choice",
+				"store_answer_in":"wheelVal"
+			},
+			{
+				"type":"if",
+				"conditional":"#wheelVal==3",
+				"if_true":[
+					{
+						"//":"That's right! I measured my arm positions, and created a force to push my arm back. Please stand back so I can reset my arm position.",
+						"type":"play",
+						"audio_index":11,
+						"delay":true
+					}
+				],
+				"if_false":[
+					{
+						"//":"Do you remember pushing my arm and I knew how far I moved?",
+						"type":"play",
+						"audio_index":12,
+						"delay":true
+					},
+					{
+						"type":"multiple_choice",
+						"store_answer_in":"wheelVal"
+					},
+					{
+						"type":"if",
+						"conditional":"#wheelVal==3",
+						"if_true":[
+							{
+								"//":"That's right! I measured my arm positions, and created a force to push my arm back. Please stand back so I can reset my arm position.",
+								"type":"play",
+								"audio_index":11,
+								"delay":true
+							}
+						],
+						"if_false":[
+							{
+								"//":"Sorry, that is incorrect. The correct answer is encoders.",
+								"type":"play",
+								"audio_index":13,
+								"delay":true
+							}
+						]
+					}
+				]
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"type":"proceed",
+				"to_section":"waypoints"
+			}
+		]
+	},
+	{
+		"id":"waypoints",
+		"instructions":[
+			{
+				"type":"refresh"
+			},
+			{
+				"//":"The final lesson of the day is about waypoints. Just like how your phone or computer can save pictures and music in its memory, I use my memory to remember different arm positions. Specifically, whenever you move my arm, I read all of my encoders so that, if I want to, I can return to this exact position. I call that remembered position a 'waypoint.'",
+				"type":"play",
+				"audio_index":0,
+				"delay":true
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
+			},
+			{
+				"//":"Let's try an example. I'm going to show you a series of arm positions. After each one, I'll unlock my arm and ask you to move it to that position and press the scroll wheel button.",
+				"type":"play",
+				"audio_index":1,
+				"delay":true
+			},
+			{
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
+			},
+			{
+				"//":"Start by pulling my arm so it's extended all the way and matches the image on the projector. When it's in the right position, press the scroll wheel button and I'll record the position as a waypoint.",
+				"type":"play",
+				"audio_index":2,
+				"delay":false
+			},
+			{
+				"type":"interaction_control",
+				"position_only":true,
+				"orientation_x":false,
+				"orientation_y":false,
+				"orientation_z":false,
+				"position_x":false,
+				"position_y":false,
+				"position_z":false,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":true,
+				"wait":true
+			},
+			{
+				"//":"Good! Now, push my arm in so it's close to my torso. When it's in the right position, press the scroll wheel button.",
+				"type":"play",
+				"audio_index":3,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location":"images/hokeypokey_in.png"
+			},
+			{
+				"type":"interaction_control",
+				"position_only":true,
+				"orientation_x":false,
+				"orientation_y":false,
+				"orientation_z":false,
+				"position_x":false,
+				"position_y":false,
+				"position_z":false,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":true,
+				"wait":true
+			},
+			{
+				"//":"Now pull my arm back out and press the scroll wheel button.",
+				"type":"play",
+				"audio_index":4,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
+			},
+			{
+				"type":"interaction_control",
+				"position_only":true,
+				"orientation_x":false,
+				"orientation_y":false,
+				"orientation_z":false,
+				"position_x":false,
+				"position_y":false,
+				"position_z":false,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":true,
+				"wait":true
+			},
+			{
+				"//":"Now rotate my torso this way and press the scroll wheel button.",
+				"type":"play",
 				"audio_index":5,
 				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot1.png"
+			},
+			{
+				"type":"interaction_control",
+				"position_only":true,
+				"orientation_x":false,
+				"orientation_y":false,
+				"orientation_z":false,
+				"position_x":false,
+				"position_y":false,
+				"position_z":false,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":true,
+				"wait":true
+			},
+			{
+				"//":"Finally, rotate my torso that way and press the scroll wheel button.",
+				"type":"play",
+				"audio_index":6,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot2.png"
+			},
+			{
+				"type":"interaction_control",
+				"position_only":true,
+				"orientation_x":false,
+				"orientation_y":false,
+				"orientation_z":false,
+				"position_x":false,
+				"position_y":false,
+				"position_z":false,
+				"in_end_point_frame":false,
+				"PASS":true,
+				"ways":true,
+				"wait":true
+			},
+			{
+				"//":"Great job! Now, I'll play back each waypoint. As I move from one waypoint to another, do the same motion with your arm.",
+				"type":"play",
+				"audio_index":7,
+				"delay":true
+			},
+			{
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
+			},
+			{
+				"//":"First, you put my arm in.",
+				"type":"play",
+				"audio_index":8,
+				"delay":false
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"waypoints.pop(0)",
+				"wait":true
+			},
+			{
+				"//":"You put my arm out.",
+				"type":"play",
+				"audio_index":9,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location":"images/hokeypokey_in.png"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"waypoints.pop(0)",
+				"wait":true
+			},
+			{
+				"//":"You put my arm in,",
+				"type":"play",
+				"audio_index":10,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location": "images/hokeypokey_out.png"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"waypoints.pop(0)",
+				"wait":true
+			},
+			{
+				"//":"And you learned all about, how to set up waypoints and make my motors turn around,",
+				"type":"play",
+				"audio_index":11,
+				"delay":false
+			},
+			{
+				"type":"displayImage",
+				"location":"images/hokeypokey_rot1.png"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"waypoints.pop(0)"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"waypoints.pop(0)",
+				"wait":true
+			},
+			{
+				"type":"proceed",
+				"to_section":"end"
+			}
+		]
+	},
+	{
+		"id":"end",
+		"instructions":[
+			{
+				"type":"displayImage",
+				"location":"images/Welcome.png"
+			},
+			{
+				"//":"And that's what it's all about! High two!",
+				"type":"play",
+				"audio_index":0,
+				"delay":false
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_high_two",
+				"wait":true
+			},
+			{
+				"type":"wait",
+				"what": "effort",
+				"timeout": 5,
+				"store_answer_in":"wait_output"
+			},
+			{
+				"type":"if",
+				"conditional":"#wait_output==true",
+				"if_true":[
+					{
+						"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
+						"type":"play",
+						"audio_index":3,
+						"delay":true
+					}
+				],
+				"if_false":[
+					{
+						"//":"I only have two fingers, so instead of a high five I can only give high two's. High two!",
+						"type":"play",
+						"audio_index":1,
+						"delay":true
+					},
+					{
+						"type":"wait",
+						"what":"effort",
+						"timeout": 5,
+						"store_answer_in":"wait_output"
+					},
+					{
+						"type":"if",
+						"conditional":"#wait_output",
+						"if_true":[
+							{
+								"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
+								"type":"play",
+								"audio_index":3,
+								"delay":true
+							}
+						],
+						"if_false":[
+							{
+								"//":"Okay,",
+								"type":"play",
+								"audio_index":2,
+								"delay":true
+							},
+							{
+								"//":"As you can probably imagine, playback control can be used for more than just dancing. Today, you recorded my arm positions and played them back to make me do the hokey pokey, but you can also record sequences to make me move equipment, package parts, and more!",
+								"type":"play",
+								"audio_index":3,
+								"delay":true
+							}
+						]
+					}
+				]
+			},
+			{
+				"//":"Great job! You have completed the first learning module.",
+				"type":"play",
+				"audio_index":4,
+				"delay":true
 			}
 		]
 	}

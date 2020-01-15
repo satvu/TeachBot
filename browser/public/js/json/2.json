@@ -3,27 +3,49 @@
 		"id": "intro",
 		"instructions": [
 			{
-				"type":"clearRect"
+				"type":"initializeDisplay"
 			},
 			{
-				"type":"drawBox",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":76,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBox",
-				"number":2
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":59,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":90
 			},
 			{
-				"type":"drawBox",
-				"number":3
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":42,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":90
 			},
 			{
-				"type":"drawBox",
-				"number":4
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":43,
+				"y_ratio":35,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBin",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":66,
+				"y_ratio":33,
+				"w_ratio":17,
+				"h_ratio":13
 			},
 			{
 				"type":"drawRamp",
@@ -43,7 +65,7 @@
 			},
 			{
 				"type":"goToJointAngles",
-				"joint_angles":"init_joint_arg"
+				"joint_angles":"avoid_collision"
 			},
 			{
 				"type":"goToJointAngles",
@@ -53,10 +75,11 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT-0.02"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"//":"3: Oh, that's embarrassing. Let me try again. I think I know what I did wrong. Would you please move the box back into the designated area? Press the scroll wheel on my arm when you've done so.",
@@ -73,7 +96,8 @@
 				"endpoint_pose":"None"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"pressed_button"
@@ -107,10 +131,11 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"type":"goToCartesianPose",
@@ -124,10 +149,11 @@
 				"type":"adjustPoseTo",
 				"geometry":"position",
 				"axis":"z",
-				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT"
+				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"goToCartesianPose",
@@ -212,7 +238,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"adjustPoseTo",
@@ -247,8 +274,8 @@
 						"orientation_x":false,
 						"orientation_y":false,
 						"orientation_z":false,
-						"position_x":true,
-						"position_y":false,
+						"position_x":false,
+						"position_y":true,
 						"position_z":false,
 						"in_end_point_frame":false,
 						"PASS":true,
@@ -293,7 +320,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"type":"goToCartesianPose",
@@ -400,15 +428,11 @@
 				"type":"adjustPoseBy",
 				"geometry":"position",
 				"axis":"y",
-				"amount":"0.1"
+				"amount":"0.22"
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"type":"adjustPoseTo",
@@ -417,15 +441,12 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT/2"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"//":"1: Can you move the bin back where it was? When it's ready, press the scroll wheel button.",
@@ -437,7 +458,7 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"2: Now let’s try moving this 3rd box into the 2nd bin.",
+				"//":"2: Now let’s try moving this 3rd box into the bin.",
 				"type":"play",
 				"audio_index":2,
 				"delay": true
@@ -483,7 +504,8 @@
 				"wait":true
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"//":"6: Now, lift my hand high enough so that the box higher than the bin. Press the scroll wheel to continue.",
@@ -540,7 +562,8 @@
 				"wait":true
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"//":"9: Please stand back so I can reset my position to be over Box 4.",
@@ -555,12 +578,8 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.07"
 			},
 			{
-				"type":"goToCartesianPose",
-				"position":"None",
-				"orientation":"None",
-				"relative_pose":"None",
-				"joint_angles":"above_fourth_box_joint_arg",
-				"endpoint_pose":"None"
+				"type":"goToJointAngles",
+				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
 				"//":"10: Can you please put Box 3 back into its designated position? Press the scroll wheel button once you've done so.",
@@ -586,7 +605,8 @@
 				"joint_angles":"waypoints.pop(0)"
 			},
 			{
-				"type":"closeGripper"
+				"type":"gripper",
+				"grip":true
 			},
 			{
 				"type":"goToJointAngles",
@@ -601,7 +621,8 @@
 				"joint_angles":"waypoints.pop(0)"
 			},
 			{
-				"type":"openGripper"
+				"type":"gripper",
+				"grip":false
 			},
 			{
 				"//":"13: Great job! Please stand back so I can adjust",
@@ -614,6 +635,9 @@
 				"geometry":"position",
 				"axis":"z",
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.07"
+			},
+			{
+				"type":"pause"
 			},
 			{
 				"type":"proceed",
