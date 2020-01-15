@@ -1,22 +1,32 @@
 /**
- * Draw a dynamic object.
+ * Draw on the canvas.
  *
- * Draws a ball or bar chart whose properties are linked with the robot state. 
+ * Registers drawable object to drawings array.
  *
- * @param {object}   ctx_in  The context of the canvas on which to draw.
- * @param {number}   x1      The x position of the first guide point in pixels.
- * @param {number}   y1      The y position of the first guide point in pixels.
- * @param {number}   x2      The x position of the second guide point in pixels.
- * @param {number}   y2      The y position of the second guide point in pixels.
- * @param {number}   x3      The x position of the third guide point in pixels.
- * @param {number}   y3      The y position of the third guide point in pixels.
- * @param {boolean}  ccw     Draw counterclockwise, as opposed to clockwise.
+ * @param {object}  instr            A parameterized instruction imported from the JSON file.
+ * @param {object}  instructionAddr  The address of the current instruction.
  */
-Module.prototype.draw = function(instr) {
+Module.prototype.draw = function(instr, instructionAddr) {
 	checkInstruction(instr, ['shape'], instructionAddr);
 
 	switch (instr.shape) {
-		case ball:
-			
+		case 'ball':
+			checkInstruction(instr, ['cx', 'cy', 'r', 'fillStyle'], instructionAddr);
+			break;
+
+		case 'bar':
+			checkInstruction(instr, ['val', 'maxVal', 'axisLeft', 'axisRight', 'maxHeight', 'antiWidth', 'fillStyle'], instructionAddr);
+			break;
+
+		case 'arc':
+			checkInstruction(instr, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'ccw'], instructionAddr);
+			break;
+
+		default:
+			throw `Draw ${instr.shape} not yet supported.`
 	}
+
+	this.drawings.push(instr);
+
+	this.start(this.getNextAddress(instructionAddr));
 }

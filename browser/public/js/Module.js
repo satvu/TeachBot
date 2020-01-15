@@ -27,11 +27,13 @@ function Module(module_num, main, content_elements) {
 	if (VERBOSE) console.log(`Beginning Module ${module_num}`);
 
 	// Instance Variables
-	this.module_num = module_num;
-	this.main = main;
-	this.content_elements = content_elements;
-	this.loaded = {'audio':false, 'text':false, 'json':false};
-	this.robot = {position: [], velocity: [], effort: [], endpoint: {}};
+	this.module_num = module_num;											// The index of the current module. TODO: replace with Claire's naming structure
+	this.main = main;														// The function to run after all resources have been loaded.
+	this.content_elements = content_elements;								// The elements to be loaded. TODO: consider deprecating per Tongxi's suggestion.
+	this.loaded = {'audio':false, 'text':false, 'json':false};				// Dictionary to track which resources have loaded.
+	this.drawings = [];														// Array of objects to draw on the canvas.
+	this.graphic_mode = 'image';											// Current graphic mode. See: set_graphic_mode().
+	this.canvas_frame_req;													// Animation frame request. See: set_graphic_mode().
 	
 	// Initialize self to module for use in event callbacks
 	self = this;
@@ -187,9 +189,6 @@ function Module(module_num, main, content_elements) {
 	this.dictionary = {};
 	this.getEndpoint();
 
-	// Initialize dynamics
-	this.dynamics = {};
-
 	/*********************
 	 *   HTML Elements   *
 	 *********************/
@@ -199,10 +198,6 @@ function Module(module_num, main, content_elements) {
 	this.ch = canvas_obj.height/100.0;
 	this.cw = canvas_obj.width/100.0;
 	this.robot_color = getComputedStyle(document.body).getPropertyValue('--robot-color')
-	// var bar_ctx = [];
-	// for(let j=0; j<JOINTS; j++) {
-	//     bar_ctx.push(document.getElementById('bar' + (j+1)).getContext('2d'));
-	// }
 
 	/************************
 	 *   Update Font Size   *
@@ -234,21 +229,27 @@ function Module(module_num, main, content_elements) {
 // Callbacks
 Module.prototype.positionCallback = function(msg) {
 	for (let j=0; j<Object.keys(msg).length; j++) {
-		self.robot.position[j] = msg[`j${j}`];
+		self.dictionary[`JOINT_POSITION_${j}`] = msg[`j${j}`];
 	}
 }
 Module.prototype.velocityCallback = function(msg) {
 	for (let j=0; j<Object.keys(msg).length; j++) {
-		self.robot.velocity[j] = msg[`j${j}`];
+		self.dictionary[`JOINT_VELOCITY_${j}`] = msg[`j${j}`];
 	}
 }
 Module.prototype.effortCallback = function(msg) {
 	for (let j=0; j<Object.keys(msg).length; j++) {
-		self.robot.effort[j] = msg[`j${j}`];
+		self.dictionary[`EFFORT_${j}`] = msg[`j${j}`];
 	}
 }
 Module.prototype.endpointCallback = function(msg) {
-	self.robot.endpoint = msg;
+	self.dictionary[`ENDPOINT_POSITION_X`] = msg.position.x;
+	self.dictionary[`ENDPOINT_POSITION_Y`] = msg.position.y;
+	self.dictionary[`ENDPOINT_POSITION_Z`] = msg.position.z;
+	self.dictionary[`ENDPOINT_ORIENTATION_X`] = msg.orientation.x;
+	self.dictionary[`ENDPOINT_ORIENTATION_Y`] = msg.orientation.y;
+	self.dictionary[`ENDPOINT_ORIENTATION_Z`] = msg.orientation.z;
+	self.dictionary[`ENDPOINT_ORIENTATION_W`] = msg.orientation.w;
 }
 
 Module.prototype.unsubscribeFrom = function(topic) {
@@ -491,6 +492,7 @@ Module.prototype.displayOff = function(clearCanvas=false) {
 		elem.style.display = 'none';
 	});
 	if (clearCanvas) {
+		this.drawings = [];
 		this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 	}
 }
@@ -1393,37 +1395,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'set_graphic_mode':
-				checkInstruction(instr, ['mode'], instructionAddr);
-				this.displayOff();
-
-				switch (instr.mode) {
-					case 'image':
-						checkInstruction(instr, ['location'], instructionAddr);
-
-						image.src = DIR + instr.location;
-						image.style.display = 'initial';
-
-						break;
-
-					case 'video':
-						animator.style.display = 'initial';
-						animator.play();
-						
-						break;
-
-					case 'canvas':
-						canvas_container.style.display = 'initial';
-						if (instr.hasOwnProperty('clear') && instr.clear) {
-							this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-						}
-						
-						break;
-
-					default:
-						throw `Graphic mode ${instr.mode} is not supported.`;
-				}
-				
-				this.start(this.getNextAddress(instructionAddr));
+				this.set_graphic_mode(instr, instructionAddr);
 				break;
 
 			case 'set_robot_mode':
@@ -1482,7 +1454,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
  * Replaces all references with a '#' with the value they reference from the dictionary.
  *
  * For each instance of '#' in a given string, this function replaces the '#' and the following variable reference with the value it references
- * from the dictionary.
+ * from the dictionary. If the input is not a string, it is returned.
  *
  * Example:
  *  >> module.dictionary.a = 314;
@@ -1493,7 +1465,12 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
  * @return {object}	The processed string with references replaced.
  */
 Module.prototype.hashTokeyVal = function(str) {
-	return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+	switch (typeof str) {
+		case 'string':
+			return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+		default:
+			return str;
+	}
 }
 
 /**
