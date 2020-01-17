@@ -516,6 +516,7 @@ class Module():
 			self.wheel_delta_topic.publish(req)
 			if self.VERBOSE: rospy.loginfo('Wheel value: {0}. Wheel delta: {1}.'.format(data, delta))
 
+		if self.VERBOSE: rospy.loginfo('Subscribing to scroll wheel.')
 		self.wheel_callback_id = self.navigator.register_callback(rx_wheel_move, 'right_wheel')
 
 	def unsubscribe_from_wheel_move(self):

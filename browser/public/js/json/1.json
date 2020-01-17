@@ -73,6 +73,11 @@
 		"id": "MultipleMotors",
 		"instructions": [
 			{
+				"type":"set_graphic_mode",
+				"mode":"image",
+				"location":"images/Welcome.png"
+			},
+			{
 				"//":"Just by looking, how many motors do you think I have in my arm? To input your answer, wait for me to move my arm. Next, turn the scroll wheel on my arm to scroll through numbers. Then press on the scroll wheel to select your answer.",
 				"type":"play",
 				"audio_index":0,
@@ -80,13 +85,17 @@
 			},
 			{
 				"type":"scrollWheelInput",
-				"skippable":true
+				"skippable":false
 			},
 			{
 				"//":"Step back and we'll count them together.",
 				"type":"play",
 				"audio_index":1,
 				"delay":true
+			},
+			{
+				"type":"set_graphic_mode",
+				"mode":"image"
 			},
 			{
 				"type":"goToJointAngles",
@@ -294,7 +303,7 @@
 				"type": "initializeDisplay"
 			},
 			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
 				"topics": {"position":["j0"]},
 				"x_ratio": [4],

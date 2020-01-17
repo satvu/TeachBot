@@ -13,14 +13,17 @@
  */
 Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 	checkInstruction(instr, ['mode'], instructionAddr);
+	if (VERBOSE) console.log(`Entering graphic mode: ${instr.mode}`);
+
+	window.cancelAnimationFrame(this.canvas_frame_req);
 	this.displayOff();
-	this.graphic_mode = instr.mode;
+	this.graphic_mode = instr;
 
 	switch (instr.mode) {
 		case 'image':
-			checkInstruction(instr, ['location'], instructionAddr);
-
-			image.src = DIR + instr.location;
+			if (instr.hasOwnProperty('location')) {
+				image.src = DIR + instr.location;
+			}
 			image.style.display = 'initial';
 
 			break;
@@ -40,14 +43,26 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
 				self.drawCanvas(timestamp);
 			});
-			
+
+			break;
+
+		case 'multiple choice':
+			canvas_container.style.display = 'initial';
+			display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], DIR + 'images/sized_cuff.png');
+
+			break;
+
+		case 'scroll wheel':
+			canvas_container.style.display = 'initial';
+			run_odometer = true;
+			canvas_obj.width = canvas_obj.width;
+			init_odometer(this.ctx);
+
 			break;
 
 		default:
 			throw `Graphic mode ${instr.mode} is not supported.`;
 	}
-	
-	this.start(this.getNextAddress(instructionAddr));
 };
 
 Module.prototype.drawCanvas = function(timestamp) {
@@ -56,9 +71,9 @@ Module.prototype.drawCanvas = function(timestamp) {
 	this.drawings.forEach(function(obj, ind) {
 		switch (obj.shape) {
 			case 'ball':
-				var cx = eval(self.hashTokeyVal(obj.cx));
-				var cy = eval(self.hashTokeyVal(obj.cy));
-				var r = eval(self.hashTokeyVal(obj.r));
+				var cx = eval(self.hashTokeyVal(obj.cx))*self.cw;
+				var cy = eval(self.hashTokeyVal(obj.cy))*self.ch;
+				var r = eval(self.hashTokeyVal(obj.r))*self.ch;
 				var fillStyle = obj.fillStyle;
 
 				draw_ball(self.ctx, cx, cy, r, fillStyle, obj.label);
@@ -79,12 +94,12 @@ Module.prototype.drawCanvas = function(timestamp) {
 				break;
 
 			case 'arc':
-				var x1 = eval(self.hashTokeyVal(obj.x1));
-				var y1 = eval(self.hashTokeyVal(obj.y1));
-				var x2 = eval(self.hashTokeyVal(obj.x2));
-				var y2 = eval(self.hashTokeyVal(obj.y2));
-				var x3 = eval(self.hashTokeyVal(obj.x3));
-				var y3 = eval(self.hashTokeyVal(obj.y3));
+				var x1 = eval(self.hashTokeyVal(obj.x1))*self.cw;
+				var y1 = eval(self.hashTokeyVal(obj.y1))*self.ch;
+				var x2 = eval(self.hashTokeyVal(obj.x2))*self.cw;
+				var y2 = eval(self.hashTokeyVal(obj.y2))*self.ch;
+				var x3 = eval(self.hashTokeyVal(obj.x3))*self.cw;
+				var y3 = eval(self.hashTokeyVal(obj.y3))*self.ch;
 				var ccw = eval(self.hashTokeyVal(obj.ccw));
 
 				arc3pt(self.ctx, x1, y1, x2, y2, x3, y3, ccw);

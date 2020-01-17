@@ -618,7 +618,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				console.log("module paused here.")
 
-				break
+				break;
 
 			// case 'shadow':
 
@@ -689,6 +689,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				canvas_container.style.display = 'initial';
 				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 				this.start(self.getNextAddress(instructionAddr));
+				break;
+
+			case 'draw':
+				this.draw(instr, instructionAddr);
 				break;
 
 			case 'drawShape':
@@ -1199,7 +1203,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 				goal.send();
 
-			break
+				break;
 
 			case 'log':
 				checkInstruction(instr, ['message'], instructionAddr);
@@ -1210,11 +1214,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'multiple_choice':
-				this.displayOff();
-				canvas_container.style.display = 'initial';
-				var multi_choice_url = DIR + 'images/sized_cuff.png';
-
-				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], multi_choice_url);
+				var currentGraphicMode = this.graphic_mode;
+				this.set_graphic_mode({"mode":"multiple_choice"}, instructionAddr);
 
 				var goal = new ROSLIB.Goal({
 					actionClient: this.MultipleChoiceAct,
@@ -1224,7 +1225,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				goal.on('result', function(result) {
 					if (VERBOSE) console.log('Button pressed:' + result.answer);
 					self.dictionary[instr.store_answer_in] = result.answer;
-					self.displayOff(true);
+					self.set_graphic_mode(currentGraphicMode, instructionAddr);
 					self.start(self.getNextAddress(instructionAddr));
 				});
 
@@ -1348,11 +1349,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'scrollWheelInput':
-				this.displayOff();
-				canvas_container.style.display = 'initial';
-				run_odometer = true;
-				canvas_obj.width = canvas_obj.width;
-				init_odometer(this.ctx);
+				var currentGraphicMode = this.graphic_mode;
+				this.set_graphic_mode({'mode': 'scroll wheel'}, instructionAddr);
 
 				var goal = this.getGoToGoal('joint_buttons')
 				goal.on('result', function(result) {
@@ -1372,7 +1370,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							self.scroll_wheel_button_receiver.unsubscribe();
 							self.scroll_wheel_button_receiver.removeAllListeners();
 							cancel_odometer();
-							self.displayOff(true);
+							self.set_graphic_mode(currentGraphicMode, instructionAddr);
 							self.start(self.getNextAddress(instructionAddr));
 						});
 					});
@@ -1396,9 +1394,12 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'set_graphic_mode':
 				this.set_graphic_mode(instr, instructionAddr);
+				this.start(this.getNextAddress(instructionAddr));
 				break;
 
 			case 'set_robot_mode':
+
+				break;
 
 
 			case 'show_camera':
@@ -1431,14 +1432,11 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'while':
 				checkInstruction(instr, ['conditional'], instructionAddr);
-				console.log(this.hashTokeyVal(instr.conditional));
 		
 				if (eval(this.hashTokeyVal(instr.conditional))) {
-					console.log('conditions')
 					instructionAddr.push(0);
 					this.start(instructionAddr);
 				} else {
-					console.log('moving on')
 					this.start(this.getNextAddress(instructionAddr));
 				}
 			
