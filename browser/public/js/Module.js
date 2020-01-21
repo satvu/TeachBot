@@ -527,7 +527,7 @@ Module.prototype.buttonCallback = function(req, resp) {
 			break;
 
 		default:
-			self.button = req.button
+			self.button = parseInt(req.button)
 			resp['response'] = 'Button pressed';
 	}
 
@@ -1317,23 +1317,38 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'multiple_choice':
 				this.displayOff();
 				canvas_container.style.display = 'initial';
-				var multi_choice_url = DIR + 'images/sized_cuff.png';
+				var multi_choice_url = DIR + 'images/button_box.JPG';
 
-				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], multi_choice_url);
+				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders'], multi_choice_url);
 
-				var goal = new ROSLIB.Goal({
-					actionClient: this.MultipleChoiceAct,
-					goalMessage: {on: true}
+				var goal_ButtonPress = new ROSLIB.Goal({
+					actionClient: this.ButtonPressAct,
+					goalMessage:{press: true}
 				});
 
-				goal.on('result', function(result) {
-					if (VERBOSE) console.log('Button pressed:' + result.answer);
-					self.dictionary[instr.store_answer_in] = result.answer;
-					self.displayOff(true);
+				goal_ButtonPress.on('result', function(result) {
+					if (VERBOSE) console.log(self.button)
+					self.dictionary[instr.store_answer_in] = String(self.button);
 					self.start(self.getNextAddress(instructionAddr));
+
 				});
 
-				goal.send();
+				goal_ButtonPress.send();
+
+
+				// var goal = new ROSLIB.Goal({
+				// 	actionClient: this.MultipleChoiceAct,
+				// 	goalMessage: {on: true}
+				// });
+
+				// goal.on('result', function(result) {
+				// 	if (VERBOSE) console.log('Button pressed:' + result.answer);
+				// 	self.dictionary[instr.store_answer_in] = result.answer;
+				// 	self.displayOff(true);
+				// 	self.start(self.getNextAddress(instructionAddr));
+				// });
+
+				// goal.send();
 
 				break;
 
@@ -1416,7 +1431,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-				break;
 
 			case 'pressed_button':
 				this.pressed.subscribe(async function(message) {

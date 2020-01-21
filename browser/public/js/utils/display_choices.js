@@ -14,15 +14,16 @@ function display_choices(ctx_in, choices_arr, multi_choice_url) {
     var imgb = new Image();
 
     imgb.onload = function(){
-        //the original image is 780x425
+        //the original image is 1920x889
         //percentages for the blank slots on the png
         ctx_in.clearRect(0,0,ctx_in.canvas.width,ctx_in.canvas.height); 
-        var choice_x_pos = [166,559,166,530,166]; //these are the optimal x and y positions of the text
-        var choice_y_pos = [105,105,241,241,340];
-        var pos_x_line_end = [240,559,255,530,245]; //these are the optimal x and y positions of the text
-        var pos_y_line_end = [100,95,235,236,335];
-        var pos_x_line = [351,432,346,432,373];//these are the optimal x and y positions on the original image
-        var pos_y_line = [139,139,286,286,329];
+
+        var choice_x_pos = [300,260,450,415]; //these are the optimal x and y positions of the text
+        var choice_y_pos = [205,358,358,205];
+        var pos_x_line_end = [320,295,485,460]; //these are the optimal x and y positions of the text
+        var pos_y_line_end = [215,338,338,215];
+        var pos_x_line = [270,350,435,520];//these are the optimal x and y positions on the original image
+        var pos_y_line = [275,275,275,275];
         var img_scale = .9
         var img_height = ctx_in.canvas.height*img_scale;
         font_size = img_height / 20;
@@ -34,10 +35,10 @@ function display_choices(ctx_in, choices_arr, multi_choice_url) {
         ctx_in.font = font_size +  "px Raleway";
         ctx_in.textAlign = "left";
         ctx_in.fillStyle = "#373737";
-        ctx_in.lineWidth = 2;
         ctx_in.strokeStyle = '#333333';
         for (let c=0; c<choices_arr.length; c++) {
             console.log("hello")
+            ctx_in.lineWidth = 2;
             ctx_in.fillText(choices_arr[c], ctx_in.canvas.width/2  - img_width/2 + (choice_x_pos[c] )*img_height/425, ctx_in.canvas.height/2-img_height/2 + (choice_y_pos[c] ) * img_height/425);
             ctx_in.beginPath(); 
             ctx_in.moveTo(ctx_in.canvas.width/2  - img_width/2 + (pos_x_line[c] )*img_height/425, ctx_in.canvas.height/2-img_height/2 + (pos_y_line[c] ) * img_height/425)
@@ -45,6 +46,20 @@ function display_choices(ctx_in, choices_arr, multi_choice_url) {
             ctx_in.stroke();
 /*            ctx_in.restore();*/
         }
+
+        ctx_in.beginPath(); 
+        ctx_in.moveTo(575, 500);
+        ctx_in.lineTo(375, 800);
+        var headlen = 15;
+        var dx = -200;
+        var dy = 300;
+        var angle = Math.atan2(dy,dx)
+        ctx_in.lineTo(375 - headlen * Math.cos(angle - Math.PI / 6), 800 - headlen * Math.sin(angle - Math.PI / 6));
+        ctx_in.moveTo(375, 800);
+        ctx_in.lineTo(375 - headlen * Math.cos(angle + Math.PI / 6), 800 - headlen * Math.sin(angle + Math.PI / 6));
+        ctx_in.lineWidth = 5;
+        ctx_in.stroke()
+
     }
     imgb.src = multi_choice_url;
 }

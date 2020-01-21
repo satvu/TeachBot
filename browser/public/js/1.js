@@ -10,8 +10,8 @@ var m = new Module(module_num, main, [image, animator]);
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'intro';
-var start_location = 0;
+var start_seq = 'feedback';
+var start_location = 33;
 async function main() {
     m.displayOff();
     image.style.display = 'none';
