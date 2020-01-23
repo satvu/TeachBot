@@ -3,6 +3,12 @@
 		"id": "intro",
 		"instructions": [
 			{
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"joints":[0],
+				"resetPOS":"default"
+			},
+			{
 				"//":"Hello, my name is TeachBot. It's nice to meet you.",
 				"type":"play",
 				"audio_index":0,
@@ -300,16 +306,17 @@
 				"listen":false
 			},
 			{
-				"type": "initializeDisplay"
+				"type": "set_graphic_mode",
+				"mode": "canvas"
 			},
 			{
 				"type": "draw",
 				"shape": "bar",
-				"topics": {"position":["j0"]},
-				"x_ratio": [4],
-				"y_ratio": [85],
-				"width_ratio": [9],
-				"max_height_ratio": [80],
+				"height_percent": "#POSITION_JOINT_0/3.14",
+				"x": 4,
+				"y": 85,
+				"width": 9,
+				"max_height": 80,
 				"fillStyle": ["#7c2629"]
 			},
 			{

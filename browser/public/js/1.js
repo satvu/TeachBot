@@ -10,7 +10,7 @@ var m = new Module(module_num, main, [image, animator]);
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'encoders';
+var start_seq = 'intro';
 var start_location = 0;
 async function main() {
     m.displayOff();

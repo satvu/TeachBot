@@ -81,15 +81,14 @@ Module.prototype.drawCanvas = function(timestamp) {
 				break;
 
 			case 'bar':
-				var val = eval(self.hashTokeyVal(obj.val));
-				var maxVal = eval(self.hashTokeyVal(obj.maxVal));
-				var axisLeft = eval(self.hashTokeyVal(obj.axisLeft));
-				var axisRight = eval(self.hashTokeyVal(obj.axisRight));
-				var maxHeight = eval(self.hashTokeyVal(obj.maxHeight));
-				var antiWidth = eval(self.hashTokeyVal(obj.antiWidth));
+				var x = eval(self.hashTokeyVal(obj.x))*self.cw;
+				var y = eval(self.hashTokeyVal(obj.y))*self.ch;
+				var width = eval(self.hashTokeyVal(obj.width))*self.cw;
+				var max_height = eval(self.hashTokeyVal(obj.max_height))*self.ch;
+				var height_percent = eval(self.hashTokeyVal(obj.height_percent));
 				var fillStyle = eval(self.hashTokeyVal(obj.fillStyle));
 
-				draw_bar(self.ctx, val, maxVal, axisLeft, axisRight, maxHeight, antiWidth, fillStyle, obj.label);
+				draw_bar_new(self.ctx, x, y, width, max_height, height_percent, fillStyle, obj.label, obj.label_align);
 
 				break;
 

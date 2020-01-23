@@ -15,7 +15,7 @@ Module.prototype.draw = function(instr, instructionAddr) {
 			break;
 
 		case 'bar':
-			checkInstruction(instr, ['val', 'maxVal', 'axisLeft', 'axisRight', 'maxHeight', 'antiWidth', 'fillStyle'], instructionAddr);
+			checkInstruction(instr, ['x', 'y', 'width', 'max_height', 'height_percent', 'fillStyle'], instructionAddr);
 			break;
 
 		case 'arc':

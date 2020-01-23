@@ -1,0 +1,19 @@
+## Change robot mode.
+
+# Request: new mode
+string mode
+
+# Custom Ctrl Parameter for Admittance and Impedance Ctrl
+int32[] joints
+string resetPOS
+float32[] min_thresh
+float32[] bias
+float32[] tol
+float32[] V2F
+float32[] X2F
+float32[] F2V
+
+# Interaction Ctrl Paramters
+---
+# Response
+bool done

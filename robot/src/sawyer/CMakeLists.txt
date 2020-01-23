@@ -37,6 +37,7 @@ add_service_files(
   FILES
   AudioDuration.srv
   DevMode.srv
+  SetRobotMode.srv
   ScrollWheelSubscription.srv
 )
 

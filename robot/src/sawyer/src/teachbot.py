@@ -3,6 +3,7 @@
 ## IMPORTS ##
 # Basic
 import rospy, actionlib, numpy, math
+from enum import Enum
 from pygame import mixer
 import cv2
 import apriltag
@@ -46,6 +47,30 @@ class Module():
 		rospy.init_node('Sawyer_comm_node', anonymous=True)
 		intera_interface.HeadDisplay().display_image('logo.png')
 
+		# Global Vars
+		self.audio_duration = 0
+		self.finished = False
+		self.startPos = 0
+		self.devMode = False
+		self.allowCuffInteraction = False
+		self.modeTimer = None
+
+		self.p_command = lambda self: self.pub_num(180/math.pi*self.limb.joint_angle(shoulder))
+		wheel = self.finished
+		b_less = lambda self : self.limb.joint_angle(shoulder)<point_b[0]
+		b_more = lambda self : self.limb.joint_angle(shoulder)>point_b[0]
+		dot_2 = lambda self : self.limb.joint_angle(shoulder)<joint_dot_2[0]
+		#endpoint = lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,tol) or self.finished
+
+		# Custom Control Variables
+		self.control = {
+			'i': 0,
+			'order': 15,
+			'effort': [],
+			'position': [],
+			'velocity': [],
+		}
+
 		# Publishing topics
 		suppress_cuff_interaction = rospy.Publisher('/robot/limb/right/suppress_cuff_interaction', Empty, queue_size=1)
 		self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
@@ -65,6 +90,7 @@ class Module():
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
+		rospy.Service('/teachbot/set_robot_mode', SetRobotMode, self.cb_SetRobotMode)
 		rospy.Service('/teachbot/wheel_subscription', ScrollWheelSubscription, self.cb_WheelSubscription)
 		# Service Clients
 		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
@@ -83,21 +109,6 @@ class Module():
 		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
 		self.JointImpedanceAct = actionlib.SimpleActionServer('/teachbot/JointImpedance', JointImpedanceAction, execute_cb=self.cb_JointImpedance, auto_start=True)
 		self.WaitAct = actionlib.SimpleActionServer('/teachbot/Wait', WaitAction, execute_cb=self.cb_Wait, auto_start=True)
-
-		# Global Vars
-		self.audio_duration = 0
-		self.finished = False
-		self.startPos = 0
-		self.devMode = False
-		self.seqArr = []
-		self.allowCuffInteraction = False
-
-		self.p_command = lambda self: self.pub_num(180/math.pi*self.limb.joint_angle(shoulder))
-		wheel = self.finished
-		b_less = lambda self : self.limb.joint_angle(shoulder)<point_b[0]
-		b_more = lambda self : self.limb.joint_angle(shoulder)>point_b[0]
-		dot_2 = lambda self : self.limb.joint_angle(shoulder)<joint_dot_2[0]
-		#endpoint = lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,tol) or self.finished
 
 		# Limb
 		self.limb = LimbPlus()
@@ -137,13 +148,13 @@ class Module():
 		for key in self.cuff_callback_ids:
 			self.cuff_callback_ids[key] = -1
 
+		# Turn off cuff interaction.
+		if not self.allowCuffInteraction:
+			rospy.Timer(rospy.Duration(0.1), lambda event=None : suppress_cuff_interaction.publish())
+
 		# Initialization complete. Spin.
 		rospy.loginfo('Ready.')
-		r = rospy.Rate(10)
-		while not rospy.is_shutdown():
-			if not self.allowCuffInteraction:
-				suppress_cuff_interaction.publish()
-			r.sleep()
+		rospy.spin()
 
 	## HELPER FUNCTIONS ##
 	# Returns true if two positions equal each other or are at least within a given tolerance
@@ -171,69 +182,6 @@ class Module():
 			startPose = self.limb.endpoint_pose()
 			rospy.sleep(1)
 		self.limb.position_mode()
-
-	# Individual joint constraint mode
-	def joint_move(self,joints,terminatingCondition,resetPos,pCMD=lambda self: None, rateNom=10, tics=15, min_thresh=0, bias=0):
-		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
-		rate = rospy.Rate(rateNom)																		# Define rate to send commands
-		# self.finished = False																			# Initialized finished variable for terminating condition
-
-		# Initialize joint dicts of all zeros
-		zeroVec = self.limb.joint_velocities()
-		effortVec = {}
-		min_thresh_vec = {}
-		bias_vec = {}
-		for joint in zeroVec.keys():
-			zeroVec[joint] = 0
-			effortVec[joint] = numpy.zeros(tics)
-			if isinstance(min_thresh, dict):
-				if joint in min_thresh.keys():
-					min_thresh_vec[joint] = min_thresh[joint]
-				else:
-					min_thresh_vec[joint] = 0
-			else:
-				min_thresh_vec[joint] = min_thresh
-			if isinstance(bias, dict):
-				if joint in bias.keys():
-					bias_vec[joint] = bias[joint]
-				else:
-					bias_vec[joint] = 0
-			else:
-				bias_vec[joint] = bias
-		lastEffort = zeroVec.copy()																		# Initialize two effort dicts
-		thisEffort = zeroVec.copy()
-		
-		i = 0
-		while not terminatingCondition(self) and not rospy.is_shutdown():
-			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
-			pCMD(self)																					# Publish whatever the user wants
-
-			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
-
-			# Measure effort
-			while thisEffort==lastEffort:
-				thisEffort = self.limb.joint_efforts()
-			lastEffort = thisEffort
-			for joint in effortVec.keys():
-				effortVec[joint][i] = thisEffort[joint]
-			i = i+1 if i+1<tics else 0
-
-			# Filter effort and convert into velocity
-			velocities = zeroVec.copy()
-			for joint in velocities.keys():
-				if joint in joints:
-					filteredForce = numpy.mean(effortVec[joint])+bias_vec[joint]
-					#rospy.loginfo(joint + ': ' + str(filteredForce))
-					if abs(filteredForce) < min_thresh_vec[joint]:
-						velocities[joint] = 0
-					else:
-						velocities[joint] = -self.FORCE2VELOCITY[joint]*filteredForce
-			self.limb.set_joint_velocities(velocities)
-
-			rate.sleep()
-
-		rospy.loginfo('Joint move completed')
-		self.limb.exit_control_mode()
 
 	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
 		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
@@ -425,11 +373,6 @@ class Module():
 		# rospy.loginfo('Creating image')
 		cv2.imwrite('/home/albertgo/TeachBot/browser/public/images/cv_image.png', cv_image)
 		self.command_complete_topic.publish()
-	
-
-
-	def addSeq(self, seq):
-		self.seqArr.append(seq.asDict())
 
 	## ROS PUBLISHERS ##
 	# Publishes message to ROSTopic to be receieved by JavaScript
@@ -460,8 +403,12 @@ class Module():
 		effort = JointInfo()
 		for j in range(Module.JOINTS):
 			setattr(position, 'j'+str(j), data.position[j+1])
+			setattr(self.control['position'][self.control.i], 'right_j'+str(j), data.position[j+1])
 			setattr(velocity, 'j'+str(j), data.velocity[j+1])
+			setattr(self.control['velocity'][self.control.i], 'right_j'+str(j), data.velocity[j+1])
 			setattr(effort, 'j'+str(j), data.effort[j+1])
+			setattr(self.control['effort'][self.control.i], 'right_j'+str(j), data.effort[j+1])
+		self.control.i = self.control.i+1 if self.control.i+1<self.control.order else 0
 		self.position_topic.publish(position)
 		self.velocity_topic.publish(velocity)
 		self.effort_topic.publish(effort)
@@ -719,7 +666,6 @@ class Module():
 
 			else:
 				goto = self.limb.go_to_joint_angles(eval(goal.name), speed_ratio=speed_ratio, ways = ways)
-				rospy.loginfo(goto)
 				if goto == False:
 					rospy.loginfo('correct me please')
 
@@ -819,7 +765,7 @@ class Module():
 		result_wait.success = False
 
 		if goal.timeout<0:
-			rospy.loginfo('Timeout not specified! Wait functoin cannot wait for forever.')
+			rospy.loginfo('Timeout not specified! Wait function cannot wait for forever.')
 			raise
 		startTime = rospy.get_time()
 
@@ -867,6 +813,112 @@ class Module():
 			pass
 		self.MultipleChoiceAct.set_succeeded(self.multiple_chocie_result)
 
+	def cb_SetRobotMode(self, req):
+		if self.modeTimer is not None:
+			self.modeTimer.shutdown()
+
+		if req.mode is 'position':
+			self.limb.exit_control_mode()
+
+		elif req.mode is 'admittance ctrl':
+			self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
+			joints = [];
+			for j in req.joints:
+				joints.append({ 'right_j'+str(j): {} })
+			rospy.loginfo(req.min_thresh)
+
+		elif req.mode is 'impedance ctrl':
+			self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
+
+		elif req.mode is 'interaction ctrl':
+			pass
+
+		else:
+			rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
+
+	def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
+		self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
+		rospy.Publisher('/robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
+
+		# Filter effort and convert into velocity
+		velocities = self.limb.joint_velocities()
+		for joint in velocities.keys():
+			if joint in joints.keys():
+				filteredForce = sum([self.control.effort[i][joint] for i in range(self.control.order)])/self.control.order + joints[joint].bias
+				#numpy.mean(effortVec[joint])+bias_vec[joint]
+				#rospy.loginfo(joint + ': ' + str(filteredForce))
+				if abs(filteredForce) < joints[joint].min_thresh:
+					velocities[joint] = 0
+				else:
+					velocities[joint] = -joints[joint].F2V*filteredForce#-self.FORCE2VELOCITY[joint]*filteredForce
+			else:
+				velocities[joint] = 0
+
+		self.limb.set_joint_velocities(velocities)
+
+	# Individual joint constraint mode
+	def joint_move(self,joints,terminatingCondition,resetPos,pCMD=lambda self: None, rateNom=10, tics=15, min_thresh=0, bias=0):
+		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
+		rate = rospy.Rate(rateNom)																		# Define rate to send commands
+		# self.finished = False																			# Initialized finished variable for terminating condition
+
+		# Initialize joint dicts of all zeros
+		zeroVec = self.limb.joint_velocities()
+		effortVec = {}
+		min_thresh_vec = {}
+		bias_vec = {}
+		for joint in zeroVec.keys():
+			zeroVec[joint] = 0
+			effortVec[joint] = numpy.zeros(tics)
+			if isinstance(min_thresh, dict):
+				if joint in min_thresh.keys():
+					min_thresh_vec[joint] = min_thresh[joint]
+				else:
+					min_thresh_vec[joint] = 0
+			else:
+				min_thresh_vec[joint] = min_thresh
+			if isinstance(bias, dict):
+				if joint in bias.keys():
+					bias_vec[joint] = bias[joint]
+				else:
+					bias_vec[joint] = 0
+			else:
+				bias_vec[joint] = bias
+		lastEffort = zeroVec.copy()																		# Initialize two effort dicts
+		thisEffort = zeroVec.copy()
+		
+		i = 0
+		while not terminatingCondition(self) and not rospy.is_shutdown():
+			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
+			pCMD(self)																					# Publish whatever the user wants
+
+			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
+
+			# Measure effort
+			while thisEffort==lastEffort:
+				thisEffort = self.limb.joint_efforts()
+			lastEffort = thisEffort
+			for joint in effortVec.keys():
+				effortVec[joint][i] = thisEffort[joint]
+			i = i+1 if i+1<tics else 0
+
+			# Filter effort and convert into velocity
+			velocities = zeroVec.copy()
+			for joint in velocities.keys():
+				if joint in joints:
+					filteredForce = numpy.mean(effortVec[joint])+bias_vec[joint]
+					#rospy.loginfo(joint + ': ' + str(filteredForce))
+					if abs(filteredForce) < min_thresh_vec[joint]:
+						velocities[joint] = 0
+					else:
+						velocities[joint] = -self.FORCE2VELOCITY[joint]*filteredForce
+			self.limb.set_joint_velocities(velocities)
+
+			rate.sleep()
+
+		rospy.loginfo('Joint move completed')
+		self.limb.exit_control_mode()
+			
 	def cb_WheelSubscription(self, req):
 		if req.subscribe:
 			self.subscribe_to_wheel_move()
@@ -874,21 +926,11 @@ class Module():
 			self.unsubscribe_from_wheel_move()
 		return True
 
-class Sequence():
-	def __init__(self, idn, timestamp=None):
-		self.idn = idn
-		if timestamp is None:
-			timestamp = rospy.get_time()
-		self.timestamp = timestamp
-		self.actions = []
-
-	def addAction(self, name, timestamp=None):
-		if timestamp is None:
-			timestamp = rospy.get_time()
-		self.actions.append({'name': name, 'timestamp': timestamp})
-
-	def asDict(self):
-		dct = {'idn': self.idn, 'timestamp': self.timestamp, 'actions': self.actions}
+class Mode(Enum):
+	POSITION = 1			# Fixed-position joint control.
+	ADMITTANCE_CTRL = 2		# Custom admittance control given torque-speed conversion factor.
+	IMPEDANCE_CTRL = 3		# Custom impedance control given springs and dampers.
+	INTERACTION_CTRL = 4	# Built-in zero-G mode in various axes.
 
 ## DEFINE IMPORTANT CONSTANTS ##
 if __name__ == '__main__':

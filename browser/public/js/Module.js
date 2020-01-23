@@ -112,6 +112,11 @@ function Module(module_num, main, content_elements) {
 	DevModeSrv.advertise(this.devRxCallback);
 
 	// Service Clients
+	this.SetRobotModeSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/set_robot_mode',
+		serviceType: 'SetRobotMode'
+	})
 	this.UpdateAudioDurationSrv = new ROSLIB.Service({
 		ros: ros,
 		name: '/teachbot/audio_duration',
@@ -694,7 +699,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'draw':
 				this.draw(instr, instructionAddr);
 				break;
-
+/*
 			case 'drawShape':
 				checkInstruction(instr, ['shape'], instructionAddr);
 
@@ -724,7 +729,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(self.getNextAddress(instructionAddr));
 
 				break;
-
+*/
 			case 'LOG':
 				console.log(Object.keys(instr.aDict))
 				for (var key in (instr.aDict)) {
@@ -1074,42 +1079,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'interaction_projection':
-				protractor_table.style.display = 'initial';
-
-				var bar_ctx = [];
-				for(let j=0; j<JOINTS; j++) {
-					bar_ctx.push(document.getElementById('bar' + (j+1)).getContext('2d'));
-				}
-
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received: ' + message.j0, message.j1, message.j2, message.j3, message.j4, message.j5, message.j6);
-					var locations = [message.j0, message.j1, message.j2, message.j3, message.j4, message.j5, message.j6]
-					for (let p=1; p<=locations.length; p++) {
-						document.getElementById('protractor' + p).value = '' + (100*locations[p-1]);
-						let cw = bar_ctx[p-1].canvas.width/100.0;
-						let ch = bar_ctx[p-1].canvas.height/100.0;
-						bar_ctx[p-1].clearRect(0,0,100*cw,100*ch);
-						draw_bar(bar_ctx[p-1], locations[p-1], 3.15,9*cw,91*cw,50*ch,6*cw, self.robot_color);
-						document.getElementById('bar' + p).value = '' + (100*locations[p-1]);
-					}
-				});
-
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
-					}
-					
-				});
-
-				break;
-
 			case 'wait':
 				checkInstruction(instr, ['what'], instructionAddr);
 
@@ -1398,7 +1367,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'set_robot_mode':
-
+				this.set_robot_mode(instr, instructionAddr);
+				this.start(this.getNextAddress(instructionAddr));
 				break;
 
 
