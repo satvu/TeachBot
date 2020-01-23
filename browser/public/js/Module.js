@@ -54,9 +54,19 @@ function Module(module_num, main, content_elements) {
 
 	// Subscribing topics
 	this.box_bin = new ROSLIB.Topic({
-		ros: this.ros,
+		ros: ros,
 		name: '/teachbot/box_in_bin',
 		messageType: 'std_msgs/Bool'
+	});
+	this.box_bin = new ROSLIB.Topic({
+		ros: ros,
+		name: '/teachbot/box_in_bin',
+		messageType: 'std_msgs/Bool'
+	});
+	this.button_topic = new ROSLIB.Topic({
+		ros: ros,
+		name: '/teachbot/button',
+		messageType: 'std_msgs/String'
 	});
 	this.command_complete = new ROSLIB.Topic({
 		ros: ros,
@@ -68,11 +78,11 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/wheel_delta',
 		messageType: 'std_msgs/Int32'
 	})
-	this.scroll_wheel_button_receiver = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/scroll_wheel_button_topic',
-		messageType: 'std_msgs/Empty'
-	})
+	// this.scroll_wheel_button_receiver = new ROSLIB.Topic({
+	// 	ros: ros,
+	// 	name: '/teachbot/scroll_wheel_button_topic',
+	// 	messageType: 'std_msgs/Empty'
+	// })
 	this.position = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/position',
@@ -114,11 +124,11 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/audio_duration',
 		serviceType: 'AudioDuration'
 	});
-	this.ScrollWheelSubscriptionSrv = new ROSLIB.Service({
-		ros: ros,
-		name: '/teachbot/wheel_subscription',
-		serviceType: 'ScrollWheelSubscription'
-	});
+	// this.ScrollWheelSubscriptionSrv = new ROSLIB.Service({
+	// 	ros: ros,
+	// 	name: '/teachbot/wheel_subscription',
+	// 	serviceType: 'ScrollWheelSubscription'
+	// });
 
 	// Actions
 	this.CuffInteractionAct = new ROSLIB.ActionClient({
@@ -181,7 +191,6 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/ButtonSend',
 		actionName: ROBOT + '/ButtonSendAction'
 	})
-
 	this.WaitAct =  new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/Wait',
@@ -753,17 +762,16 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 				};
 
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						for (topic in instr.topics){
-							eval('self.'+topic+'.unsubscribe();');
-							eval('self.'+topic+'.removeAllListeners();');
-						}
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
+				this.button_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Received indication to advance');
+					for (topic in instr.topics){
+						eval('self.'+topic+'.unsubscribe();');
+						eval('self.'+topic+'.removeAllListeners();');
+					
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
+					self.displayOff();
+					self.start(self.getNextAddress(instructionAddr));
 					}
 				});
 
@@ -1188,17 +1196,14 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 				});
 
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
-					}
-					
+				this.button_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Received indication to advance');			
+					self.position.unsubscribe();
+					self.position.removeAllListeners();
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
+					self.displayOff();
+					self.start(self.getNextAddress(instructionAddr));
 				});
 
 				break;
@@ -1335,21 +1340,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				goal_ButtonPress.send();
 
-
-				// var goal = new ROSLIB.Goal({
-				// 	actionClient: this.MultipleChoiceAct,
-				// 	goalMessage: {on: true}
-				// });
-
-				// goal.on('result', function(result) {
-				// 	if (VERBOSE) console.log('Button pressed:' + result.answer);
-				// 	self.dictionary[instr.store_answer_in] = result.answer;
-				// 	self.displayOff(true);
-				// 	self.start(self.getNextAddress(instructionAddr));
-				// });
-
-				// goal.send();
-
 				break;
 
 			case 'play':
@@ -1433,13 +1423,11 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 
 			case 'pressed_button':
-				this.pressed.subscribe(async function(message) {
+				this.button_topic.subscribe(async function(message) {
 					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.start(self.getNextAddress(instructionAddr));
-					}
+					self.pressed.unsubscribe();
+					self.pressed.removeAllListeners();
+					self.start(self.getNextAddress(instructionAddr));
 				});
 
 				break;
@@ -1460,17 +1448,14 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					draw_goal(self.ctx, 100, message.j1*400+100)
 				});
 
-				this.pressed.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.position.unsubscribe();
-						self.position.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
-						self.displayOff();
-						self.start(self.getNextAddress(instructionAddr));
-					}
-					
+				this.button_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Received indication to advance');
+					self.position.unsubscribe();
+					self.position.removeAllListeners();
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
+					self.displayOff();
+					self.start(self.getNextAddress(instructionAddr));
 				});
 
 				break;
@@ -1498,35 +1483,30 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'scrollWheelInput':
 				this.displayOff();
 				canvas_container.style.display = 'initial';
-				run_odometer = true;
-				canvas_obj.width = canvas_obj.width;
-				init_odometer(this.ctx);
+				var odometer_url = DIR + 'images/new_scroll.JPG';
 
-				var goal = this.getGoToGoal('joint_buttons')
-				goal.on('result', function(result) {
-					self.ScrollWheelSubscriptionSrv.callService(new ROSLIB.ServiceRequest({subscribe: true}), result => {
-						self.wheel_delta_topic.subscribe(async function(message) {
-							if (VERBOSE) console.log('Rx: ' + message.data);
-								wheel_val+= message.data;
-						});
+				if (VERBOSE) console.log('Here');
+				wheel_val = 0
+				draw_odometer(m.ctx, odometer_url, wheel_val);
 
-						self.scroll_wheel_button_receiver.subscribe(async function(message) {
-							if (VERBOSE) console.log('Scroll wheel button pressed.');
-							if (instr.hasOwnProperty('store_answer_in')) {
-								self.dictionary[instr.store_answer_in] = wheel_val;
-							}
-							self.wheel_delta_topic.unsubscribe();
-							self.wheel_delta_topic.removeAllListeners();
-							self.scroll_wheel_button_receiver.unsubscribe();
-							self.scroll_wheel_button_receiver.removeAllListeners();
-							cancel_odometer();
-							self.displayOff(true);
-							self.start(self.getNextAddress(instructionAddr));
-						});
-					});
+				this.button_topic.subscribe(async function(message) {
+					value = parseInt(message.data)
+					if (value > 1){
+						if (VERBOSE) console.log('Finished');
+						if (instr.hasOwnProperty('store_answer_in')) {
+							self.dictionary[instr.store_answer_in] = wheel_val;
+						}
+						self.button_topic.unsubscribe();
+						self.button_topic.removeAllListeners();
+						self.displayOff(true);
+						self.start(self.getNextAddress(instructionAddr));
+					}else{
+						wheel_val+= value;
+						draw_odometer(m.ctx, odometer_url, wheel_val);
+						if (VERBOSE) console.log('Wheel value: ' + wheel_val);
+					}
 				});
-				goal.send();
-
+				
 				break;
 
 			case 'set':

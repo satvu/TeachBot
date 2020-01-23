@@ -53,10 +53,7 @@ class Module():
 		self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
 		self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
 		self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
-		self.scroll_wheel_button_topic = rospy.Publisher('/teachbot/scroll_wheel_button_topic', Empty, queue_size = 10)
 		self.command_complete_topic = rospy.Publisher('/teachbot/command_complete', Empty, queue_size=1)
-		self.wheel_delta_topic = rospy.Publisher('/teachbot/wheel_delta', Int32, queue_size=10)
-		self.clicked = rospy.Publisher('/teachbot/scroll_wheel_pressed', Bool, queue_size=10)
 		self.endpoint_topic = rospy.Publisher('/teachbot/EndpointInfo', EndpointInfo, queue_size=10)
 		self.box_in_bin_topic = rospy.Publisher('/teachbot/box_in_bin', Bool, queue_size=1)
 
@@ -65,10 +62,11 @@ class Module():
 		rospy.Subscriber('/robot/limb/right/endpoint_state', intera_core_msgs.msg.EndpointState, self.forwardEndpointState)
 		rospy.Subscriber('/teachbot/camera', Bool, self.cb_camera)
 		rospy.Subscriber('/teachbot/allowCuffInteraction', Bool, self.cb_allowCuffInteraction)
+		rospy.Subscriber('/teachbot/button', String, self.cb_Button)
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
-		rospy.Service('/teachbot/wheel_subscription', ScrollWheelSubscription, self.cb_WheelSubscription)
+
 		# Service Clients
 		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
 
@@ -494,10 +492,6 @@ class Module():
 		self.endpoint_topic.publish(endpoint_msg)
 
 	def rx_finished(self,data):
-		if self.navigator.button_string_lookup(data) == 'OFF':
-			self.finished = True
-			self.scroll_wheel_button_topic.publish()
-			self.clicked.publish(True)
 		if self.VERBOSE: rospy.loginfo('Rx from arm scroll wheel button: ' + self.navigator.button_string_lookup(data) + '. finished = ' + str(self.finished))
 
 	def rx_cheat_code(self,data):
@@ -575,6 +569,10 @@ class Module():
 
 		result_AdjustPoseTo.is_done = True
 		self.AdjustPoseToAct.set_succeeded(result_AdjustPoseTo)
+
+	def cb_Button(self, data):
+		self.finished = True
+		rospy.loginfo('Received: ' + str(self.finished))
 
 	def cb_Gripper(self,goal):
 
@@ -719,8 +717,8 @@ class Module():
 						PASS = False,
 						ways = False
 						)
-					InteractionControlActCli.send_goal(goal_InteractionControl)
-					InteractionControlActCli.wait_for_result()
+					self.InteractionControlActCli.send_goal(goal_InteractionControl)
+					self.InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
@@ -756,8 +754,8 @@ class Module():
 						PASS = False,
 						ways = False
 						)
-					InteractionControlActCli.send_goal(goal_InteractionControl)
-					InteractionControlActCli.wait_for_result()
+					self.InteractionControlActCli.send_goal(goal_InteractionControl)
+					self.InteractionControlActCli.wait_for_result()
 
 					mixer.init()
 					mixer.music.load('safety4.mp3')
@@ -826,6 +824,7 @@ class Module():
 
 		self.joint_move(eval(req.joints), eval(req.terminatingCondition), eval(req.resetPOS), min_thresh=eval(req.min_thresh), bias=eval(req.bias))
 
+		rospy.loginfo('Sending info that joint move is done')
 		result.done = True
 		self.JointMoveAct.set_succeeded(result);
 
@@ -883,12 +882,12 @@ class Module():
 			pass
 		self.MultipleChoiceAct.set_succeeded(self.multiple_chocie_result)
 
-	def cb_WheelSubscription(self, req):
-		if req.subscribe:
-			self.subscribe_to_wheel_move()
-		else:
-			self.unsubscribe_from_wheel_move()
-		return True
+	# def cb_WheelSubscription(self, req):
+	# 	if req.subscribe:
+	# 		self.subscribe_to_wheel_move()
+	# 	else:
+	# 		self.unsubscribe_from_wheel_move()
+	# 	return True
 
 class Sequence():
 	def __init__(self, idn, timestamp=None):
@@ -914,7 +913,7 @@ if __name__ == '__main__':
 
 	BIAS_SHOULDER = -0.55#-0.5
 	BIAS_ELBOW = 0.4
-	BIAS_WRIST = 0.75
+	BIAS_WRIST = -0.15
 	#shoulder_wrist_bias = {shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}
 	#shoulder_wrist_thresh = {shoulder: 1.0, wrist: 0.5}
 

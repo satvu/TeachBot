@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Create on Monday, January 6, 2020
+Created on Monday, January 6, 2020
 @author: Albert Go
 Client code for the button box; takes data from arduino serial monitor
 '''
@@ -25,9 +25,13 @@ class ButtonClient():
 	def __init__(self):
 		rospy.init_node('client', anonymous=True)
 
-		self.button = None
 		self.pressed = False
+		self.button  = None
 
+		#Publisher topics
+		self.button_topic = rospy.Publisher('/teachbot/button', String, queue_size=10)
+
+		#Subscribe and listen to any action requests from the button topic
 		self.ButtonPressAct = actionlib.SimpleActionServer('/teachbot/ButtonSend', ButtonSendAction, execute_cb=self.cb_buttonPress, auto_start=True)
 
 		#Connect to the arduino serial port
@@ -41,6 +45,9 @@ class ButtonClient():
 
 			#Split the serial line readout and take the first item
 			self.button = re.split(": |\r|\n", button_raw)[0]
+			if self.button != 'start' and self.button != 'On' and self.button != 'Off':
+				rospy.loginfo('Publishing...')
+				self.button_topic.publish(self.button)
 			if self.button != "start":
 				self.pressed = True
 				self.send_buttonInfo()
@@ -59,14 +66,13 @@ class ButtonClient():
 		go = True
 		while go:
 			#Make sure that a button is pressed before continuing
-			if self.button != "start" and self.button != None and self.pressed:
+			if self.button != 'start' and self.button != None and self.pressed:
 				self.send_buttonInfo()
 				go = False
 
 		#Tell the action client that the user has pressed a button
 		result_press.done = True
 		self.ButtonPressAct.set_succeeded(result_press)
-
 
 	def send_buttonInfo(self):
 		'''
@@ -84,6 +90,7 @@ class ButtonClient():
 
 		except rospy.ServiceException, e:
 			rospy.loginfo('Service did not process request:'%e)
+
 
 if __name__ == '__main__':
 	ButtonClient()
