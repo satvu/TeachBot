@@ -58,11 +58,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/box_in_bin',
 		messageType: 'std_msgs/Bool'
 	});
-	this.box_bin = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/box_in_bin',
-		messageType: 'std_msgs/Bool'
-	});
 	this.button_topic = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/button',
@@ -119,16 +114,16 @@ function Module(module_num, main, content_elements) {
 	ButtonReceiverSrv.advertise(this.buttonCallback);
 
 	// Service Clients
+	this.CuffWaysSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/CuffWays',
+		serviceType: 'CuffWays'
+	});
 	this.UpdateAudioDurationSrv = new ROSLIB.Service({
 		ros: ros,
 		name: '/teachbot/audio_duration',
 		serviceType: 'AudioDuration'
 	});
-	// this.ScrollWheelSubscriptionSrv = new ROSLIB.Service({
-	// 	ros: ros,
-	// 	name: '/teachbot/wheel_subscription',
-	// 	serviceType: 'ScrollWheelSubscription'
-	// });
 
 	// Actions
 	this.CuffInteractionAct = new ROSLIB.ActionClient({
@@ -605,6 +600,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'pause':
 
 				console.log("module paused here.")
+				self.start(self.getNextAddress(instructionAddr));
 
 				break
 
@@ -901,33 +897,87 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				var position_bw_url = DIR + 'images/position_bw.png';
 				var position_color_url = DIR + 'images/position_color.png';
 
-				var goal = new ROSLIB.Goal({
-					actionClient: this.CuffInteractionAct,
+				// var goal = new ROSLIB.Goal({
+				// 	actionClient: this.CuffInteractionAct,
+				// 	goalMessage: {
+				// 		terminatingCondition: instr.terminatingCondition,
+				// 		ways: instr.ways
+				// 	}
+				// });
+
+				// goal.on('feedback', function(feedback) {
+				// 	var POSITION = true;
+				// 	var ORIENTATION = false;
+				// 	if (feedback.mode === POSITION) {
+				// 		if (VERBOSE) console.log('Position Mode');
+				// 		draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'pos');
+				// 	} else if (feedback.mode === ORIENTATION) {
+				// 		if (VERBOSE) console.log('Orientation Mode');
+				// 		draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'orien');
+				// 	}
+				// });
+
+				// goal.on('result', function(result) {
+				// 	if (VERBOSE) console.log('Exited cuff interaction.');
+				// 	self.ctx.clearRect(3, 300, 403, 1100)
+				// 	self.start(self.getNextAddress(instructionAddr));
+				// });
+
+				// goal.send();
+
+				var goal_pos = new ROSLIB.Goal({
+				actionClient: self.InteractionControlAct,
+				goalMessage: {
+					position_only: false,
+					position_x: true,
+					position_y: true,
+					position_z: false,
+					orientation_x: false,
+					orientation_y: false,
+					orientation_z: false,
+					in_end_point_frame: false,
+					PASS: true,
+					ways: false
+				}
+				});
+
+				var goal_orient = new ROSLIB.Goal({
+					actionClient: self.InteractionControlAct,
 					goalMessage: {
-						terminatingCondition: instr.terminatingCondition,
-						ways: instr.ways
+						position_only: false,
+						position_x: false,
+						position_y: false,
+						position_z: false,
+						orientation_x: false,
+						orientation_y: false,
+						orientation_z: true,
+						in_end_point_frame: true,
+						PASS: true,
+						ways: false
 					}
 				});
 
-				goal.on('feedback', function(feedback) {
-					var POSITION = true;
-					var ORIENTATION = false;
-					if (feedback.mode === POSITION) {
-						if (VERBOSE) console.log('Position Mode');
+				this.button_topic.subscribe(async function(message) {
+					var value = parseInt(message.data)
+					if (value == 6){
 						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'pos');
-					} else if (feedback.mode === ORIENTATION) {
-						if (VERBOSE) console.log('Orientation Mode');
+						if (VERBOSE) console.log('Entering position mode');	
+						goal_pos.send()
+					} else if (value == 7){
 						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'orien');
+						if (VERBOSE) console.log('Entering orientation mode');	
+						goal_orient.send()
+					} else{
+						if (VERBOSE) console.log('Received indication to advance');	
+						if (instr.ways == true) {
+							self.CuffWaysSrv.callService(new ROSLIB.ServiceRequest({request: true}), result => {return})
+						}
+						self.ctx.clearRect(3, 300, 403, 1100)		
+						self.button_topic.unsubscribe();
+						self.button_topic.removeAllListeners();
+						self.start(self.getNextAddress(instructionAddr));
 					}
 				});
-
-				goal.on('result', function(result) {
-					if (VERBOSE) console.log('Exited cuff interaction.');
-					self.ctx.clearRect(3, 300, 403, 1100)
-					self.start(self.getNextAddress(instructionAddr));
-				});
-
-				goal.send();
 
 				break;
 
@@ -1323,6 +1373,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.displayOff();
 				canvas_container.style.display = 'initial';
 				var multi_choice_url = DIR + 'images/button_box.JPG';
+				var arrow_url = DIR + 'image/Arrow.png';
 
 				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders'], multi_choice_url);
 
@@ -1425,8 +1476,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'pressed_button':
 				this.button_topic.subscribe(async function(message) {
 					if (VERBOSE) console.log('Pressed: ' + message.data);
-					self.pressed.unsubscribe();
-					self.pressed.removeAllListeners();
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
 					self.start(self.getNextAddress(instructionAddr));
 				});
 

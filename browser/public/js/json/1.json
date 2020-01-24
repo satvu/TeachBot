@@ -1137,10 +1137,14 @@
 				"type":"projection"
 			},
 			{
-				"//":"Before, I was using the feedback from my encoders to go somewhere new. Now, I'm using feedback to stay in one place. What am I using to know when my arm is moving?",
+				"//":"Before, I was using the feedback from my encoders to go somewhere new. Now, I'm using feedback to stay in one place. What am I using to know when my arm is moving? Please stand back so I can reset my arm position.",
 				"type":"play",
 				"audio_index":10,
 				"delay":false
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"default"
 			},
 			{
 				"type":"multiple_choice",
@@ -1151,7 +1155,7 @@
 				"conditional":"#wheelVal==5",
 				"if_true":[
 					{
-						"//":"That's right! I measured my arm positions, and created a force to push my arm back. Please stand back so I can reset my arm position.",
+						"//":"That's right! I measured my arm positions, and created a force to push my arm back.",
 						"type":"play",
 						"audio_index":11,
 						"delay":true
@@ -1173,7 +1177,7 @@
 						"conditional":"#wheelVal==5",
 						"if_true":[
 							{
-								"//":"That's right! I measured my arm positions, and created a force to push my arm back. Please stand back so I can reset my arm position.",
+								"//":"That's right! I measured my arm positions, and created a force to push my arm back.",
 								"type":"play",
 								"audio_index":11,
 								"delay":true
@@ -1181,7 +1185,7 @@
 						],
 						"if_false":[
 							{
-								"//":"Sorry, that is incorrect. The correct answer is encoders. Please stand back so I can reset my arm position.",
+								"//":"Sorry, that is incorrect. The correct answer is encoders.",
 								"type":"play",
 								"audio_index":13,
 								"delay":true
@@ -1189,10 +1193,6 @@
 						]
 					}
 				]
-			},
-			{
-				"type":"goToJointAngles",
-				"joint_angles":"default"
 			},
 			{
 				"type":"proceed",

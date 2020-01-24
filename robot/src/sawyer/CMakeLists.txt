@@ -43,6 +43,7 @@ add_service_files(
   AudioDuration.srv
   DevMode.srv
   ScrollWheelSubscription.srv
+  CuffWays.srv
 )
 
 add_action_files(

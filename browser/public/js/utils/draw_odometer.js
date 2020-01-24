@@ -38,6 +38,40 @@ function draw_odometer(ctx_in, odometer_url, wheel_val) {
         ctx_in.beginPath(); 
         ctx_in.stroke();
 
+        var headlen = 10;
+        var fromx = 325;
+        var fromy = 500;
+        var tox = 275;
+        var toy = 775;
+        var angle = Math.atan2(toy-fromy,tox-fromx);
+
+        //starting path of the arrow from the start square to the end square and drawing the stroke
+        ctx_in.beginPath();
+        ctx_in.moveTo(fromx, fromy);
+        ctx_in.lineTo(tox, toy);
+        // ctx_in.strokeStyle = "#cc0000";
+        ctx_in.lineWidth = 17;
+        ctx_in.stroke();
+
+        //starting a new path from the head of the arrow to one of the sides of the point
+        ctx_in.beginPath();
+        ctx_in.moveTo(tox, toy);
+        ctx_in.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+        //path from the side point of the arrow, to the other side point
+        ctx_in.lineTo(tox-headlen*Math.cos(angle+Math.PI/7),toy-headlen*Math.sin(angle+Math.PI/7));
+
+        //path from the side point back to the tip of the arrow, and then again to the opposite side point
+        ctx_in.lineTo(tox, toy);
+        ctx_in.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+        //draws the paths created above
+        // ctx_in.strokeStyle = "#cc0000";
+        ctx_in.lineWidth = 22;
+        ctx_in.stroke();
+        // ctx_in.fillStyle = "#cc0000";
+        ctx_in.fill();
+
     }
     imgb.src = odometer_url;
 }

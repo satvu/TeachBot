@@ -66,6 +66,7 @@ class Module():
 
 		# Service Servers
 		rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
+		rospy.Service('/teachbot/CuffWays', CuffWays, self.cb_CuffWays)
 
 		# Service Clients
 		self.DevModeSrv = rospy.ServiceProxy('/teachbot/dev_mode', DevMode)
@@ -623,6 +624,11 @@ class Module():
 		feedback.mode = False
 		self.CuffInteractionAct.publish_feedback(feedback)
 
+	def cb_CuffWays(self, data):
+		waypoints.append(self.limb.joint_angles())
+		rospy.loginfo('Adding to waypoints')
+		return True
+
 	def unsubscribe_from_cuff_interaction(self):
 		self._unsubscribe_from(self.cuff, self.cuff_callback_ids)
 		self.limb.position_mode()
@@ -1054,7 +1060,7 @@ if __name__ == '__main__':
 	above_third_box_joint_arg     = [0.29264,-0.21117,-1.25342,1.56628,1.30664,1.24663,-1.04227]
 	above_fourth_box_joint_arg    = [0.49833,-0.21497,-1.28520,2.12842,1.45044,1.20956,-3.03918]
 
-	camera_pos                    = default # Temporary pose. This is not working yet.
+	camera_pos                    = [0.5832646484375, -1.301193359375, -0.193248046875, 2.0165146484375, 0.0075908203125, -0.75755078125, 0.3351982421875] # Temporary pose. This is not working yet.
 	
 	# fail_init_joint_arg           = [1.033235,-0.629208007812,-1.01547070313,1.05442871094,-2.38241699219,-1.48850390625,-1.18359277344]
 	# fail_pickup_cart_arg          = [1.08375488281,0.175158203125,-1.53774609375,1.02942480469,-1.45563085938,-1.45510351563,1.86297558594]
