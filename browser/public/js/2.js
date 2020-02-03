@@ -12,7 +12,7 @@ var ch = m.ch;
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'camera';
+var start_seq = 'intro';
 async function main() {
     m.displayOff();
     // canvas_container.style.display = 'initial';

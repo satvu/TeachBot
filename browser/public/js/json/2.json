@@ -637,9 +637,6 @@
 				"amount":"Module.Z_TABLE+Module.BOX_HEIGHT+0.07"
 			},
 			{
-				"type":"pause"
-			},
-			{
 				"type":"proceed",
 				"to_section":"camera"
 			}
@@ -683,6 +680,9 @@
 				"delay":true
 			},
 			{
+				"type":"reset"
+			},
+			{
 				"type":"camera_color_graphic"
 			},
 			{
@@ -690,6 +690,9 @@
 				"type":"play",
 				"audio_index":4,
 				"delay":true
+			},
+			{
+				"type":"reset"
 			},
 			{
 				"type":"camera"
@@ -705,6 +708,9 @@
 			},
 			{
 				"type":"show_camera"
+			},
+			{
+				"type":"pause"
 			},
 			{
 				"type":"proceed",

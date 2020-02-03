@@ -600,7 +600,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'pause':
 
 				console.log("module paused here.")
-				self.start(self.getNextAddress(instructionAddr));
+				// self.start(self.getNextAddress(instructionAddr));
 
 				break
 
@@ -823,19 +823,31 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'camerabw_graphic':
 
 				var cv_image_url = DIR + 'images/cv_1.png';
+				var bw_image = new Image();
 
-				image.src = cv_image_url;
-				
-				this.start(this.getNextAddress(instructionAddr));
+				bw_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(bw_image, 300, 10, self.ctx.canvas.width*.7, self.ctx.canvas.height)
+
+		            self.start(self.getNextAddress(instructionAddr));
+				};
+
+				bw_image.src = cv_image_url;
 
 				break;
 
 			case 'camera_color_graphic':
 				var cv_image_url = DIR + 'images/cv_2.png';
+				var color_image = new Image();
 
-				image.src = cv_image_url;
-				
-				this.start(this.getNextAddress(instructionAddr));
+				color_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(color_image, 300, 10, self.ctx.canvas.width*.7, self.ctx.canvas.height)
+
+		            self.start(self.getNextAddress(instructionAddr));
+				};
+
+				color_image.src = cv_image_url;
 
 				break;
 
@@ -1574,22 +1586,18 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'show_camera':
-				// this.displayOff();
-				// var cv_image = new Image();
-
-				// cv_image.onload = function() {
-				// 	console.log('Displaying camera')
-		  //           self.ctx.drawImage(cv_image, 20, 70)
-
-		  //           self.start(self.getNextAddress(instructionAddr));
-				// };
-				// cv_image.src = DIR + 'images/cv_image.png';
 
 				var cv_image_url = DIR + 'images/cv_image.png';
+				var cv_image = new Image();
 
-				image.src = cv_image_url;
-				
-				this.start(this.getNextAddress(instructionAddr));
+				cv_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(cv_image, 300, 10, self.ctx.canvas.width*.75, self.ctx.canvas.height*.95)
+
+		            self.start(self.getNextAddress(instructionAddr));
+				};
+
+				cv_image.src = cv_image_url;
 
 				break;
 
