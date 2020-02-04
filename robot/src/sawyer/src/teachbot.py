@@ -109,7 +109,6 @@ class Module():
 		# Actions
 		self.CuffInteractionAct = actionlib.SimpleActionServer('/teachbot/CuffInteraction', CuffInteractionAction, execute_cb=self.cb_CuffInteraction, auto_start=True)
 		self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
-		self.JointMoveAct = actionlib.SimpleActionServer('/teachbot/JointMove', JointMoveAction, execute_cb=self.cb_joint_move, auto_start=True)
 		self.InteractionControlAct = actionlib.SimpleActionServer('/teachbot/InteractionControl', InteractionControlAction, execute_cb=self.cb_interaction, auto_start=True)
 		self.InteractionControlActCli = actionlib.SimpleActionClient('/teachbot/InteractionControl',InteractionControlAction)
 		self.AdjustPoseToAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseTo', AdjustPoseToAction, execute_cb=self.cb_AdjustPoseTo, auto_start=True)
@@ -118,7 +117,6 @@ class Module():
 		self.MultipleChoiceAct = actionlib.SimpleActionServer('/teachbot/MultipleChoice', MultipleChoiceAction, execute_cb=self.cb_MultipleChoice, auto_start=True)
 		self.PickUpBoxAct = actionlib.SimpleActionServer('/teachbot/PickUpBox', PickUpBoxAction, execute_cb=self.cb_PickUpBox, auto_start=True)
 		self.AdjustPoseByAct = actionlib.SimpleActionServer('/teachbot/AdjustPoseBy', AdjustPoseByAction, execute_cb=self.cb_AdjustPoseBy, auto_start=True)
-		self.JointImpedanceAct = actionlib.SimpleActionServer('/teachbot/JointImpedance', JointImpedanceAction, execute_cb=self.cb_JointImpedance, auto_start=True)
 		self.WaitAct = actionlib.SimpleActionServer('/teachbot/Wait', WaitAction, execute_cb=self.cb_Wait, auto_start=True)
 
 		# Lights
@@ -177,18 +175,6 @@ class Module():
 			   and abs(pose1['orientation'].z-pose2['orientation'].z)<=tol \
 			   and abs(pose1['orientation'].w-pose2['orientation'].w)<=tol
 		return equality
-
-	# Allows user to move arm in zero G mode
-	def user_move(self):
-		startPose = self.limb.endpoint_pose()
-		self.limb.interaction_control(orientation_x=False, orientation_y=False, orientation_z=False, position_x=True, position_y=True, position_z=True)
-		while(self.endpoints_equal(startPose,self.limb.endpoint_pose(),tol=0.01)):	# Wait for user to begin moving arm
-			pass
-		rospy.sleep(0.5)
-		while(not self.endpoints_equal(startPose,self.limb.endpoint_pose())):		# Wait for user to stop moving arm
-			startPose = self.limb.endpoint_pose()
-			rospy.sleep(1)
-		self.limb.position_mode()
 
 	def set_joint_imp(self, springs, damping, ref_pos, ref_vel):
 		cmd = dict()
@@ -707,17 +693,6 @@ class Module():
 			result.done = True
 			self.InteractionControlAct.set_succeeded(result)
 
-	def cb_joint_move(self, req):
-		self.finished = False
-		if self.VERBOSE: rospy.loginfo('joint able to be moved')
-		
-		result = sawyer.msg.JointMoveResult()
-
-		self.joint_move(eval(req.joints), eval(req.terminatingCondition), eval(req.resetPOS), min_thresh=eval(req.min_thresh), bias=eval(req.bias))
-
-		result.done = True
-		self.JointMoveAct.set_succeeded(result);
-
 	# TODO: Deprecate
 	def cb_Wait(self, goal):
 
@@ -781,6 +756,7 @@ class Module():
 
 		if req.mode == 'position':
 			self.limb.exit_control_mode()
+			self.limb.go_to_joint_angles(self.limb.joint_angles())
 
 		elif req.mode == 'admittance ctrl':
 			# Set command timeout to be much greater than the command period
@@ -850,7 +826,24 @@ class Module():
 			self.modeTimer = rospy.Timer(rospy.Duration(0.02), lambda event=None : self.cb_ImpedanceCtrl(joints, eval(req.resetPos)))
 
 		elif req.mode == 'interaction ctrl':
-			pass
+			d = self.limb.interaction_control.func_defaults
+			self.limb.interaction_control(position_only=req.position_only,
+				                          orientation_only=req.orientation_only, 
+				                          plane_horizontal=req.plane_horizontal,
+				                          plane_vertical_xz=req.plane_vertical_xz,
+				                          plane_vertical_yz=req.plane_vertical_yz,
+				                          nullspace_only=req.nullspace_only,
+				                          position_x=req.position_x,
+				                          position_y=req.position_y,
+				                          position_z=req.position_z,
+				                          orientation_x=req.orientation_x,
+				                          orientation_y=req.orientation_y,
+				                          orientation_z=req.orientation_z,
+				                          constrained_axes=d[12] if len(req.constrained_axes)==0 else req.constrained_axes,
+				                          in_endpoint_frame=req.in_endpoint_frame,
+				                          interaction_frame=d[14] if len(req.interaction_frame)==0 else req.interaction_frame,
+				                          K_nullspace=d[15] if len(req.K_nullspace)==0 else req.K_nullspace,
+				                          rate=d[16] if req.rate==0 else req.rate)
 
 		else:
 			rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
@@ -889,53 +882,20 @@ class Module():
 
 		self.limb.set_joint_torques(efforts)
 
-	def cb_JointImpedance(self, goal):
-		if self.VERBOSE: rospy.loginfo('Impedance activated')
-		k = self.limb.joint_angles()
-		b = k.copy()
-		for joint in k.keys():
-			k[joint] = 160 if joint=='right_j1' else 10
-			b[joint] = 5 if joint=='right_j1' else 10
-		self.finished = False
-		self.joint_impedance_move(b,k,eval(goal.terminatingCondition), tics=goal.tics)
-		
-		result = sawyer.msg.JointImpedanceResult()
-		result.done = True
-		self.JointImpedanceAct.set_succeeded(result)
+	def cb_InteractionCtrl(self):
+		pass
 
-	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
-		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
-		rate = rospy.Rate(rateNom)																		# Define rate to send commands
-		self.finished = False																			# Initialized finished variable for terminating condition
-		effortVec = {}
-		for joint in self.limb.joint_angles().keys():
-			effortVec[joint] = numpy.zeros(tics)
-		startPos = self.limb.joint_angles()
-		i=0
-		while not terminatingCondition(self):
-			pCMD(self)																					# Publish whatever the user wants
-
-			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
-
-			# Calculate effort
-			thisPos = self.limb.joint_angles();
-			thisVel = self.limb.joint_velocities();
-			for joint in startPos.keys():
-				effortVec[joint][i] = 0
-				if b.has_key(joint):
-					effortVec[joint][i] += -b[joint]*thisVel[joint]
-				if k.has_key(joint):
-					effortVec[joint][i] += -k[joint]*(thisPos[joint]-startPos[joint])
-			i = i+1 if i+1<tics else 0
-
-			# Filter and set
-			efforts = self.limb.joint_efforts();
-			for joint in efforts:
-				efforts[joint] = numpy.mean(effortVec[joint])
-			self.limb.set_joint_torques(efforts)
-
-			rate.sleep()
-		self.limb.exit_control_mode()
+	# Allows user to move arm in zero G mode
+	def user_move(self):
+		startPose = self.limb.endpoint_pose()
+		self.limb.interaction_control(orientation_x=False, orientation_y=False, orientation_z=False, position_x=True, position_y=True, position_z=True)
+		while(self.endpoints_equal(startPose,self.limb.endpoint_pose(),tol=0.01)):	# Wait for user to begin moving arm
+			pass
+		rospy.sleep(0.5)
+		while(not self.endpoints_equal(startPose,self.limb.endpoint_pose())):		# Wait for user to stop moving arm
+			startPose = self.limb.endpoint_pose()
+			rospy.sleep(1)
+		self.limb.position_mode()
 			
 	def cb_WheelSubscription(self, req):
 		if req.subscribe:

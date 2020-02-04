@@ -4,11 +4,8 @@
 		"instructions": [
 			{
 				"type":"set_robot_mode",
-				"mode":"impedance ctrl",
-				"joints":[1],
-				"resetPos":"default",
-				"X2F":[5],
-				"V2F":[0]
+				"mode":"interaction ctrl",
+				"position_only":true
 			},
 			{
 				"type":"wait",

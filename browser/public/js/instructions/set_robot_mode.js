@@ -34,15 +34,20 @@ Module.prototype.set_robot_mode = function(instr, instructionAddr) {
 			break;
 
 		case 'interaction ctrl':
+			['position_only', 'orientation_only', 'plane_horizontal', 'plane_vertical_xz',
+			 'plane_vertical_yz', 'nullspace_only', 'position_x', 'position_y',
+			 'position_z', 'orientation_x', 'orientation_y', 'orientation_z',
+			 'constrained_axes', 'in_endpoint_frame', 'interaction_frame', 'K_nullspace',
+			 'rate'].forEach(function(attr, i) {
+			 	if (instr.hasOwnProperty(attr)) req[attr] = instr[attr];
+			});
 			break;
 
 		default:
-			throw `Robot mode not supported.`
+			throw `Robot mode "${instr.mode}" not supported.`
 	}
 
 	this.robot_mode = req;
 
-	this.SetRobotModeSrv.callService(new ROSLIB.ServiceRequest(req), result => {
-		if (VERBOSE) console.log('Success')
-	});
+	this.SetRobotModeSrv.callService(new ROSLIB.ServiceRequest(req), result => {  });
 };
