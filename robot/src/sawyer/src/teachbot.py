@@ -671,20 +671,6 @@ class Module():
 			result.success = True
 			self.GoToJointAnglesAct.set_succeeded(result)
 
-	def cb_JointImpedance(self, goal):
-		if self.VERBOSE: rospy.loginfo('Impedance activated')
-		k = self.limb.joint_angles()
-		b = k.copy()
-		for joint in k.keys():
-			k[joint] = 160 if joint=='right_j1' else 10
-			b[joint] = 5 if joint=='right_j1' else 10
-		self.finished = False
-		self.joint_impedance_move(b,k,eval(goal.terminatingCondition), tics=goal.tics)
-		
-		result = sawyer.msg.JointImpedanceResult()
-		result.done = True
-		self.JointImpedanceAct.set_succeeded(result)
-
 	def cb_interaction(self, goal):
 		if self.VERBOSE: rospy.loginfo('Free motion is on')
 
@@ -844,13 +830,24 @@ class Module():
 
 			# Initialize Joints Dict
 			joints = {};
-			for j in req.joints:
-				joints['right_j'+str(j)] = {}
+			for joint in self.limb.joint_efforts().keys():
+				joints[joint] = {}
 
 			# Set V2F and X2F specs
+			for joint in self.limb.joint_efforts().keys():
+				joints[joint]['V2F'] = 5 if joint==shoulder else 10
+				joints[joint]['X2F'] = 160 if joint==shoulder else 10
 			for i,j in enumerate(req.joints):
 				joints['right_j'+str(j)]['V2F'] = req.V2F[i]
 				joints['right_j'+str(j)]['X2F'] = req.X2F[i]
+
+			# Set position and velocity reference points
+			x_ref = self.limb.joint_angles()
+			for joint in self.limb.joint_efforts().keys():
+				joints[joint]['x_ref'] = x_ref[joint]
+				joints[joint]['v_ref'] = 0
+
+			self.modeTimer = rospy.Timer(rospy.Duration(0.02), lambda event=None : self.cb_ImpedanceCtrl(joints, eval(req.resetPos)))
 
 		elif req.mode == 'interaction ctrl':
 			pass
@@ -874,74 +871,37 @@ class Module():
 				if abs(filteredForce) < joints[joint]['min_thresh']:
 					velocities[joint] = 0
 				else:
-					velocities[joint] = -joints[joint]['F2V']*filteredForce#-self.FORCE2VELOCITY[joint]*filteredForce
+					velocities[joint] = -joints[joint]['F2V']*filteredForce
 			else:
 				velocities[joint] = 0
 
 		self.limb.set_joint_velocities(velocities)
 
-	# Individual joint constraint mode
-	def joint_move(self,joints,terminatingCondition,resetPos,pCMD=lambda self: None, rateNom=10, tics=15, min_thresh=0, bias=0):
-		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
-		rate = rospy.Rate(rateNom)																		# Define rate to send commands
-		# self.finished = False																			# Initialized finished variable for terminating condition
+	def cb_ImpedanceCtrl(self, joints, resetPos, rateNom=50):
+		self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
+		rospy.Publisher('/robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
 
-		# Initialize joint dicts of all zeros
-		zeroVec = self.limb.joint_velocities()
-		effortVec = {}
-		min_thresh_vec = {}
-		bias_vec = {}
-		for joint in zeroVec.keys():
-			zeroVec[joint] = 0
-			effortVec[joint] = numpy.zeros(tics)
-			if isinstance(min_thresh, dict):
-				if joint in min_thresh.keys():
-					min_thresh_vec[joint] = min_thresh[joint]
-				else:
-					min_thresh_vec[joint] = 0
-			else:
-				min_thresh_vec[joint] = min_thresh
-			if isinstance(bias, dict):
-				if joint in bias.keys():
-					bias_vec[joint] = bias[joint]
-				else:
-					bias_vec[joint] = 0
-			else:
-				bias_vec[joint] = bias
-		lastEffort = zeroVec.copy()																		# Initialize two effort dicts
-		thisEffort = zeroVec.copy()
+		x = self.limb.joint_angles()
+		v = self.limb.joint_velocities()
+		efforts = self.limb.joint_efforts()
+		for joint in efforts.keys():
+			efforts[joint] = joints[joint]['X2F']*(joints[joint]['x_ref']-x[joint]) + joints[joint]['V2F']*(joints[joint]['v_ref']-v[joint])
+
+		self.limb.set_joint_torques(efforts)
+
+	def cb_JointImpedance(self, goal):
+		if self.VERBOSE: rospy.loginfo('Impedance activated')
+		k = self.limb.joint_angles()
+		b = k.copy()
+		for joint in k.keys():
+			k[joint] = 160 if joint=='right_j1' else 10
+			b[joint] = 5 if joint=='right_j1' else 10
+		self.finished = False
+		self.joint_impedance_move(b,k,eval(goal.terminatingCondition), tics=goal.tics)
 		
-		i = 0
-		while not terminatingCondition(self) and not rospy.is_shutdown():
-			self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
-			pCMD(self)																					# Publish whatever the user wants
-
-			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
-
-			# Measure effort
-			while thisEffort==lastEffort:
-				thisEffort = self.limb.joint_efforts()
-			lastEffort = thisEffort
-			for joint in effortVec.keys():
-				effortVec[joint][i] = thisEffort[joint]
-			i = i+1 if i+1<tics else 0
-
-			# Filter effort and convert into velocity
-			velocities = zeroVec.copy()
-			for joint in velocities.keys():
-				if joint in joints:
-					filteredForce = numpy.mean(effortVec[joint])+bias_vec[joint]
-					#rospy.loginfo(joint + ': ' + str(filteredForce))
-					if abs(filteredForce) < min_thresh_vec[joint]:
-						velocities[joint] = 0
-					else:
-						velocities[joint] = -self.FORCE2VELOCITY[joint]*filteredForce
-			self.limb.set_joint_velocities(velocities)
-
-			rate.sleep()
-
-		rospy.loginfo('Joint move completed')
-		self.limb.exit_control_mode()
+		result = sawyer.msg.JointImpedanceResult()
+		result.done = True
+		self.JointImpedanceAct.set_succeeded(result)
 
 	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
 		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
