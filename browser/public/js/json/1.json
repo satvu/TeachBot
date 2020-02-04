@@ -3,20 +3,6 @@
 		"id": "intro",
 		"instructions": [
 			{
-				"type":"set_robot_mode",
-				"mode":"interaction ctrl",
-				"position_only":true
-			},
-			{
-				"type":"wait",
-				"for":"time",
-				"s":10
-			},
-			{
-				"type":"set_robot_mode",
-				"mode":"position"
-			},
-			{
 				"//":"Hello, my name is TeachBot. It's nice to meet you.",
 				"type":"play",
 				"audio_index":0,
