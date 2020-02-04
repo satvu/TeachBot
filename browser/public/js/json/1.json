@@ -6,13 +6,17 @@
 				"type":"set_robot_mode",
 				"mode":"admittance ctrl",
 				"joints":[0],
-				"resetPOS":"default",
+				"resetPos":"default",
 				"min_thresh":[0.1]
 			},
 			{
 				"type":"wait",
 				"for":"time",
 				"s":10
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"Hello, my name is TeachBot. It's nice to meet you.",

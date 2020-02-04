@@ -190,40 +190,6 @@ class Module():
 			rospy.sleep(1)
 		self.limb.position_mode()
 
-	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
-		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
-		rate = rospy.Rate(rateNom)																		# Define rate to send commands
-		self.finished = False																			# Initialized finished variable for terminating condition
-		effortVec = {}
-		for joint in self.limb.joint_angles().keys():
-			effortVec[joint] = numpy.zeros(tics)
-		startPos = self.limb.joint_angles()
-		i=0
-		while not terminatingCondition(self):
-			pCMD(self)																					# Publish whatever the user wants
-
-			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
-
-			# Calculate effort
-			thisPos = self.limb.joint_angles();
-			thisVel = self.limb.joint_velocities();
-			for joint in startPos.keys():
-				effortVec[joint][i] = 0
-				if b.has_key(joint):
-					effortVec[joint][i] += -b[joint]*thisVel[joint]
-				if k.has_key(joint):
-					effortVec[joint][i] += -k[joint]*(thisPos[joint]-startPos[joint])
-			i = i+1 if i+1<tics else 0
-
-			# Filter and set
-			efforts = self.limb.joint_efforts();
-			for joint in efforts:
-				efforts[joint] = numpy.mean(effortVec[joint])
-			self.limb.set_joint_torques(efforts)
-
-			rate.sleep()
-		self.limb.exit_control_mode()
-
 	def set_joint_imp(self, springs, damping, ref_pos, ref_vel):
 		cmd = dict()
 		cur_pos = self.joint_angles()
@@ -831,20 +797,60 @@ class Module():
 			self.limb.exit_control_mode()
 
 		elif req.mode == 'admittance ctrl':
-			self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
-			joints = [];
+			# Set command timeout to be much greater than the command period
+			self.limb.set_command_timeout(2)
+
+			# Initialize Joints Dict
+			joints = {};
 			for j in req.joints:
-				joints.append({ 'right_j'+str(j): {} })
+				joints['right_j'+str(j)] = {}
+
+			# Set min_thresh specs
 			if len(req.min_thresh)!=0:
 				for i,j in enumerate(req.joints):
-					# TODO: ERROR HERE XXX
-					print(type(i))
-					print(type(j))
-					joints['right_j'+str(j)].min_thresh = req.min_thresh[i]
-			rospy.loginfo(joints)
+					joints['right_j'+str(j)]['min_thresh'] = req.min_thresh[i]
+			else:
+				for j in joints.keys():
+					joints[j]['min_thresh'] = 0
+
+			# Set bias specs
+			if len(req.bias)!=0:
+				for i,j in enumerate(req.joints):
+					joints['right_j'+str(j)]['bias'] = req.bias[i]
+			else:
+				for j in joints.keys():
+					if j==shoulder:
+						joints[j]['bias'] = BIAS_SHOULDER
+					elif j==elbow:
+						joints[j]['bias'] = BIAS_ELBOW
+					elif j==wrist:
+						joints[j]['bias'] = BIAS_WRIST
+					else:
+						joints[j]['bias'] = 0
+
+			# Set F2V specs
+			if len(req.F2V)!=0:
+				for i,j in enumerate(req.joints):
+					joints['right_j'+str(j)]['F2V'] = req.F2V[i]
+			else:
+				for j in joints.keys():
+					joints[j]['F2V'] = self.FORCE2VELOCITY[j]
+
+			self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
 
 		elif req.mode == 'impedance ctrl':
-			self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
+			# Set command timeout to be much greater than the command period
+			self.limb.set_command_timeout(2)
+
+			# Initialize Joints Dict
+			joints = {};
+			for j in req.joints:
+				joints['right_j'+str(j)] = {}
+
+			# Set V2F and X2F specs
+			for i,j in enumerate(req.joints):
+				joints['right_j'+str(j)]['V2F'] = req.V2F[i]
+				joints['right_j'+str(j)]['X2F'] = req.X2F[i]
 
 		elif req.mode == 'interaction ctrl':
 			pass
@@ -862,13 +868,13 @@ class Module():
 		velocities = self.limb.joint_velocities()
 		for joint in velocities.keys():
 			if joint in joints.keys():
-				filteredForce = sum([self.control['effort'][i][joint] for i in range(self.control['order'])])/self.control['order'] + joints[joint].bias
-				#numpy.mean(effortVec[joint])+bias_vec[joint]
-				#rospy.loginfo(joint + ': ' + str(filteredForce))
-				if abs(filteredForce) < joints[joint].min_thresh:
+				allForces = [self.control['effort'][i][joint] for i in range(self.control['order'])]
+				filteredForce = sum(allForces)/self.control['order']
+				filteredForce = filteredForce + joints[joint]['bias']
+				if abs(filteredForce) < joints[joint]['min_thresh']:
 					velocities[joint] = 0
 				else:
-					velocities[joint] = -joints[joint].F2V*filteredForce#-self.FORCE2VELOCITY[joint]*filteredForce
+					velocities[joint] = -joints[joint]['F2V']*filteredForce#-self.FORCE2VELOCITY[joint]*filteredForce
 			else:
 				velocities[joint] = 0
 
@@ -935,6 +941,40 @@ class Module():
 			rate.sleep()
 
 		rospy.loginfo('Joint move completed')
+		self.limb.exit_control_mode()
+
+	def joint_impedance_move(self,b,k,terminatingCondition,pCMD=lambda self: None, rateNom=50, tics=1):
+		self.limb.set_command_timeout(2)																# Set command timeout to be much greater than the command period
+		rate = rospy.Rate(rateNom)																		# Define rate to send commands
+		self.finished = False																			# Initialized finished variable for terminating condition
+		effortVec = {}
+		for joint in self.limb.joint_angles().keys():
+			effortVec[joint] = numpy.zeros(tics)
+		startPos = self.limb.joint_angles()
+		i=0
+		while not terminatingCondition(self):
+			pCMD(self)																					# Publish whatever the user wants
+
+			rospy.Publisher('robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)		# Set publish rate
+
+			# Calculate effort
+			thisPos = self.limb.joint_angles();
+			thisVel = self.limb.joint_velocities();
+			for joint in startPos.keys():
+				effortVec[joint][i] = 0
+				if b.has_key(joint):
+					effortVec[joint][i] += -b[joint]*thisVel[joint]
+				if k.has_key(joint):
+					effortVec[joint][i] += -k[joint]*(thisPos[joint]-startPos[joint])
+			i = i+1 if i+1<tics else 0
+
+			# Filter and set
+			efforts = self.limb.joint_efforts();
+			for joint in efforts:
+				efforts[joint] = numpy.mean(effortVec[joint])
+			self.limb.set_joint_torques(efforts)
+
+			rate.sleep()
 		self.limb.exit_control_mode()
 			
 	def cb_WheelSubscription(self, req):
