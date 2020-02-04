@@ -16,7 +16,7 @@
 			{
 				"type":"drawShape",
 				"shape":"rectangle",
-				"x_ratio":59,
+				"x_ratio":57.9,
 				"y_ratio":69,
 				"w_ratio":11,
 				"h_ratio":10,
@@ -25,7 +25,7 @@
 			{
 				"type":"drawShape",
 				"shape":"rectangle",
-				"x_ratio":42,
+				"x_ratio":40.9,
 				"y_ratio":69,
 				"w_ratio":11,
 				"h_ratio":10,
@@ -34,8 +34,8 @@
 			{
 				"type":"drawShape",
 				"shape":"rectangle",
-				"x_ratio":43,
-				"y_ratio":35,
+				"x_ratio":41.5,
+				"y_ratio":33.8,
 				"w_ratio":11,
 				"h_ratio":10
 			},
@@ -48,8 +48,12 @@
 				"h_ratio":13
 			},
 			{
-				"type":"drawRamp",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":19,
+				"y_ratio":60,
+				"w_ratio":17,
+				"h_ratio":19
 			},
 			{
 				"//":"0: Today, we will be learning about the gripper. Many of today's activities will involve the boxes and bins on the table.",
@@ -458,7 +462,7 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"2: Now let’s try moving this 3rd box into the bin.",
+				"//":"2: Now let’s try moving the 2nd box into the bin.",
 				"type":"play",
 				"audio_index":2,
 				"delay": true
@@ -542,7 +546,7 @@
 				"ways": true
 			},
 			{
-				"//":"8: Finally, lower my hand so that is just above the bin. Make sure the hand is low enough so that when it drops Box 3, it doesn't drop too far, but high enough so that my grippers don't hit the side of the box. Then, press any button on the box to open my gripper.",
+				"//":"8: Finally, lower my hand so that is just above the bin. Make sure the hand is low enough so that when it drops Box 2, it doesn't drop too far, but high enough so that my grippers don't hit the side of the box. Then, press any button on the box to open my gripper.",
 				"type":"play",
 				"audio_index":8,
 				"delay":false
@@ -582,7 +586,7 @@
 				"joint_angles":"above_fourth_box_joint_arg"
 			},
 			{
-				"//":"10: Can you please put Box 3 back into its designated position? Press any button on the box once you've done so.",
+				"//":"10: Can you please put Box 2 back into its designated position? Press any button on the box once you've done so.",
 				"type":"play",
 				"audio_index":10,
 				"delay":false
@@ -591,7 +595,7 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"11: Now, I'm going to place Box 3 into Bin 1 based on the waypoints you set up for me!",
+				"//":"11: Now, I'm going to place Box 2 into Bin 1 based on the waypoints you set up for me!",
 				"type":"play",
 				"audio_index":11,
 				"delay":true
@@ -710,9 +714,6 @@
 				"type":"show_camera"
 			},
 			{
-				"type":"pause"
-			},
-			{
 				"type":"proceed",
 				"to_section":"multipleDof"
 			}
@@ -722,7 +723,7 @@
 		"id":"multipleDof",
 		"instructions":[
 			{
-				"//":"1: You have now mastered putting boxes into bins with one and two degrees of freedom. Will you now help me put box 3 into the bin on the ramp?",
+				"//":"1: You have now mastered putting boxes into bins with one and two degrees of freedom. Will you now help me put Box 3 into the bin on the ramp?",
 				"type":"play",
 				"audio_index":0,
 				"delay":true
@@ -735,31 +736,57 @@
 				"type":"reset"
 			},
 			{
-				"type":"drawBox",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":76,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBox",
-				"number":2
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":57.9,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":90
 			},
 			{
-				"type":"drawBox",
-				"number":3
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":40.9,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":90
 			},
 			{
-				"type":"drawBox",
-				"number":4
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":41.5,
+				"y_ratio":33.8,
+				"w_ratio":11,
+				"h_ratio":10
 			},
 			{
-				"type":"drawBin",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":66,
+				"y_ratio":33,
+				"w_ratio":17,
+				"h_ratio":13
 			},
 			{
-				"type":"drawRamp",
-				"number":1
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":19,
+				"y_ratio":60,
+				"w_ratio":17,
+				"h_ratio":19
 			},
 			{
-				"//":"2:Before we get started, can you put box 2 back into its designated position and put bin1 on the stand? Press any button on the box when you've done so.",
+				"//":"2:Before we get started, can you put Box 3 back into its designated position and put bin1 on the stand? Press any button on the box when you've done so.",
 				"type":"play",
 				"audio_index":1,
 				"delay":false
@@ -768,7 +795,7 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"3: Great! Similarly to last time, can you help me create a series of waypoints so that I can put the box 3 into the bin?",
+				"//":"3: Great! Similarly to last time, can you help me create a series of waypoints so that I can put the Box 3 into the bin?",
 				"type":"play",
 				"audio_index":2,
 				"delay":true
@@ -970,6 +997,9 @@
 				"type":"play",
 				"audio_index":11,
 				"delay":true
+			},
+			{
+				"type":"pause"
 			},
 			{
 				"type":"proceed",

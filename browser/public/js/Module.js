@@ -1010,58 +1010,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'drawBox':
-				checkInstruction(instr, ['number'], instructionAddr);
-				console.log('Drawing box')
-				var boxW = 14*this.cw;
-				var boxH = 10*this.ch;
-				var corner_size = 0.01561*this.cw;
-				this.ctx.fillStyle = "#7c2629";
-				var x;
-				var y;
-				switch (instr.number) {
-					case 1:
-						// x = 83*this.cw;
-						// y = 77*this.ch;
-						// x = 77*this.cw;
-						// y = 73*this.ch;
-						x = 80*this.cw;
-						y = 88*this.ch;
-						this.ctx.strokeRect(x, y, boxW, boxH);
-						break;
-					case 2:
-						// x = 70*this.cw;
-						// y = 74*this.ch;
-						x = 66*this.cw;
-						y = 74*this.ch;
-						this.ctx.strokeRect(x, y, boxH, boxW);
-						break;
-					case 3:
-						// x = 47*this.cw;
-						// y = 82*this.ch;
-						x = 50*this.cw;
-						y = 74*this.ch;
-						this.ctx.strokeRect(x, y, boxH, boxW);
-						break;
-					case 4:
-						// x = 41*this.cw;
-						// y = 40*this.ch;
-						// x = 39*this.cw;
-						// y = 40*this.ch;
-						x = 64*this.cw;
-						y = 11*this.ch;
-						this.ctx.strokeRect(x, y, boxW, boxH);
-						break;
-				}
-
-				this.ctx.fillRect(x, y , corner_size, corner_size);
-				this.ctx.fillRect(x+ boxW - corner_size, y, corner_size, corner_size);
-				this.ctx.fillRect(x, y + boxH - corner_size, corner_size, corner_size);
-				this.ctx.fillRect(x +boxW - corner_size, y + boxH - corner_size, corner_size, corner_size);
-
-				this.start(this.getNextAddress(instructionAddr));
-				break;
-
 			case 'drawPosOrien':
 				var orient_bw_url = DIR + 'images/orientation_bw.png';
 				var orient_color_url = DIR + 'images/orientation_color.png';
