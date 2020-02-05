@@ -922,6 +922,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'encode':
+				window.cancelAnimationFrame(this.canvas_frame_req);
 				self.displayOff();
 				canvas_container.style.display = 'initial';
 				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
@@ -1425,7 +1426,11 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 Module.prototype.hashTokeyVal = function(str) {
 	switch (typeof str) {
 		case 'string':
-			return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+			try {
+				return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+			} catch (error) {
+				throw `Hash reference(s) in "${str}" not defined.`
+			}
 		default:
 			return str;
 	}

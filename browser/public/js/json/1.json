@@ -291,13 +291,11 @@
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"1.0",
-				"bias":"BIAS_SHOULDER",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[0],
+				"min_thresh":[1.0]
 			},
 			{
 				"type": "set_graphic_mode",
@@ -306,12 +304,20 @@
 			{
 				"type": "draw",
 				"shape": "bar",
-				"height_percent": "#POSITION_JOINT_0/3.14",
+				"height_percent": "#JOINT_POSITION_0/3.14",
 				"x": 4,
 				"y": 85,
 				"width": 9,
 				"max_height": 80,
 				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"Let me show you how I know. Please stand back.",
@@ -340,32 +346,43 @@
 				"type": "stopEncode"
 			},
 			{
+				"type":"set_graphic_mode",
+				"mode":"image"
+			},
+			{
 				"//":"Now I'm going to lock my shoulder and unlock my wrist. Try pushing my hand. When you're done, press the scroll wheel button.",
 				"type":"play",
 				"audio_index":6,
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"wrist",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"0.5",
-				"bias":"BIAS_WRIST",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[5],
+				"min_thresh":[0.5]
 			},
 			{
-				"type":"initializeDisplay"
+				"type":"set_graphic_mode",
+				"mode":"canvas"
 			},
 			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
-				"topics": {"position":["j5"]},
-				"x_ratio": [15],
-				"y_ratio": [85],
-				"width_ratio": [9],
-				"max_height_ratio": [80],
+				"height_percent": "#JOINT_POSITION_5/3.14",
+				"x": 15,
+				"y": 85,
+				"width": 9,
+				"max_height": 80,
 				"fillStyle": ["BlueViolet"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"So far I've only unlocked one motor at a time. Let's try unlocking both my shoulder and wrist motors. Push on my arm again and see what happens. When you're done, press the scroll wheel button.",
@@ -374,26 +391,25 @@
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"[shoulder,wrist]",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"{shoulder: 1.0, wrist: 0.5}",
-				"bias":"{shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[0,5],
+				"min_thresh":[1.0,0.5]
 			},
 			{
-				"type":"initializeDisplay"
-			},
-			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
-				"topics": {"position": ["j0","j5"]},
-				"x_ratio": [4, 13],
-				"y_ratio": [85, 85],
-				"width_ratio": [7, 7],
-				"max_height_ratio": [80, 80],
-				"fillStyle": ["#7c2629", "BlueViolet"]
+				"height_percent": "#JOINT_POSITION_0/3.14",
+				"x": 4,
+				"y": 85,
+				"width": 7,
+				"max_height": 80,
+				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
 			},
 			{
 				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can move my arm for you to use the scroll wheel.",
