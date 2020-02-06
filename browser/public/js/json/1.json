@@ -320,6 +320,10 @@
 				"mode":"position"
 			},
 			{
+				"type":"set_graphic_mode",
+				"mode":"image"
+			},
+			{
 				"//":"Let me show you how I know. Please stand back.",
 				"type":"play",
 				"audio_index":4,
@@ -410,6 +414,14 @@
 			{
 				"type":"wait",
 				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
+			},
+			{
+				"type":"set_graphic_mode",
+				"mode":"image"
 			},
 			{
 				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can move my arm for you to use the scroll wheel.",

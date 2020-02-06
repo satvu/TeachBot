@@ -5,12 +5,12 @@ const module_num = 1;         //The module number
 /*******************************
  *       Construct Module      *
  *******************************/
-var m = new Module(module_num, main, [image, animator]);
+var m = new Module(module_num, main, [image, animator, canvas_container]);
 
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'encoders';
+var start_seq = 'intro';
 var start_location = 0;
 async function main() {
     m.displayOff();
