@@ -84,7 +84,7 @@
 				"delay":false
 			},
 			{
-				"type":"scrollWheelInput",
+				"type":"numeric_input",
 				"skippable":false
 			},
 			{
@@ -140,7 +140,7 @@
 				"delay":false
 			},
 			{
-				"type":"scrollWheelInput",
+				"type":"numeric_input",
 				"store_answer_in":"wheelVal"
 			},
 			{
@@ -434,7 +434,7 @@
 				"joint_angles":"default"
 			},
 			{
-				"type":"scrollWheelInput",
+				"type":"numeric_input",
 				"store_answer_in":"wheelVal"
 			},
 			{
@@ -456,7 +456,7 @@
 						"delay":true
 					},
 					{
-						"type":"scrollWheelInput"
+						"type":"numeric_input"
 					}
 				]
 			},

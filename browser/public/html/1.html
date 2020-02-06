@@ -33,6 +33,7 @@
 	<!-- TeachBot Module -->
 	<script type="text/javascript" src="https://localhost:8000/js/Module.js"></script>
 	<script src="https://localhost:8000/js/instructions/draw.js"></script>
+	<script src="https://localhost:8000/js/instructions/numeric_input.js"></script>
 	<script src="https://localhost:8000/js/instructions/set_graphic_mode.js"></script>
 	<script src="https://localhost:8000/js/instructions/set_robot_mode.js"></script>
 	<script src="https://localhost:8000/js/instructions/wait.js"></script>
@@ -51,18 +52,11 @@
 
 <body>
 	<!-- Welcome image -->
-	<img id="image" class="welcome" src="https://localhost:8000/images/Welcome.png" alt="Welcome" height = "90%">
+	<img id="image" class="welcome" src="https://localhost:8000/images/Welcome.png" alt="Welcome" height="90%">
 	
 	<!-- Canvas -->
 	<div id="canvas_container">
 		<canvas id="canvas_obj"></canvas>
-	</div>
-
-	<!-- Audio text -->
-	<div id='adjustable'>
-		<!-- <div align="center">
-			<button onclick="begin()">Begin Module 1</button>
-		</div> -->
 	</div>
 
 	<!-- Speech -->
@@ -73,6 +67,12 @@
 		<source src="https://localhost:8000/videos/motor_animation.mp4" type="video/mp4">
 	</video>
 
+	<!-- Audio text -->
+	<div id='adjustable'>Loading...
+		<!-- <div align="center">
+			<button onclick="begin()">Begin Module 1</button>
+		</div> -->
+	</div>
 
 	<!-- Run JS Module -->
 	<script type="text/javascript" src="https://localhost:8000/js/1.js"></script>

@@ -139,16 +139,6 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/GoToJointAngles',
 		actionName: ROBOT + '/GoToJointAnglesAction'
 	});
-	/*this.JointMoveAct = new ROSLIB.ActionClient({
-		ros: ros,
-		serverName: '/teachbot/JointMove',
-		actionName: ROBOT + '/JointMoveAction'
-	});
-	this.InteractionControlAct = new ROSLIB.ActionClient({
-		ros: ros,
-		serverName: '/teachbot/InteractionControl',
-		actionName: ROBOT + '/InteractionControlAction'
-	});*/
 	this.AdjustPoseToAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/AdjustPoseTo',
@@ -257,7 +247,7 @@ Module.prototype.endpointCallback = function(msg) {
 	self.dictionary[`ENDPOINT_ORIENTATION_W`] = msg.orientation.w;
 }
 
-Module.prototype.unsubscribeFrom = function(topic) {
+/*Module.prototype.unsubscribeFrom = function(topic) {
 	topic.unsubscribe();
 	topic.removeAllListeners();
 	switch (topic.name) {
@@ -274,7 +264,7 @@ Module.prototype.unsubscribeFrom = function(topic) {
 			topic.subscribe(self.endpointCallback);
 			break;
 	}
-}
+}*/
 
 /**
  * Loads text and audio.
@@ -373,6 +363,21 @@ Module.prototype.play = async function(audioFile, duration, text) {
 }
 
 /**
+ * Adjusts the text size to fit in the text box.
+ *
+ * Adjusts the font until the text fills the most space possible in the text box or the maximum font size is reached.
+ *
+ * @param {string}	[max_font_size='64px']	The maximum allowable font size.
+ */
+Module.prototype.adjust_text = function(max_font_size='64px') {
+	var resize_me = document.getElementById('adjustable');
+	resize_me.style.fontSize = max_font_size;
+	while (resize_me.scrollHeight > this.textBoxMaxHeight && parseInt(resize_me.style.fontSize)>2){
+		resize_me.style.fontSize = parseInt(resize_me.style.fontSize) - 1 + 'px';
+	}
+}
+
+/**
  * Format a GoToJointAngles goal for sending.
  *
  * When the returned object is sent, the robot should move to the position specified.
@@ -404,20 +409,6 @@ Module.prototype.getGoToGoal = function(joint_angles, speed_ratio=0, wait=false)
 	});
 }
 
-/*Module.prototype.getJointMoveGoal = function(joints, terminatingCondition, resetPOS, min_thresh, bias, tol = 0) {
-	return new ROSLIB.Goal({
-		actionClient: self.JointMoveAct,
-		goalMessage: {
-			joints: self.hashTokeyVal(joints),
-			terminatingCondition: self.hashTokeyVal(terminatingCondition),
-			resetPOS: self.hashTokeyVal(resetPOS),
-			min_thresh: self.hashTokeyVal(min_thresh),
-			bias: self.hashTokeyVal(bias),
-			tol: tol
-		}
-	});
-}*/
-
 Module.prototype.pub_angle = function(angle) {
 	
 	var req = new ROSLIB.Message({
@@ -425,7 +416,6 @@ Module.prototype.pub_angle = function(angle) {
 	});
 
 	this.joint_angle.publish(req);
-
 }
 
 Module.prototype.getEndpoint = function(){
@@ -439,22 +429,6 @@ Module.prototype.getEndpoint = function(){
 		self.dictionary['orientation_w'] = message.orientation.w;
 		//console.log(self.dictionary)	
 	});
-}
-
-
-/**
- * Adjusts the text size to fit in the text box.
- *
- * Adjusts the font until the text fills the most space possible in the text box or the maximum font size is reached.
- *
- * @param {string}	[max_font_size='64px']	The maximum allowable font size.
- */
-Module.prototype.adjust_text = function(max_font_size='64px') {
-	var resize_me = document.getElementById('adjustable');
-	resize_me.style.fontSize = max_font_size;
-	while (resize_me.scrollHeight > this.textBoxMaxHeight && parseInt(resize_me.style.fontSize)>2){
-		resize_me.style.fontSize = parseInt(resize_me.style.fontSize) - 1 + 'px';
-	}
 }
 
 /**
@@ -546,6 +520,7 @@ Module.prototype.robot2canvas = async function(x, y, robot='sawyer') {
 		x: x_canvas,
 		y: y_canvas
 	};
+}
   
 /**
  * Detects if button was pressed
@@ -1472,36 +1447,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'scrollWheelInput':
-				var currentGraphicMode = this.graphic_mode;
-				// TODO: this.set_graphic_mode({'mode': 'scroll wheel'}, instructionAddr);
-				this.displayOff();
-				canvas_container.style.display = 'initial';
-				var odometer_url = DIR + 'images/new_scroll.JPG';
-
-				if (VERBOSE) console.log('Here');
-				wheel_val = 0
-				draw_odometer(m.ctx, odometer_url, wheel_val);
-
-				this.button_topic.subscribe(async function(message) {
-					value = parseInt(message.data)
-					if (value > 1){
-						if (VERBOSE) console.log('Finished');
-						if (instr.hasOwnProperty('store_answer_in')) {
-							self.dictionary[instr.store_answer_in] = wheel_val;
-						}
-						self.button_topic.unsubscribe();
-						self.button_topic.removeAllListeners();
-						self.displayOff(true);
-						self.start(self.getNextAddress(instructionAddr));
-					}else{
-						wheel_val+= value;
-						draw_odometer(m.ctx, odometer_url, wheel_val);
-						if (VERBOSE) console.log('Wheel value: ' + wheel_val);
-					}
-				});
-				// TODO							self.set_graphic_mode(currentGraphicMode, instructionAddr);
-
+			case 'numeric_input':
+				this.numeric_input(instr, instructionAddr);
+				
 				break;
 
 			case 'set':

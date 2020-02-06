@@ -6,7 +6,7 @@
  * - 'video': Plays a video.
  * - 'canvas': Displays the canvas and draws objects on it from the drawings array.
  * - 'multiple choice': Displays the multiple choice graphic with custom options.
- * - 
+ * - 'numeric input': Displays the numeric input graphic with counter.
  *
  * @param {object}  instr            A parameterized instruction imported from the JSON file.
  * @param {object}  instructionAddr  The address of the current instruction.
@@ -35,7 +35,7 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			break;
 
 		case 'canvas':
-			canvas_container.style.display = 'initial';
+			canvas_obj.style.display = 'initial';
 			if (instr.hasOwnProperty('clear') && instr.clear) {
 				this.drawings = [];
 			}
@@ -47,16 +47,16 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			break;
 
 		case 'multiple choice':
-			canvas_container.style.display = 'initial';
+			canvas_obj.style.display = 'initial';
 			display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], DIR + 'images/sized_cuff.png');
 
 			break;
 
-		case 'scroll wheel':
-			canvas_container.style.display = 'initial';
-			run_odometer = true;
-			canvas_obj.width = canvas_obj.width;
-			init_odometer(this.ctx);
+		case 'numeric input':
+			canvas_obj.style.display = 'initial';
+			wheel_val = 0
+			draw_odometer(m.ctx, odometer_url, wheel_val);
+			//canvas_obj.width = canvas_obj.width;
 
 			break;
 
