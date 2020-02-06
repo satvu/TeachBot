@@ -5,14 +5,15 @@ const module_num = 1;         //The module number
 /*******************************
  *       Construct Module      *
  *******************************/
-var m = new Module(module_num, main, [image,animator,protractor_table,canvas_container]);
+var m = new Module(module_num, main, [image, animator]);
 
 /**************************
  *   Main Functionality   *
  **************************/
 var start_seq = 'intro';
+var start_location =0;
 async function main() {
     m.displayOff();
-    image.style.display = 'initial';
-    m.start([start_seq,0]);
+    image.style.display = 'none';
+    m.start([start_seq,start_location]);
 }

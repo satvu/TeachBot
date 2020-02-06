@@ -31,6 +31,11 @@ add_message_files(
   GoToCartesianPose.msg
   adjustPoseBy.msg
   Image.msg
+  ButtonSendAction.msg
+  ButtonSendActionGoal.msg
+  ButtonSendActionResult.msg
+  ButtonSendGoal.msg
+  ButtonSendResult.msg
 )
 
 add_service_files(
@@ -38,6 +43,7 @@ add_service_files(
   AudioDuration.srv
   DevMode.srv
   ScrollWheelSubscription.srv
+  CuffWays.srv
 )
 
 add_action_files(
@@ -53,9 +59,9 @@ add_action_files(
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
-  HighTwo.action
-  WaitForPush.action
   JointImpedance.action
+  Button.action
+  Wait.action
 )
 
 generate_messages(

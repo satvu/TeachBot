@@ -44,8 +44,10 @@ class Camera():
 		self.heights = []
 		self.widths = []
 
-		self.limb.go_to_joint_angles([0.070240234375, 0.4665498046875, -2.684875, 1.362388671875, 2.43615234375, 0.3864345703125, 3.3399619140625])
-
+		#Camera pos 1
+		# self.limb.go_to_joint_angles([0.5832646484375, -1.301193359375, -0.193248046875, 2.0165146484375, 0.0075908203125, -0.75755078125, 0.3351982421875])
+		#Camera pos 2
+		self.limb.go_to_joint_angles([0.21234375, 0.2708505859375, -1.70441796875, 1.7846484375, 1.9352724609375, -0.17507421875, -3.083966796875])
 		# rospy.sleep(3)
 
 		self.start()
@@ -83,7 +85,7 @@ class Camera():
 
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
