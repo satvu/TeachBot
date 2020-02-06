@@ -11,7 +11,7 @@ var m = new Module(module_num, main, [image, animator, canvas_container]);
  *   Main Functionality   *
  **************************/
 var start_seq = 'intro';
-var start_location = 0;
+var start_location =0;
 async function main() {
     m.displayOff();
     image.style.display = 'initial';

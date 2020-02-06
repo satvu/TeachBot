@@ -27,6 +27,11 @@ add_message_files(
   JointInfo.msg
   EndpointInfo.msg
   Image.msg
+  ButtonSendAction.msg
+  ButtonSendActionGoal.msg
+  ButtonSendActionResult.msg
+  ButtonSendGoal.msg
+  ButtonSendResult.msg
 )
 
 add_service_files(
@@ -35,6 +40,7 @@ add_service_files(
   DevMode.srv
   SetRobotMode.srv
   ScrollWheelSubscription.srv
+  CuffWays.srv
 )
 
 add_action_files(
@@ -48,6 +54,7 @@ add_action_files(
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
+  Button.action
   Wait.action
 )
 
