@@ -28,10 +28,13 @@ function Module(module_num, main, content_elements) {
 	if (VERBOSE) console.log(`Beginning Module ${module_num}`);
 
 	// Instance Variables
-	this.module_num = module_num;
-	this.main = main;
-	this.content_elements = content_elements;
-	this.loaded = {'audio':false, 'text':false, 'json':false};
+	this.module_num = module_num;											// The index of the current module. TODO: replace with Claire's naming structure
+	this.main = main;														// The function to run after all resources have been loaded.
+	this.content_elements = content_elements;								// The elements to be loaded. TODO: consider deprecating per Tongxi's suggestion.
+	this.loaded = {'audio':false, 'text':false, 'json':false};				// Dictionary to track which resources have loaded.
+	this.drawings = [];														// Array of objects to draw on the canvas.
+	this.graphic_mode = 'image';											// Current graphic mode. See: set_graphic_mode().
+	this.canvas_frame_req;													// Animation frame request. See: set_graphic_mode().
 	this.button = 'none';
 	
 	// Initialize self to module for use in event callbacks
@@ -64,40 +67,35 @@ function Module(module_num, main, content_elements) {
 		messageType: 'std_msgs/String'
 	});
 	this.command_complete = new ROSLIB.Topic({
+		// Deprecated, but still used by 'camera' and 'camera_off'
 		ros: ros,
 		name: '/teachbot/command_complete',
 		messageType: 'std_msgs/Empty'
 	})
-	this.wheel_delta_topic = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/wheel_delta',
-		messageType: 'std_msgs/Int32'
-	})
-	// this.scroll_wheel_button_receiver = new ROSLIB.Topic({
-	// 	ros: ros,
-	// 	name: '/teachbot/scroll_wheel_button_topic',
-	// 	messageType: 'std_msgs/Empty'
-	// })
 	this.position = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/position',
 		messageType: ROBOT + '/JointInfo'
 	});
-	this.pressed = new ROSLIB.Topic({
+	this.position.subscribe(self.positionCallback);
+	this.velocity = new ROSLIB.Topic({
 		ros: ros,
-		name: '/teachbot/scroll_wheel_pressed',
-		messageType: 'std_msgs/Bool'
+		name: '/teachbot/velocity',
+		messageType: ROBOT + '/JointInfo'
 	});
+	this.velocity.subscribe(self.velocityCallback);
 	this.effort = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/effort',
 		messageType: ROBOT + '/JointInfo'
 	});
+	this.effort.subscribe(self.effortCallback);
 	this.endpoint = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/EndpointInfo',
 		messageType: ROBOT + '/EndpointInfo'
 	});
+	this.endpoint.subscribe(self.endpointCallback);
 
 	// Service Servers
 	var DevModeSrv = new ROSLIB.Service({
@@ -114,6 +112,11 @@ function Module(module_num, main, content_elements) {
 	ButtonReceiverSrv.advertise(this.buttonCallback);
 
 	// Service Clients
+	this.SetRobotModeSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/set_robot_mode',
+		serviceType: 'SetRobotMode'
+	});
 	this.CuffWaysSrv = new ROSLIB.Service({
 		ros: ros,
 		name: '/teachbot/CuffWays',
@@ -136,7 +139,7 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/GoToJointAngles',
 		actionName: ROBOT + '/GoToJointAnglesAction'
 	});
-	this.JointMoveAct = new ROSLIB.ActionClient({
+	/*this.JointMoveAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/JointMove',
 		actionName: ROBOT + '/JointMoveAction'
@@ -145,7 +148,7 @@ function Module(module_num, main, content_elements) {
 		ros: ros,
 		serverName: '/teachbot/InteractionControl',
 		actionName: ROBOT + '/InteractionControlAction'
-	});
+	});*/
 	this.AdjustPoseToAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/AdjustPoseTo',
@@ -176,11 +179,6 @@ function Module(module_num, main, content_elements) {
 		serverName: '/teachbot/AdjustPoseBy',
 		actionName: ROBOT + '/AdjustPoseByAction'
 	});
-	this.JointImpedanceAct = new ROSLIB.ActionClient({
-		ros: ros,
-		serverName: '/teachbot/JointImpedance',
-		actionName: ROBOT + '/JointImpedanceAction'
-	});
 	this.ButtonPressAct = new ROSLIB.ActionClient({
 		ros: ros,
 		serverName: '/teachbot/ButtonSend',
@@ -205,10 +203,6 @@ function Module(module_num, main, content_elements) {
 	this.ch = canvas_obj.height/100.0;
 	this.cw = canvas_obj.width/100.0;
 	this.robot_color = getComputedStyle(document.body).getPropertyValue('--robot-color')
-	// var bar_ctx = [];
-	// for(let j=0; j<JOINTS; j++) {
-	//     bar_ctx.push(document.getElementById('bar' + (j+1)).getContext('2d'));
-	// }
 
 	/************************
 	 *   Update Font Size   *
@@ -235,6 +229,51 @@ function Module(module_num, main, content_elements) {
 		self.loaded['json'] = true;
 		if (self.allLoaded()) { self.main(); }
 	});
+}
+
+// Callbacks
+Module.prototype.positionCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.dictionary[`JOINT_POSITION_${j}`] = msg[`j${j}`];
+	}
+}
+Module.prototype.velocityCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.dictionary[`JOINT_VELOCITY_${j}`] = msg[`j${j}`];
+	}
+}
+Module.prototype.effortCallback = function(msg) {
+	for (let j=0; j<Object.keys(msg).length; j++) {
+		self.dictionary[`EFFORT_${j}`] = msg[`j${j}`];
+	}
+}
+Module.prototype.endpointCallback = function(msg) {
+	self.dictionary[`ENDPOINT_POSITION_X`] = msg.position.x;
+	self.dictionary[`ENDPOINT_POSITION_Y`] = msg.position.y;
+	self.dictionary[`ENDPOINT_POSITION_Z`] = msg.position.z;
+	self.dictionary[`ENDPOINT_ORIENTATION_X`] = msg.orientation.x;
+	self.dictionary[`ENDPOINT_ORIENTATION_Y`] = msg.orientation.y;
+	self.dictionary[`ENDPOINT_ORIENTATION_Z`] = msg.orientation.z;
+	self.dictionary[`ENDPOINT_ORIENTATION_W`] = msg.orientation.w;
+}
+
+Module.prototype.unsubscribeFrom = function(topic) {
+	topic.unsubscribe();
+	topic.removeAllListeners();
+	switch (topic.name) {
+		case '/teachbot/position':
+			topic.subscribe(self.positionCallback);
+			break;
+		case '/teachbot/velocity':
+			topic.subscribe(self.velocityCallback);
+			break;
+		case '/teachbot/effort':
+			topic.subscribe(self.effortCallback);
+			break;
+		case '/teachbot/endpoint':
+			topic.subscribe(self.endpointCallback);
+			break;
+	}
 }
 
 /**
@@ -365,20 +404,7 @@ Module.prototype.getGoToGoal = function(joint_angles, speed_ratio=0, wait=false)
 	});
 }
 
-/**
- * Format JointMove goal for sending.
- *
- * When the returned object is sent, the robot should activate admittance control.
- *
- * @param  {[string,Array]}	joints 	             Either an Array of joint(s) that determines which joints to unlock.
- * @param  {string}			terminatingCondition Condition that once reached, the program exit out of the function.
- * @param  {string}         resetPOS             String that states the position the robot should default to after the terminatingCondition is reached
- * @param  {string}         min_thresh           Specifies the minimum amount of force that requires the joint(s) to move
- * @param  {string}         bias                 Each joint has a bias that takes into account an internal force in the robot and counteracts it
- * @param  {float32}        tol                  Float that is used in the callback function in the teachbot script
- * @return {object}                              ROSLIB.Goal object to be sent.
- */
-Module.prototype.getJointMoveGoal = function(joints, terminatingCondition, resetPOS, min_thresh, bias, tol = 0) {
+/*Module.prototype.getJointMoveGoal = function(joints, terminatingCondition, resetPOS, min_thresh, bias, tol = 0) {
 	return new ROSLIB.Goal({
 		actionClient: self.JointMoveAct,
 		goalMessage: {
@@ -390,7 +416,7 @@ Module.prototype.getJointMoveGoal = function(joints, terminatingCondition, reset
 			tol: tol
 		}
 	});
-}
+}*/
 
 Module.prototype.pub_angle = function(angle) {
 	
@@ -458,6 +484,7 @@ Module.prototype.displayOff = function(clearCanvas=false) {
 		elem.style.display = 'none';
 	});
 	if (clearCanvas) {
+		this.drawings = [];
 		this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 	}
 }
@@ -497,6 +524,29 @@ Module.prototype.devRxCallback = function(req, resp) {
     return true;
 }
 
+/**
+ * Coordinate transform from robot-space to 
+ */
+Module.prototype.robot2canvas = async function(x, y, robot='sawyer') {
+	const Kx = 72.73;
+	const bx = 51.45;
+	const Ky = 157.89;
+	const by = -30;
+
+	switch (robot) {
+		case 'sawyer':
+			x_canvas = (Kx * y + bx) * this.cw;
+			y_canvas = (Ky * x + by) * this.ch;
+
+		default:
+			throw `Robot ${robot} not supported.`;
+	} 
+
+	return {
+		x: x_canvas,
+		y: y_canvas
+	};
+  
 /**
  * Detects if button was pressed
  * If the switch value changes, it toggles development mode
@@ -602,7 +652,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				console.log("module paused here.")
 				// self.start(self.getNextAddress(instructionAddr));
 
-				break
+				break;
 
 			// case 'shadow':
 
@@ -675,6 +725,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(self.getNextAddress(instructionAddr));
 				break;
 
+			case 'draw':
+				this.draw(instr, instructionAddr);
+				break;
+/*
 			case 'drawShape':
 				checkInstruction(instr, ['shape'], instructionAddr);
 
@@ -704,7 +758,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(self.getNextAddress(instructionAddr));
 
 				break;
-
+*/
 			case 'LOG':
 				console.log(Object.keys(instr.aDict))
 				for (var key in (instr.aDict)) {
@@ -714,9 +768,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'drawDynamic':
-
-				checkInstruction(instr, ['shape','topics'], instructionAddr);
+			case 'draw_dynamic':
+				
 
 				for (var topic in instr.topics) {				// Loop through all topics.
 					var values = instr.topics[topic];
@@ -1041,6 +1094,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 
 			case 'encode':
+				window.cancelAnimationFrame(this.canvas_frame_req);
 				self.displayOff();
 				canvas_container.style.display = 'initial';
 				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
@@ -1148,79 +1202,12 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'interaction_control':
-				checkInstruction(instr, ["position_only","orientation_x","orientation_y","orientation_z","position_x","position_y","position_z", "in_end_point_frame", "PASS", "ways"], instructionAddr);
-
-				var orient_bw_url = DIR + 'images/orientation_bw.png';
-				var orient_color_url = DIR + 'images/orientation_color.png';
-				var position_bw_url = DIR + 'images/position_bw.png';
-				var position_color_url = DIR + 'images/position_color.png';
-
-				var goal = new ROSLIB.Goal({
-					actionClient: self.InteractionControlAct,
-					goalMessage: {
-						position_only: instr.position_only,
-						position_x: instr.position_x,
-						position_y: instr.position_y,
-						position_z: instr.position_z,
-						orientation_x: instr.orientation_x,
-						orientation_y: instr.orientation_y,
-						orientation_z: instr.orientation_z,
-						in_end_point_frame: instr.in_end_point_frame,
-						PASS: instr.PASS,
-						ways: instr.ways
-					}
-				});
-
-				if (instr.hasOwnProperty('wait') && instr.wait) {
-					goal.on('result', function(result) {
-						self.ctx.clearRect(3, 300, 403, 1100);
-						self.start(self.getNextAddress(instructionAddr));
-					});
-					goal.send();
-				} else {
-					goal.send();
-					this.start(self.getNextAddress(instructionAddr));
-				}
-
-				break;
-
-			case 'interaction_projection':
-				protractor_table.style.display = 'initial';
-
-				var bar_ctx = [];
-				for(let j=0; j<JOINTS; j++) {
-					bar_ctx.push(document.getElementById('bar' + (j+1)).getContext('2d'));
-				}
-
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received: ' + message.j0, message.j1, message.j2, message.j3, message.j4, message.j5, message.j6);
-					var locations = [message.j0, message.j1, message.j2, message.j3, message.j4, message.j5, message.j6]
-					for (let p=1; p<=locations.length; p++) {
-						document.getElementById('protractor' + p).value = '' + (100*locations[p-1]);
-						let cw = bar_ctx[p-1].canvas.width/100.0;
-						let ch = bar_ctx[p-1].canvas.height/100.0;
-						bar_ctx[p-1].clearRect(0,0,100*cw,100*ch);
-						draw_bar(bar_ctx[p-1], locations[p-1], 3.15,9*cw,91*cw,50*ch,6*cw, self.robot_color);
-						document.getElementById('bar' + p).value = '' + (100*locations[p-1]);
-					}
-				});
-
-				this.button_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received indication to advance');			
-					self.position.unsubscribe();
-					self.position.removeAllListeners();
-					self.button_topic.unsubscribe();
-					self.button_topic.removeAllListeners();
-					self.displayOff();
-					self.start(self.getNextAddress(instructionAddr));
-				});
-
-				break;
-
 			case 'wait':
-				checkInstruction(instr, ['what'], instructionAddr);
-
+				this.wait(instr, instructionAddr).then((msg) => {
+					this.start(self.getNextAddress(instructionAddr));
+				});
+				
+				/*
 				var goal = new ROSLIB.Goal({
 					actionClient: this.WaitAct,
 					goalMessage:{ 
@@ -1236,10 +1223,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					self.start(self.getNextAddress(instructionAddr));
 				});
 				goal.send();
-
+				*/
 				break;
 
-			case 'joint_impedance':
+			/*case 'joint_impedance':
 				checkInstruction(instr, ["terminatingCondition","tics"], instructionAddr);
 
 				var goal = new ROSLIB.Goal({
@@ -1253,9 +1240,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				this.start(self.getNextAddress(instructionAddr));
 
-				break;
+				break;*/
 
-			case 'joint_move':
+			/*case 'joint_move':
 				checkInstruction(instr, ["joints","terminatingCondition","resetPOS","min_thresh","bias","listen"], instructionAddr);
 
 				var goal;
@@ -1289,9 +1276,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					}
 				}
 
-				break;
+				break;*/
 
-			case 'shadow_projection':
+			/*case 'shadow_projection':
 
 				console.log("Entered projection mode.");
 
@@ -1299,17 +1286,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				var goal = this.getJointMoveGoal(instr.joints, instr.terminatingCondition, instr.resetPOS, instr.min_thresh, instr.bias);
 
-				const Kx = 72.73;
-				const bx = 51.45;
-				const Ky = 157.89;
-				const by = -30;
+				
 
-				this.endpoint.subscribe(async function(message) {
-					self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-					var x_center = (Kx * message.position.y + bx) * self.cw;
-					var y_center = (Ky * message.position.x + by) * self.ch;
-					draw_ball(self.ctx, x_center, y_center, 8*self.ch, '#7c2629');
-				});
+				
 
 				goal.on('result', function(result) {
 					self.endpoint.unsubscribe();
@@ -1319,7 +1298,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 				goal.send();
 
-			break
+				break;*/
 
 			case 'log':
 				checkInstruction(instr, ['message'], instructionAddr);
@@ -1330,6 +1309,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'multiple_choice':
+				var currentGraphicMode = this.graphic_mode;
+				// TODO: this.set_graphic_mode({"mode":"multiple_choice"}, instructionAddr);
 				this.displayOff();
 				canvas_container.style.display = 'initial';
 				var multi_choice_url = DIR + 'images/button_box.JPG';
@@ -1346,7 +1327,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 					if (VERBOSE) console.log(self.button)
 					self.dictionary[instr.store_answer_in] = String(self.button);
 					self.start(self.getNextAddress(instructionAddr));
-
 				});
 
 				goal_ButtonPress.send();
@@ -1493,6 +1473,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'scrollWheelInput':
+				var currentGraphicMode = this.graphic_mode;
+				// TODO: this.set_graphic_mode({'mode': 'scroll wheel'}, instructionAddr);
 				this.displayOff();
 				canvas_container.style.display = 'initial';
 				var odometer_url = DIR + 'images/new_scroll.JPG';
@@ -1518,7 +1500,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						if (VERBOSE) console.log('Wheel value: ' + wheel_val);
 					}
 				});
-				
+				// TODO							self.set_graphic_mode(currentGraphicMode, instructionAddr);
+
 				break;
 
 			case 'set':
@@ -1530,9 +1513,20 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				} else {
 					this.dictionary[instr.key] = instr.val;
 				}
-				//console.log(self.dictionary)
+				
 				this.start(this.getNextAddress(instructionAddr));
 				break;
+
+			case 'set_graphic_mode':
+				this.set_graphic_mode(instr, instructionAddr);
+				this.start(this.getNextAddress(instructionAddr));
+				break;
+
+			case 'set_robot_mode':
+				this.set_robot_mode(instr, instructionAddr);
+				this.start(this.getNextAddress(instructionAddr));
+				break;
+
 
 			case 'show_camera':
 
@@ -1560,14 +1554,11 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'while':
 				checkInstruction(instr, ['conditional'], instructionAddr);
-				console.log(this.hashTokeyVal(instr.conditional));
 		
 				if (eval(this.hashTokeyVal(instr.conditional))) {
-					console.log('conditions')
 					instructionAddr.push(0);
 					this.start(instructionAddr);
 				} else {
-					console.log('moving on')
 					this.start(this.getNextAddress(instructionAddr));
 				}
 			
@@ -1583,7 +1574,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
  * Replaces all references with a '#' with the value they reference from the dictionary.
  *
  * For each instance of '#' in a given string, this function replaces the '#' and the following variable reference with the value it references
- * from the dictionary.
+ * from the dictionary. If the input is not a string, it is returned.
  *
  * Example:
  *  >> module.dictionary.a = 314;
@@ -1594,7 +1585,16 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
  * @return {object}	The processed string with references replaced.
  */
 Module.prototype.hashTokeyVal = function(str) {
-	return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+	switch (typeof str) {
+		case 'string':
+			try {
+				return str.replace(/#[a-z_0-9]+/gi, key => this.dictionary[key.substring(1)].toString());
+			} catch (error) {
+				throw `Hash reference(s) in "${str}" not defined.`
+			}
+		default:
+			return str;
+	}
 }
 
 /**

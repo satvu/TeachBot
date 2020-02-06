@@ -24,12 +24,8 @@ catkin_python_setup()
 
 add_message_files(
   FILES
-  adjustPoseTo.msg
   JointInfo.msg
-  JointImpedance.msg
   EndpointInfo.msg
-  GoToCartesianPose.msg
-  adjustPoseBy.msg
   Image.msg
   ButtonSendAction.msg
   ButtonSendActionGoal.msg
@@ -42,6 +38,7 @@ add_service_files(
   FILES
   AudioDuration.srv
   DevMode.srv
+  SetRobotMode.srv
   ScrollWheelSubscription.srv
   CuffWays.srv
 )
@@ -51,15 +48,12 @@ add_action_files(
   FILES
   CuffInteraction.action
   GoToJointAngles.action
-  InteractionControl.action
-  JointMove.action
   GoToCartesianPose.action
   Gripper.action
   MultipleChoice.action
   AdjustPoseTo.action
   PickUpBox.action
   AdjustPoseBy.action
-  JointImpedance.action
   Button.action
   Wait.action
 )

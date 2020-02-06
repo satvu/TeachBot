@@ -35,7 +35,8 @@
 				"skippable": true
 			},
 			{
-				"type":"playVideo",
+				"type":"set_graphic_mode",
+				"mode":"video",
 				"skippable":true
 			},
 			{
@@ -72,6 +73,11 @@
 		"id": "MultipleMotors",
 		"instructions": [
 			{
+				"type":"set_graphic_mode",
+				"mode":"image",
+				"location":"images/Welcome.png"
+			},
+			{
 				"//":"Just by looking, how many motors do you think I have in my arm? To input your answer, use the white buttons on the button box next to you to go up or down in value. Then press any colored button to submit your answer.",
 				"type":"play",
 				"audio_index":0,
@@ -79,13 +85,21 @@
 			},
 			{
 				"type":"scrollWheelInput",
-				"skippable":true
+				"skippable":false
 			},
 			{
 				"//":"Step back and we'll count them together.",
 				"type":"play",
 				"audio_index":1,
 				"delay":true
+			},
+			{
+				"type":"set_graphic_mode",
+				"mode":"image"
+			},
+			{
+				"type":"goToJointAngles",
+				"joint_angles":"joint_motor_animation_0"
 			},
 			{
 				"//":"Pay close attention while I move each motor individually. Try to count how many motors I have.",
@@ -277,26 +291,37 @@
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"shoulder",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"1.0",
-				"bias":"BIAS_SHOULDER",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[0],
+				"min_thresh":[1.0]
 			},
 			{
-				"type": "initializeDisplay"
+				"type": "set_graphic_mode",
+				"mode": "canvas"
 			},
 			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
-				"topics": {"position":["j0"]},
-				"x_ratio": [4],
-				"y_ratio": [85],
-				"width_ratio": [9],
-				"max_height_ratio": [80],
+				"height_percent": "#JOINT_POSITION_0/3.14",
+				"x": 4,
+				"y": 85,
+				"width": 9,
+				"max_height": 80,
 				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
+			},
+			{
+				"type":"set_graphic_mode",
+				"mode":"image"
 			},
 			{
 				"//":"Let me show you how I know. Please stand back.",
@@ -325,32 +350,43 @@
 				"type": "stopEncode"
 			},
 			{
+				"type":"set_graphic_mode",
+				"mode":"image"
+			},
+			{
 				"//":"Now I'm going to lock my shoulder and unlock my wrist. Try pushing my hand. When you're done, press any button on the box.",
 				"type":"play",
 				"audio_index":6,
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"wrist",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"0.5",
-				"bias":"BIAS_WRIST",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[5],
+				"min_thresh":[0.5]
 			},
 			{
-				"type":"initializeDisplay"
+				"type":"set_graphic_mode",
+				"mode":"canvas"
 			},
 			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
-				"topics": {"position":["j5"]},
-				"x_ratio": [15],
-				"y_ratio": [85],
-				"width_ratio": [9],
-				"max_height_ratio": [80],
+				"height_percent": "#JOINT_POSITION_5/3.14",
+				"x": 15,
+				"y": 85,
+				"width": 9,
+				"max_height": 80,
 				"fillStyle": ["BlueViolet"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"So far I've only unlocked one motor at a time. Let's try unlocking both my shoulder and wrist motors. Push on my arm again and see what happens. When you're done, press any button on the box.",
@@ -359,26 +395,33 @@
 				"delay":false
 			},
 			{
-				"type":"joint_move",
-				"joints":"[shoulder,wrist]",
-				"terminatingCondition":"lambda self: self.finished",
-				"resetPOS":"joint_dof_start",
-				"min_thresh":"{shoulder: 1.0, wrist: 0.5}",
-				"bias":"{shoulder: BIAS_SHOULDER, wrist: BIAS_WRIST}",
-				"listen":false
+				"type":"set_robot_mode",
+				"mode":"admittance ctrl",
+				"resetPos":"joint_dof_start",
+				"joints":[0,5],
+				"min_thresh":[1.0,0.5]
 			},
 			{
-				"type":"initializeDisplay"
-			},
-			{
-				"type": "drawDynamic",
+				"type": "draw",
 				"shape": "bar",
-				"topics": {"position": ["j0","j5"]},
-				"x_ratio": [4, 13],
-				"y_ratio": [85, 85],
-				"width_ratio": [7, 7],
-				"max_height_ratio": [80, 80],
-				"fillStyle": ["#7c2629", "BlueViolet"]
+				"height_percent": "#JOINT_POSITION_0/3.14",
+				"x": 4,
+				"y": 85,
+				"width": 7,
+				"max_height": 80,
+				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
+			},
+			{
+				"type":"set_graphic_mode",
+				"mode":"image"
 			},
 			{
 				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can reset my position. Again, use the white buttons on the box to change the number.",
