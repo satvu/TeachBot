@@ -51,7 +51,7 @@
 				"type":"drawShape",
 				"shape":"rectangle",
 				"x_ratio":19,
-				"y_ratio":60,
+				"y_ratio":63,
 				"w_ratio":17,
 				"h_ratio":19
 			},
@@ -781,7 +781,7 @@
 				"type":"drawShape",
 				"shape":"rectangle",
 				"x_ratio":19,
-				"y_ratio":60,
+				"y_ratio":67,
 				"w_ratio":17,
 				"h_ratio":19
 			},
@@ -841,7 +841,8 @@
 						"wait":true
 					},
 					{
-						"type":"closeGripper"
+						"type":"gripper",
+						"grip":true
 					},
 					{
 						"//":"6: Now, lift my hand high enough so that the box higher than the bin. Press any button on the box to continue.",
@@ -884,7 +885,8 @@
 						"wait":true
 					},
 					{
-						"type":"openGripper"
+						"type":"gripper",
+						"grip":false
 					},
 					{
 						"//":"8: Please stand back so I can reset my position to be over Box 4.",
@@ -930,7 +932,8 @@
 						"joint_angles":"waypoints.pop(0)"
 					},
 					{
-						"type":"closeGripper"
+						"type":"gripper",
+						"grip":true
 					},
 					{
 						"type":"goToJointAngles",
@@ -942,7 +945,8 @@
 						"speed_ratio":0.225
 					},
 					{
-						"type":"openGripper"
+						"type":"gripper",
+						"grip":false
 					},
 					{
 						"type":"adjustPoseBy",
@@ -983,6 +987,9 @@
 								"type":"play",
 								"audio_index":12,
 								"delay":true
+							},
+							{
+								"type":"pressed_button"
 							},
 							{
 								"type":"goToJointAngles",

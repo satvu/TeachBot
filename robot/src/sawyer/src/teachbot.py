@@ -381,6 +381,7 @@ class Module():
 		'''
 
 	def display_camera_callback(self, img_data):
+		rospy.sleep(0.5)
 		bridge = CvBridge()
 		try:
 			cv_image = bridge.imgmsg_to_cv2(img_data, 'bgr8')
@@ -404,7 +405,7 @@ class Module():
 
 		gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 		blurred = cv2.GaussianBlur(gray, (5,5), 0)
-		ret, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
+		ret, thresh = cv2.threshold(blurred, 140, 255, cv2.THRESH_BINARY_INV)
 
 		im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
