@@ -1399,7 +1399,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'programming_choices':
 				this.displayOff();
                 canvas_container.style.display = 'initial';
-                var multi_choice_url = DIR + 'images/sized_cuff.png';
+                var multi_choice_url = DIR + 'images/button_box.JPG';
+				var arrow_url = DIR + 'image/Arrow.png';
 
                 display_choices(m.ctx, ['Open Gripper','Close Gripper','Move'], multi_choice_url);
 

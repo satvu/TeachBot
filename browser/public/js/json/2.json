@@ -959,14 +959,14 @@
 						"joint_angles":"camera_pos2"
 					},
 					{
-						"type":"camera",
-						"store_answer_in":"wheelVal"
-					},
-					{
 						"//":"11: Let's see if you successfully put the box into the bin.",
 						"type":"play",
 						"audio_index":10,
 						"delay":true
+					},
+					{
+						"type":"camera",
+						"store_answer_in":"wheelVal"
 					},
 					{
 						"type":"camera_off"
@@ -1025,11 +1025,24 @@
 				"type":"reset"
 			},
 			{
-				"type":"drawBox",
-				"number":3
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":57.9,
+				"y_ratio":69,
+				"w_ratio":11,
+				"h_ratio":10,
+				"rotate":90
 			},
 			{
-				"//":"0: Please put box 3 back to it's original position. Press any button on the box when done.",
+				"type":"drawShape",
+				"shape":"rectangle",
+				"x_ratio":19,
+				"y_ratio":67,
+				"w_ratio":17,
+				"h_ratio":19
+			},
+			{
+				"//":"0: Please put boxes 1, 3, and 4 off to the side. Press any button on the box when done.",
 				"type":"play",
 				"audio_index":0,
 				"delay": false
