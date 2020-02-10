@@ -53,7 +53,8 @@ class LimbPlus(Limb):
 		self.nav = intera_interface.Navigator()
 		self.icc_pub = rospy.Publisher('/robot/limb/right/interaction_control_command', InteractionControlCommand, queue_size = 1)
 
-	def go_to_joint_angles(self, joint_angles = [math.pi/2, -0.9, 0.0, 1.8, 0.0, -0.9, 0.0], speed_ratio = 0.5, accel_ratio = 0.5, timeout = None, ways = False):
+	def go_to_joint_angles(self, joint_angles = [0.0, -0.78, 0.0, 1.57, 0, -0.79, 0.2], speed_ratio = 0.5, accel_ratio = 0.5, timeout = None, ways = False):
+		# Old home position: [math.pi/2, -0.9, 0.0, 1.8, 0.0, -0.9, 0.0]
 		try:
 			if isinstance(joint_angles, dict):
 				joint_angles_arr = [0]*len(joint_angles)
