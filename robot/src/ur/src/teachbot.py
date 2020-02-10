@@ -82,51 +82,6 @@ class Module():
         result.success = True
         self.GoToJointAnglesAct.set_succeeded(result)
 
-    '''
-    Receives "GoToCartesianPose" message and based on which paramters are given, perform kinematic different
-    operations.
-    '''
-    def cb_GoToCartesianPose(self, req):
-        # Evaluate all of the paramters
-        joint_angles = eval(req.joint_angles)
-        relative_pose = eval(req.relative_pose)
-        endpoint_pose = eval(req.endpoint_pose)
-        position = eval(req.position)
-        orientation = eval(req.orientation)
-
-        if joint_angles and len(joint_angles) != len(JOINT_NAMES):
-            rospy.logerr('len(joint_angles) does not match len(JOINT_NAMES)!')
-            return None
-
-        if (position is None and orientation is None and relative_pose is None and endpoint_pose is None):
-            if joint_angles:
-                # Forward Kinematics <-- comment from the Sawyer package, but seems this is just a goToJointAngles
-                joint_input = GoToJointAngles()
-                joint_input.name = req.joint_angles
-                self.cb_GoToJointAngles(joint_input)
-
-                # call to GoToJointAngles already sends a command_complete so we can return None to escape this function 
-                return None 
-
-            else:
-                rospy.loginfo("No Cartesian pose or joint angles given.")
-                return None
-        else:
-            # Inverse Kinematics 
-            converted_joint_angles = ur_kin.inverse(endpoint_pose)
-            joint_input = GoToJointAngles()
-
-            # Set the new joint angle to go to
-            joint_input.j0pos = converted_joint_angles[0]
-            joint_input.j1pos = converted_joint_angles[1]
-            joint_input.j2pos = converted_joint_angles[2]
-            joint_input.j3pos = converted_joint_angles[3]
-            joint_input.j4pos = converted_joint_angles[4]
-            joint_input.j5pos = converted_joint_angles[5]
-
-            self.cb_GoToJointAngles(joint_input)
-
-            return None 
 
     def create_traj_goal(self, array):
         traj_msg = JointTrajectory()
