@@ -1396,19 +1396,34 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
+			case 'pressed_button':
+				this.button_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Pressed: ' + message.data);
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
+					self.start(self.getNextAddress(instructionAddr));
+				});
+
+				break;
+
+			case 'proceed':
+				checkInstruction(instr, ['to_section'], instructionAddr);
+
+				this.start([instr.to_section, 0]);
+
+				break;
+
 			case 'programming_choices':
 				this.displayOff();
                 canvas_container.style.display = 'initial';
                 var multi_choice_url = DIR + 'images/button_box.JPG';
 				var arrow_url = DIR + 'image/Arrow.png';
 
-                display_choices(m.ctx, ['Open Gripper','Close Gripper','Move'], multi_choice_url);
+                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint'], multi_choice_url);
 
                 var req = new ROSLIB.Message({
 					data: true
 				});
-
-                this.multiple_choice.publish(req);
 
                 this.wheel_delta_topic.subscribe(async function(message) {
 					if (VERBOSE) console.log('Button pressed:' + message.data);
@@ -1430,24 +1445,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						self.start(self.getNextAddress(instructionAddr));
 					}
 				});
-
-				break;
-
-
-			case 'pressed_button':
-				this.button_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Pressed: ' + message.data);
-					self.button_topic.unsubscribe();
-					self.button_topic.removeAllListeners();
-					self.start(self.getNextAddress(instructionAddr));
-				});
-
-				break;
-
-			case 'proceed':
-				checkInstruction(instr, ['to_section'], instructionAddr);
-
-				this.start([instr.to_section, 0]);
 
 				break;
 

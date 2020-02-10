@@ -1057,14 +1057,21 @@
 				"delay": true
 			},
 			{
-				"type":"programming_choices"
-			},
-			{
-				"//":"2: Displayed on my screen is a series of options you can choose from to put the box into the bin. Press the desired button to do a specific task.",
+				"//":"2: I am about to display a series of options you can choose from to create a series of steps to put the box into the bin. Press the desired button to do a specific task. You can choose actions more than once.",
 				"type":"play",
 				"audio_index":2,
 				"delay": true
-			}
+			},
+			{
+				"//":"3: Once you have gotten the box into the bin, press any white button on the box to continue.",
+				"type":"play",
+				"audio_index":3,
+				"delay": true
+			},
+			{
+				"type":"programming_choices"
+			},
+			
 		]
 	}
 ]}

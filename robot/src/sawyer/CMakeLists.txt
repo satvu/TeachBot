@@ -31,11 +31,6 @@ add_message_files(
   GoToCartesianPose.msg
   adjustPoseBy.msg
   Image.msg
-  ButtonSendAction.msg
-  ButtonSendActionGoal.msg
-  ButtonSendActionResult.msg
-  ButtonSendGoal.msg
-  ButtonSendResult.msg
 )
 
 add_service_files(
@@ -60,7 +55,7 @@ add_action_files(
   PickUpBox.action
   AdjustPoseBy.action
   JointImpedance.action
-  Button.action
+  ButtonSend.action
   Wait.action
 )
 
