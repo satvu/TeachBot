@@ -32,7 +32,25 @@ app.use('/images', images);
 app.use('/css', css);
 
 //app.get all the teachbot required files
-app.get('/', function(req,res) {
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/home.html'));
+})
+app.get('/home', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/home.html'));
+})
+app.get('/selectmodules', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/home_modules.html'));
+})
+app.get('/robotconfiguration', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/robot_configuration.html'));
+})
+app.get('/cuffinteraction', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/cuff_interaction.html'));
+})
+app.get('/test', function(req, res) {
+  res.sendFile(path.join(__dirname + '/public/html/test_module_page.html'));
+})
+app.get('/module1', function(req,res) {
 	res.sendFile(path.join(__dirname + '/public/html/1.html'));
 });
 app.get('/module2', function(req,res) {

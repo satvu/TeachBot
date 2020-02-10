@@ -24,74 +24,61 @@
 	<script src="https://localhost:8000/js/utils/draw_goal.js"></script>
 	<script src="https://localhost:8000/js/utils/draw_pos_orien.js"></script>
 	<script src="https://localhost:8000/js/utils/draw_odometer.js"></script>
+	<script src="https://localhost:8000/js/utils/draw_rectangle.js"></script>
 	<script src="https://localhost:8000/js/utils/draw_spring.js"></script>
 	<script src="https://localhost:8000/js/utils/draw_encoder.js"></script>
 	<script src="https://localhost:8000/js/utils/JSONcopy.js"></script>
 	<script src="https://localhost:8000/js/utils/sleep.js"></script>
+
+	<!-- TeachBot Module -->
+	<script type="text/javascript" src="https://localhost:8000/js/Module.js"></script>
+	<script src="https://localhost:8000/js/instructions/draw.js"></script>
+	<script src="https://localhost:8000/js/instructions/numeric_input.js"></script>
+	<script src="https://localhost:8000/js/instructions/set_graphic_mode.js"></script>
+	<script src="https://localhost:8000/js/instructions/set_robot_mode.js"></script>
+	<script src="https://localhost:8000/js/instructions/wait.js"></script>
 </head>
 
+<script type="text/javascript">
+	function begin() {
+		document.getElementById("adjustable").innerHTML = "Loading..."
+		var script = document.createElement("script");
+		script.setAttribute('type', "text/javascript");
+		script.setAttribute('src', "https://localhost:8000/js/1.js");
+		document.getElementsByTagName("head")[0].appendChild(script);
+	}
+
+</script>
+
 <body>
-	<div class = "content">
-		<!-- Image -->
-		<img id="image" src="https://localhost:8000/images/Welcome.png" alt="image missing">
-		<br>
+	<!-- Welcome image -->
+	<img id="image" class="welcome" src="https://localhost:8000/images/Welcome.png" alt="Welcome" height="90%">
+	
+	<!-- Canvas -->
+	<div id="canvas_container">
+		<canvas id="canvas_obj"></canvas>
+	</div>
 
-		<!-- Animation -->
-		<video id="animator" class="centered" preload>
-			<source src="https://localhost:8000/videos/motor_animation.mp4" type="video/mp4">
-		</video>
+	<!-- Speech -->
+	<audio id="player"></audio>
 
-		<!-- Angle Sliders -->
-		<div class="container" id="protractor_table">
-		<table>
-			<tr>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor1"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor2"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor3"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor4"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor5"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor6"></td>
-				<td><input type="range" min="-315" max="315" class="protractor" id="protractor7"></td>
-			</tr>
-			<tr>
-				<td><canvas id="bar1" class="bar"></canvas></td>
-				<td><canvas id="bar2" class="bar"></canvas></td>
-				<td><canvas id="bar3" class="bar"></canvas></td>
-				<td><canvas id="bar4" class="bar"></canvas></td>
-				<td><canvas id="bar5" class="bar"></canvas></td>
-				<td><canvas id="bar6" class="bar"></canvas></td>
-				<td><canvas id="bar7" class="bar"></canvas></td>
-			</tr>
-			<tr>
-				<td>Joint 1</td>
-				<td>Joint 2</td>
-				<td>Joint 3</td>
-				<td>Joint 4</td>
-				<td>Joint 5</td>
-				<td>Joint 6</td>
-				<td>Joint 7</td>
-			</tr>
-		</table>
-		</div>
+	<!-- Animation -->
+	<video id="animator" class="centered" preload>
+		<source src="https://localhost:8000/videos/motor_animation.mp4" type="video/mp4">
+	</video>
 
-		<!-- Canvas -->
-		<div class="container" id="canvas_container">
-			<canvas id="canvas_obj"></canvas>
-		</div>
-		
-		<!-- Text -->
-		<div id='adjustable'>Loading...</div>
-
-		<!-- Speech -->
-		<audio id="player"></audio>
+	<!-- Audio text -->
+	<div id='adjustable'>Loading...
+		<!-- <div align="center">
+			<button onclick="begin()">Begin Module 1</button>
+		</div> -->
 	</div>
 
 	<!-- Run JS Module -->
-	<script type="text/javascript" src="https://localhost:8000/js/Module.js"></script>
 	<script type="text/javascript" src="https://localhost:8000/js/1.js"></script>
 
-	<!-- Display Pointer Position
-	<script type="text/javascript" src="https://localhost:8000/js/utils/displayPointerPosition.js"></script>
-	 -->
+	<!-- Display Pointer Position -->
+	<!-- <script type="text/javascript" src="https://localhost:8000/js/utils/displayPointerPosition.js"></script> -->
+	
 </body>
 </html>
