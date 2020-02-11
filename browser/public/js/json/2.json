@@ -1042,7 +1042,7 @@
 				"h_ratio":19
 			},
 			{
-				"//":"0: Please put boxes 1, 3, and 4 off to the side. Press any button on the box when done.",
+				"//":"1: Please put boxes 1, 3, and 4 off to the side. Press any button on the box when done.",
 				"type":"play",
 				"audio_index":0,
 				"delay": false
@@ -1051,27 +1051,100 @@
 				"type":"pressed_button"
 			},
 			{
-				"//":"1: This next segment will help you practice programming the robot yourself.",
+				"//":"2: This next segment will help you practice programming the robot yourself.",
 				"type":"play",
 				"audio_index":1,
 				"delay": true
 			},
 			{
-				"//":"2: I am about to display a series of options you can choose from to create a series of steps to put the box into the bin. Press the desired button to do a specific task. You can choose actions more than once.",
+				"//":"3: I am about to display a series of options you can choose from to create a series of steps to put the box into the bin. Press the desired button to do a specific task. You can choose actions more than once. Once you press an action it will be added to a list displayed in the top left corner.",
 				"type":"play",
 				"audio_index":2,
 				"delay": true
 			},
 			{
-				"//":"3: Once you have gotten the box into the bin, press any white button on the box to continue.",
+				"//":"4: To remove an action from the list, simply press the white button with the minus on it. Once you have gotten the box into the bin, press the white button with a plus on the box to continue.",
 				"type":"play",
 				"audio_index":3,
 				"delay": true
 			},
 			{
-				"type":"programming_choices"
+				"type":"set",
+				"key":"p",
+				"val":false
 			},
-			
+			{
+				"type":"while",
+				"conditional":"#p===false",
+				"instructions":[
+					{
+						"type":"programming_choices"
+					},
+					{
+						"type":"if",
+						"conditional":"#self.program.length==0",
+						"if_true":[
+							{
+								"type":"goToJointAngles",
+								"joint_angles":"camera_pos2"
+							},
+							{
+								"//":"6: Let's see if you successfully put the box into the bin.",
+								"type":"play",
+								"audio_index":5,
+								"delay":true
+							},
+							{
+								"type":"camera",
+								"store_answer_in":"wheelVal"
+							},
+							{
+								"type":"camera_off"
+							},
+							{
+								"type":"if",
+								"conditional":"#wheelVal==1",
+								"if_true":[
+									{
+										"type":"set",
+										"key":"p",
+										"val":true
+									}
+								],
+								"if_false":[
+									{
+										"//":"8: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
+										"type":"play",
+										"audio_index":7,
+										"delay":true
+									},
+									{
+										"type":"pressed_button"
+									},
+									{
+										"type":"goToJointAngles",
+										"joint_angles":"above_fourth_box_joint_arg"
+									}
+								]
+							}
+						],
+						"if_false":[
+							{
+								"type":"complete_program"
+							}
+						]
+					}
+				]
+			},
+			{
+				"//":"7:Great job! You are a programminge expert!",
+				"type":"play",
+				"audio_index":6,
+				"delay":true
+			},
+			{
+				"type":"pause"
+			}
 		]
 	}
 ]}

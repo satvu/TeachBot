@@ -33,6 +33,7 @@ function Module(module_num, main, content_elements) {
 	this.content_elements = content_elements;
 	this.loaded = {'audio':false, 'text':false, 'json':false};
 	this.button = 'none';
+	this.program = [];
 	
 	// Initialize self to module for use in event callbacks
 	self = this;
@@ -68,16 +69,6 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/command_complete',
 		messageType: 'std_msgs/Empty'
 	})
-	this.wheel_delta_topic = new ROSLIB.Topic({
-		ros: ros,
-		name: '/teachbot/wheel_delta',
-		messageType: 'std_msgs/Int32'
-	})
-	// this.scroll_wheel_button_receiver = new ROSLIB.Topic({
-	// 	ros: ros,
-	// 	name: '/teachbot/scroll_wheel_button_topic',
-	// 	messageType: 'std_msgs/Empty'
-	// })
 	this.position = new ROSLIB.Topic({
 		ros: ros,
 		name: '/teachbot/position',
@@ -901,6 +892,41 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
+			case 'complete_program':
+
+				for (let c=0; c<self.program; c++){
+					if (self.program[c] == 'Open Gripper'){
+						var goal_Gripper = new ROSLIB.Goal({
+							actionClient: this.GripperAct,
+							goalMessage:{grip: true}
+						});
+						goal_Gripper.on('result', function(result){
+							console.log('Completed program')
+						});
+						goal_Gripper.send();
+					} else if (self.program[c] == 'Close Gripper'){
+						var goal_Gripper = new ROSLIB.Goal({
+							actionClient: this.GripperAct,
+							goalMessage:{grip: false}
+						});
+						goal_Gripper.on('result', function(result){
+							console.log('Completed program')
+						});
+						goal_Gripper.send();
+					} else {
+						var goal;
+						goal = this.getGoToGoal('waypoints.pop(0)', 0.225);
+						goal.on('result', function(result) {
+							console.log('Completed program')
+						});
+						goal.send();
+					}
+				}
+
+				this.start(this.getNextAddress(instructionAddr));
+
+			break;
+
 			case 'cuff_interaction':
 				checkInstruction(instr, ['terminatingCondition', 'ways'], instructionAddr);
 
@@ -908,34 +934,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				var orient_color_url = DIR + 'images/orientation_color.png';
 				var position_bw_url = DIR + 'images/position_bw.png';
 				var position_color_url = DIR + 'images/position_color.png';
-
-				// var goal = new ROSLIB.Goal({
-				// 	actionClient: this.CuffInteractionAct,
-				// 	goalMessage: {
-				// 		terminatingCondition: instr.terminatingCondition,
-				// 		ways: instr.ways
-				// 	}
-				// });
-
-				// goal.on('feedback', function(feedback) {
-				// 	var POSITION = true;
-				// 	var ORIENTATION = false;
-				// 	if (feedback.mode === POSITION) {
-				// 		if (VERBOSE) console.log('Position Mode');
-				// 		draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'pos');
-				// 	} else if (feedback.mode === ORIENTATION) {
-				// 		if (VERBOSE) console.log('Orientation Mode');
-				// 		draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'orien');
-				// 	}
-				// });
-
-				// goal.on('result', function(result) {
-				// 	if (VERBOSE) console.log('Exited cuff interaction.');
-				// 	self.ctx.clearRect(3, 300, 403, 1100)
-				// 	self.start(self.getNextAddress(instructionAddr));
-				// });
-
-				// goal.send();
 
 				var goal_pos = new ROSLIB.Goal({
 				actionClient: self.InteractionControlAct,
@@ -1419,30 +1417,60 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
                 var multi_choice_url = DIR + 'images/button_box.JPG';
 				var arrow_url = DIR + 'image/Arrow.png';
 
-                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint'], multi_choice_url);
+                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode'], multi_choice_url);
 
-                var req = new ROSLIB.Message({
-					data: true
-				});
-
-                this.wheel_delta_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Button pressed:' + message.data);
-					wheel_val = message.data
-					if (instr.hasOwnProperty('store_answer_in')) {
-						self.dictionary[instr.store_answer_in] = wheel_val;
-					}
-					
-				});
-
-				this.pressed.subscribe(async function(message) {
+				this.button_topic.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
-					if (message.data == true) {
-						self.wheel_delta_topic.unsubscribe();
-						self.wheel_delta_topic.removeAllListeners();
-						self.pressed.unsubscribe();
-						self.pressed.removeAllListeners();
+                	value = parseInt(message.data)
+					if (value < 2) {
+						self.button_topic.unsubscribe();
+						self.button_topic.removeAllListeners();
 						self.displayOff(true);
 						self.start(self.getNextAddress(instructionAddr));
+					} else if (value == 2){
+						self.program.push('Open Gripper')
+						var goal_Gripper = new ROSLIB.Goal({
+							actionClient: self.GripperAct,
+							goalMessage:{grip: false}
+						});
+						goal_Gripper.on('result', function(result){
+							display_program(m.ctx, 10, 100, self.program)
+						});
+						goal_Gripper.send();
+					} else if (value == 3){
+						self.program.push('Close Gripper')
+						var goal_Gripper = new ROSLIB.Goal({
+							actionClient: self.GripperAct,
+							goalMessage:{grip: true}
+						});
+						goal_Gripper.on('result', function(result){
+							display_program(m.ctx, 10, 100, self.program)
+						});
+						goal_Gripper.send();
+					} else if (value == 4){
+						self.program.push('Waypoint')
+						var goal = new ROSLIB.Goal({
+							actionClient: self.InteractionControlAct,
+							goalMessage: {
+								position_only: false,
+								position_x: true,
+								position_y: true,
+								position_z: true,
+								orientation_x: true,
+								orientation_y: true,
+								orientation_z: true,
+								in_end_point_frame: false,
+								PASS: true,
+								ways: true
+							}
+						});
+						goal.on('result', function(result) {
+							display_program(m.ctx, 10, 100, self.program)
+						});
+						goal.send();
+					} else if (value == -1){
+						self.program.pop()
+						display_program(m.ctx, 300, 400, self.program)
 					}
 				});
 
