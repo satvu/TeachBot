@@ -1081,56 +1081,57 @@
 						"type":"programming_choices"
 					},
 					{
+						"//":"5: Please stand back so I can see if you succesfully completed the task. Can you please put Box 2 in its original position? Press any button on the box once you've done so.",
+						"type":"play",
+						"audio_index":4,
+						"delay": true
+					},
+					{
+						"type":"pressed_button"
+					},
+					{
+						"type":"complete_program"
+					},
+					{
+						"type":"goToJointAngles",
+						"joint_angles":"camera_pos2"
+					},
+					{
+						"//":"6: Let's see if you successfully put the box into the bin.",
+						"type":"play",
+						"audio_index":5,
+						"delay":true
+					},
+					{
+						"type":"camera",
+						"store_answer_in":"wheelVal"
+					},
+					{
+						"type":"camera_off"
+					},
+					{
 						"type":"if",
-						"conditional":"#self.program.length==0",
+						"conditional":"#wheelVal==1",
 						"if_true":[
 							{
-								"type":"goToJointAngles",
-								"joint_angles":"camera_pos2"
-							},
-							{
-								"//":"6: Let's see if you successfully put the box into the bin.",
-								"type":"play",
-								"audio_index":5,
-								"delay":true
-							},
-							{
-								"type":"camera",
-								"store_answer_in":"wheelVal"
-							},
-							{
-								"type":"camera_off"
-							},
-							{
-								"type":"if",
-								"conditional":"#wheelVal==1",
-								"if_true":[
-									{
-										"type":"set",
-										"key":"p",
-										"val":true
-									}
-								],
-								"if_false":[
-									{
-										"//":"8: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
-										"type":"play",
-										"audio_index":7,
-										"delay":true
-									},
-									{
-										"type":"pressed_button"
-									},
-									{
-										"type":"goToJointAngles",
-										"joint_angles":"above_fourth_box_joint_arg"
-									}
-								]
+								"type":"set",
+								"key":"p",
+								"val":true
 							}
 						],
 						"if_false":[
 							{
-								"type":"complete_program"
+								"//":"8: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
+								"type":"play",
+								"audio_index":7,
+								"delay":true
+							},
+							{
+								"type":"pressed_button"
+							},
+							{
+								"type":"goToJointAngles",
+								"joint_angles":"above_fourth_box_joint_arg"
 							}
 						]
 					}

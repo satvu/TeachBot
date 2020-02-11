@@ -922,7 +922,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						goal.send();
 					}
 				}
-
+				self.program = [];
 				this.start(this.getNextAddress(instructionAddr));
 
 			break;

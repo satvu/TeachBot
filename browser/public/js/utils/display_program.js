@@ -4,15 +4,7 @@
  * @param {object}  ctx_in          The context of the canvas on which to draw.
  * @param {number}  x      			The x coordinate for the text.
  * @param {number}  y      			The y coordinate for the text.
- * @param {number}  width 			The width of the icons.
- * @param {string}  pos_bw       	The url of the position icon in black and white.
- * @param {string}  pos_color       The url of the position icon in color.
- * @param {string}  pos_bw       	The url of the position icon in black and white.
- * @param {string}  orien_color     The url of the orientation icon in color.
- * @param {string}  orien_bw        The url of the orientation icon in black and white.
- * @param {string}  status			status = "pos": Only the label and icon for position will be in color.
- 									status = "orien": Only the label and icon for orientation will be in color.
- 									For any other status, or if parameter is empty, all icons and labels will be in black and white.
+ * @param {array}   program_arr     The array of programming choices selected by the user.
  */
 
 function display_program(ctx_in, x, y, program_arr) {
