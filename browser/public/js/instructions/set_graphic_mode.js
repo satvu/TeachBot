@@ -40,9 +40,19 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 				this.drawings = [];
 			}
 
-			this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
-				self.drawCanvas(timestamp);
-			});
+			if (instr.hasOwnProperty('custom')) {
+				if (!instr.custom) {
+					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+					this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
+						self.drawCanvas(timestamp);
+					});
+				}
+			} else {
+				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+				this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
+					self.drawCanvas(timestamp);
+				});
+			}
 
 			break;
 

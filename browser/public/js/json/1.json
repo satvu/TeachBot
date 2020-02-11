@@ -373,8 +373,8 @@
 			{
 				"type": "draw",
 				"shape": "bar",
-				"height_percent": "#JOINT_POSITION_5/3.14",
-				"x": 15,
+				"height_percent": "#JOINT_POSITION_5/6.28+0.5",
+				"x": 19,
 				"y": 85,
 				"width": 9,
 				"max_height": 80,
@@ -407,9 +407,14 @@
 				"height_percent": "#JOINT_POSITION_0/3.14",
 				"x": 4,
 				"y": 85,
-				"width": 7,
+				"width": 9,
 				"max_height": 80,
 				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"wait",
+				"for":"time",
+				"s":1
 			},
 			{
 				"type":"wait",
@@ -456,7 +461,8 @@
 						"delay":true
 					},
 					{
-						"type":"numeric_input"
+						"type":"numeric_input",
+						"store_answer_in":"wheelVal"
 					}
 				]
 			},
@@ -467,31 +473,79 @@
 				"delay":false
 			},
 			{
-				"type":"interaction_control",
-				"position_only":false,
+				"type":"set_robot_mode",
+				"mode":"interaction ctrl",
 				"orientation_x":true,
 				"orientation_y":true,
 				"orientation_z":true,
 				"position_x":true,
 				"position_y":true,
-				"position_z":true,
-				"in_end_point_frame":false,
-				"PASS":false,
-				"ways":false
+				"position_z":true
 			},
 			{
-				"type":"initializeDisplay"
+				"type":"set_graphic_mode",
+				"mode":"canvas",
+				"clear":true
 			},
 			{
-				"type": "drawDynamic",
-				"shape": "bar",
-				"topics": {"position": ["j0","j1","j2","j3","j4","j5","j6"]},
-				"x_ratio": [4,18,32,46,60,74,88],
-				"y_ratio": [80,80,80,80,80,80,80],
-				"width_ratio": [9,9,9,9,9,9,9],
-				"max_height_ratio": [70,70,70,70,70,70,70],
-				"fillStyle": ["#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629", "#7c2629"],
-				"label": ["Joint 1","Joint 2","Joint 3","Joint 4","Joint 5","Joint 6","Joint 7"]
+				"type":"set",
+				"key":"j",
+				"val":0
+			},
+			{
+				"type":"log",
+				"message":"#JOINT_POSITION"
+			},
+			{
+				"type":"log",
+				"message":"#JOINT_POSITION[0]"
+			},
+			{
+				"type":"log",
+				"message":"#JOINT_POSITION_0"
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"draw",
+				"shape":"bar",
+				"height_percent": "#JOINT_POSITION[0]/3.14",
+				"x": 4,
+				"y": 80,
+				"width": 9,
+				"max_height": 70,
+				"fillStyle": ["#7c2629"]
+			},
+			{
+				"type":"while",
+				"conditional":"#j<JOINTS",
+				"instructions":[
+					{
+						"type":"draw",
+						"shape":"bar",
+						"height_percent": "#JOINT_POSITION[#j]/3.14",
+						"x": "4+14*#j",
+						"y": 80,
+						"width": 9,
+						"max_height": 70,
+						"fillStyle": ["#7c2629"]
+					},
+					{
+						"type":"set",
+						"key":"j",
+						"val":"#j+1"
+					}
+				]
+			},
+			{
+				"type":"wait",
+				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"Using my encoders, I can measure the angles of all seven of my motors. Please stand back so I can reset my position.",

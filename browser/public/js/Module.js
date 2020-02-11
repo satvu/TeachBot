@@ -182,6 +182,7 @@ function Module(module_num, main, content_elements) {
 
 	// Initialize dictionary
 	this.dictionary = {};
+	this.dictionary['JOINT_POSITION'] = [];
 	this.getEndpoint();
 
 	/*********************
@@ -225,6 +226,7 @@ function Module(module_num, main, content_elements) {
 Module.prototype.positionCallback = function(msg) {
 	for (let j=0; j<Object.keys(msg).length; j++) {
 		self.dictionary[`JOINT_POSITION_${j}`] = msg[`j${j}`];
+		self.dictionary[`JOINT_POSITION`][j] = msg[`j${j}`];
 	}
 }
 Module.prototype.velocityCallback = function(msg) {
@@ -1067,12 +1069,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-
 			case 'encode':
-				window.cancelAnimationFrame(this.canvas_frame_req);
-				self.displayOff();
-				canvas_container.style.display = 'initial';
-				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+				this.set_graphic_mode({mode: 'canvas', custom: true}, instructionAddr);
 				var encoder_moving_part_url = DIR + 'images/moving_part.png';
 				var encoder_still_part_url = DIR + 'images/still_part.png';
 				var encoder_motor_url = DIR + 'images/motor_body.png';
@@ -1084,10 +1082,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'stopEncode':
-			// this is a temporary command to separate clearInterval from drawing command.
-			// It needs to be deleted eventually.
+				// TODO: This is a temporary command to separate clearInterval from drawing command. It needs to be deleted eventually.
 				clearInterval(encoder);
 				this.start(self.getNextAddress(instructionAddr));
+
 				break;
 
 			case 'gripper':
@@ -1179,26 +1177,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'wait':
 				this.wait(instr, instructionAddr).then((msg) => {
+					if (VERBOSE) console.log(`Done waiting.`)
 					this.start(self.getNextAddress(instructionAddr));
 				});
-				
-				/*
-				var goal = new ROSLIB.Goal({
-					actionClient: this.WaitAct,
-					goalMessage:{ 
-						what: instr.what,
-						timeout: instr.timeout 
-					}
-				});
 
-				goal.on('result', result => {
-					if (instr.hasOwnProperty('store_answer_in')) {
-							self.dictionary[instr.store_answer_in] = result.success;
-						}
-					self.start(self.getNextAddress(instructionAddr));
-				});
-				goal.send();
-				*/
 				break;
 
 			/*case 'joint_impedance':
@@ -1278,7 +1260,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'log':
 				checkInstruction(instr, ['message'], instructionAddr);
 
-				console.log(instr.message);
+				console.log(this.hashTokeyVal(instr.message));
 
 				this.start(this.getNextAddress(instructionAddr));
 				break;

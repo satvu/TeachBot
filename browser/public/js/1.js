@@ -10,8 +10,8 @@ var m = new Module(module_num, main, [image, animator, canvas_obj]);
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = 'MultipleMotors';
-var start_location =0;
+var start_seq = 'encoders';
+var start_location =19;
 async function main() {
     m.displayOff();
     m.set_graphic_mode({mode:'image'});
