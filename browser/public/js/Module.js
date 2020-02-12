@@ -894,6 +894,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'complete_program':
 
+				console.log(self.program)
+
 				for (let c=0; c<self.program; c++){
 					if (self.program[c] == 'Open Gripper'){
 						var goal_Gripper = new ROSLIB.Goal({
@@ -1416,13 +1418,14 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
                 canvas_container.style.display = 'initial';
                 var multi_choice_url = DIR + 'images/button_box.JPG';
 				var arrow_url = DIR + 'image/Arrow.png';
+				var program_url = DIR + 'images/program_rect.png';
 
                 display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode'], multi_choice_url);
 
 				this.button_topic.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
                 	value = parseInt(message.data)
-					if (value < 2) {
+					if (value == 1) {
 						self.button_topic.unsubscribe();
 						self.button_topic.removeAllListeners();
 						self.displayOff(true);
@@ -1434,7 +1437,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: false}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program)
+							self.ctx.clearRect(0,0,12,100*this.ch);
+							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal_Gripper.send();
 					} else if (value == 3){
@@ -1444,7 +1448,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: true}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program)
+							self.ctx.clearRect(0,0,12,100*this.ch);
+							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal_Gripper.send();
 					} else if (value == 4){
@@ -1465,11 +1470,13 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							}
 						});
 						goal.on('result', function(result) {
-							display_program(m.ctx, 10, 100, self.program)
+							self.ctx.clearRect(0,0,12,100*this.ch);
+							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal.send();
 					} else if (value == -1){
 						self.program.pop()
+						self.ctx.clearRect(0,0,12,100*this.ch);
 						display_program(m.ctx, 300, 400, self.program)
 					}
 				});

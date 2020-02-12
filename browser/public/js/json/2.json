@@ -1081,13 +1081,49 @@
 						"type":"programming_choices"
 					},
 					{
-						"//":"5: Please stand back so I can see if you succesfully completed the task. Can you please put Box 2 in its original position? Press any button on the box once you've done so.",
+						"//":"5: Please stand back so I can reset my position. ",
 						"type":"play",
 						"audio_index":4,
 						"delay": true
 					},
 					{
+						"type":"reset"
+					},
+					{
+						"type":"drawShape",
+						"shape":"rectangle",
+						"x_ratio":57.9,
+						"y_ratio":69,
+						"w_ratio":11,
+						"h_ratio":10,
+						"rotate":90
+					},
+					{
+						"type":"drawShape",
+						"shape":"rectangle",
+						"x_ratio":19,
+						"y_ratio":67,
+						"w_ratio":17,
+						"h_ratio":19
+					},
+					{
+						"type":"goToJointAngles",
+						"joint_angles":"above_fourth_box_joint_arg"
+					},
+					{
+						"//":"6: Can you please put Box 2 in its original position? Press any button on the box once you've done so. ",
+						"type":"play",
+						"audio_index":5,
+						"delay": true
+					},
+					{
 						"type":"pressed_button"
+					},
+					{
+						"//":"7: I am going to run through program you set up for me.",
+						"type":"play",
+						"audio_index":6,
+						"delay": true
 					},
 					{
 						"type":"complete_program"
@@ -1097,9 +1133,9 @@
 						"joint_angles":"camera_pos2"
 					},
 					{
-						"//":"6: Let's see if you successfully put the box into the bin.",
+						"//":"8: Let's see if you successfully put the box into the bin.",
 						"type":"play",
-						"audio_index":5,
+						"audio_index":7,
 						"delay":true
 					},
 					{
@@ -1121,9 +1157,9 @@
 						],
 						"if_false":[
 							{
-								"//":"8: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
+								"//":"10: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
 								"type":"play",
-								"audio_index":7,
+								"audio_index":9,
 								"delay":true
 							},
 							{
@@ -1138,9 +1174,9 @@
 				]
 			},
 			{
-				"//":"7:Great job! You are a programminge expert!",
+				"//":"9:Great job! You are a programming expert!",
 				"type":"play",
-				"audio_index":6,
+				"audio_index":8,
 				"delay":true
 			},
 			{

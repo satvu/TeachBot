@@ -7,14 +7,20 @@
  * @param {array}   program_arr     The array of programming choices selected by the user.
  */
 
-function display_program(ctx_in, x, y, program_arr) {
+function display_program(ctx_in, x, y, program_arr, img_url) {
 
-	ctx_in.font = "45px Raleway";
-	ctx_in.textAlign = "left";
-	ctx_in.fillStyle = "#373737";
-    ctx_in.strokeStyle = '#333333';
-    ctx_in.lineWidth = 7;
-	for (let c=0; c<program_arr.length; c++){
-		ctx_in.fillText(program_arr[c], x, y+75*c); 
+	var imga = new Image();
+	imga.onload = function(){
+		ctx_in.clearRect(0,0,12,ctx_in.canvas.height); 
+		ctx_in.drawImage(imga, 0, 0, 12, ctx_in.canvas.height);
+		ctx_in.font = "40px Raleway";
+		ctx_in.textAlign = "left";
+		ctx_in.fillStyle = "#373737";
+	    ctx_in.strokeStyle = '#333333';
+	    ctx_in.lineWidth = 7;
+		for (let c=0; c<program_arr.length; c++){
+			ctx_in.fillText(program_arr[c], x, y+75*c); 
+		}
 	}
+	imga.src = img_url;
 }
