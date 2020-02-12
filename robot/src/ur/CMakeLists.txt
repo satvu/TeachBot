@@ -60,44 +60,34 @@ add_message_files(
 
    FILES
    #files in Sawyer + Module
-   adjustPoseTo.msg
-   GoToJointAngles.msg
-   JointInfo.msg
-   joint_move.msg
-   InteractionControl.msg
-   JointImpedance.msg
-   EndpointInfo.msg
-   GoToCartesianPose.msg
-   cuffInteraction.msg
-   adjustPoseBy.msg
-   Image.msg
+    JointInfo.msg
+    EndpointInfo.msg
+    Image.msg
  )
 
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
-   Joints.srv
-   JointCommand.srv
-   AudioDuration.srv
-   DevMode.srv
+  AudioDuration.srv
+  DevMode.srv
+  SetRobotMode.srv
+  ScrollWheelSubscription.srv
+  CuffWays.srv
 )
 
 ## Generate actions in the 'action' folder
 add_action_files(
    FILES
-   AdjustPoseBy.action
-   AdjustPoseTo.action
-   CuffInteraction.action
-   GoToCartesianPose.action 
-   GoToJointAngles.action
-   Gripper.action 
-   HighTwo.action 
-   InteractionControl.action 
-   JointImpedance.action 
-   JointMove.action 
-   MultipleChoice.action 
-   PickUpBox.action 
-   WaitForPush.action 
+  CuffInteraction.action
+  GoToJointAngles.action
+  GoToCartesianPose.action
+  Gripper.action
+  MultipleChoice.action
+  AdjustPoseTo.action
+  PickUpBox.action
+  AdjustPoseBy.action
+  ButtonSend.action
+  Wait.action
  )
 
 ## Generate added messages and services with any dependencies listed here

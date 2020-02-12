@@ -7,6 +7,7 @@ float32 j2pos
 float32 j3pos
 float32 j4pos
 float32 j5pos
+float32 j6pos
 # Alternatively, you can access a preset joint configuration by referencing its name.
 string name
 # Optional: Fraction of fastest speed the arm can move

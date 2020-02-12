@@ -127,11 +127,17 @@ if __name__ == '__main__':
     
     # 6 - 15
     # TODO Find the hard-coded values that work for UR
-    joint_dof_start = [-1.57, DSP,j2scara,0,-j4max,0]
-    joint_dof_shoulder = [-1.57, -2.80 ,j2scara,0,-j4max,0]
-    joint_dof_elbow = [-1.57, DSP, .30, 0,-j4max,0]
-    joint_dof_wrist = [-1.57, DSP,j2scara,0, 0.45,0]
-    joint_dof_up = [-1.57, DSP, j2scara,0,-j4max,0]
+    # joint_dof_start = [-1.57, DSP,j2scara,0,-j4max,0]
+    # joint_dof_shoulder = [-1.57, -2.80 ,j2scara,0,-j4max,0]
+    # joint_dof_elbow = [-1.57, DSP, .30, 0,-j4max,0]
+    # joint_dof_wrist = [-1.57, DSP,j2scara,0, 0.45,0]
+    # joint_dof_up = [-1.57, DSP, j2scara,0,-j4max,0]
+    # for now use the following so it goes through this section of the module but doesn't swing around like crazy
+    joint_dof_start = ZERO
+    joint_dof_shoulder = ZERO
+    joint_dof_elbow = ZERO
+    joint_dof_wrist = ZERO
+    joint_dof_up = ZERO
 
     m = Module()
 
