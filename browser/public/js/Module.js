@@ -666,36 +666,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(self.getNextAddress(instructionAddr));
 				break;
 
-			case 'drawShape':
-				checkInstruction(instr, ['shape'], instructionAddr);
-
-				if (instr.shape=='ball') {
-					if (instr.hasOwnProperty('clearRec')){this.ctx.clearRect(0,0,100*this.cw,100*this.ch);};
-					var x_ball = instr.x_ratio*this.cw;
-					var y_ball = instr.y_ratio*this.ch;
-					var r_ball = instr.r_ratio*this.ch;
-					if (instr.hasOwnProperty('label')) {
-						this.ctx.font = Math.round(instr.labelsize_ratio*this.cw) + 'px Raleway';
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle, instr.label);
-					} else{
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
-					}
-				} else if (instr.shape=='arc') {
-					canvas_container.style.display = 'initial';
-					arc3pt(this.ctx,instr.x1*this.cw,instr.y1*this.ch,instr.x2*this.cw,instr.y2*this.ch,instr.x3*this.cw,instr.y3*this.ch,instr.ccw);
-				} else if (instr.shape=='bar') {
-					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
-				} else if (instr.shape=='rectangle') {
-					if (instr.hasOwnProperty('label')){
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate, instr.label)
-					} else {
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate)
-					}
-				}
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-
 			case 'LOG':
 				console.log(Object.keys(instr.aDict))
 				for (var key in (instr.aDict)) {
@@ -703,65 +673,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				}
 
 				this.start(this.getNextAddress(instructionAddr));
-				break;
-
-			case 'drawDynamic':
-
-				checkInstruction(instr, ['shape','topics'], instructionAddr);
-
-				for (var topic in instr.topics) {				// Loop through all topics.
-					var values = instr.topics[topic];
-					if (topic == 'position') {					// Check what type of topics it is.
-						this.position.subscribe(async function(message) {
-							if (instr.shape == 'bar') {
-								/** 
-								 *  The line below needs to be fixed.
-								 *  When multiple topics are fed, it clears previous topics.
-								 *  Not an issue for now.
-								 */
-								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-								self.ctx.font = Math.round(3*self.cw) + 'px Raleway';
-								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
-									var joint = values[i]
-									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
-									var x = instr.x_ratio[i]*self.cw;
-									var y = instr.y_ratio[i]*self.ch;
-									var width = instr.width_ratio[i]*self.cw;
-									var max_height = instr.max_height_ratio[i]*self.ch;
-									var height_percent;
-									if (joint == 'j6') {
-										height_percent = (eval('message.'+joint)+1.5*Math.PI)/(3*Math.PI);
-									} else {
-										height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
-									}
-									if (instr.hasOwnProperty('label')) {
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
-									} else{
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i]);
-									};
-								};
-							} else if (instr.shape == 'ball'){
-								// Placeholder, doing nothing for now.
-							};
-						});
-					} else if (topic == 'velocity'){
-						// placeholder for another topic. Also serves as an example of what a topic can be.
-					}
-				};
-
-				this.button_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received indication to advance');
-					for (topic in instr.topics){
-						eval('self.'+topic+'.unsubscribe();');
-						eval('self.'+topic+'.removeAllListeners();');
-					
-					self.button_topic.unsubscribe();
-					self.button_topic.removeAllListeners();
-					self.displayOff();
-					self.start(self.getNextAddress(instructionAddr));
-					}
-				});
-
 				break;
 
 			case 'buttons':
@@ -894,38 +805,51 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'complete_program':
 
-				console.log(self.program)
 
-				for (let c=0; c<self.program; c++){
-					if (self.program[c] == 'Open Gripper'){
-						var goal_Gripper = new ROSLIB.Goal({
-							actionClient: this.GripperAct,
-							goalMessage:{grip: true}
-						});
-						goal_Gripper.on('result', function(result){
-							console.log('Completed program')
-						});
-						goal_Gripper.send();
-					} else if (self.program[c] == 'Close Gripper'){
-						var goal_Gripper = new ROSLIB.Goal({
-							actionClient: this.GripperAct,
-							goalMessage:{grip: false}
-						});
-						goal_Gripper.on('result', function(result){
-							console.log('Completed program')
-						});
-						goal_Gripper.send();
-					} else {
-						var goal;
-						goal = this.getGoToGoal('waypoints.pop(0)', 0.225);
-						goal.on('result', function(result) {
-							console.log('Completed program')
-						});
-						goal.send();
-					}
+				action = self.program[0]
+				console.log(self.program[0])
+
+				if (self.program[0] == 'Open Gripper'){
+					var goal_Gripper2 = new ROSLIB.Goal({
+						actionClient: this.GripperAct,
+						goalMessage:{grip: false}
+					});
+					goal_Gripper2.on('result', function(result){
+						console.log('Completed program')
+						self.program.shift()
+						if (self.program.length == 0){
+							self.dictionary['q'] = true;
+						}
+						self.start(self.getNextAddress(instructionAddr));
+					});
+					goal_Gripper2.send();
+				} else if (self.program[0] == 'Close Gripper'){
+					var goal_Gripper1 = new ROSLIB.Goal({
+						actionClient: this.GripperAct,
+						goalMessage:{grip: true}
+					});
+					goal_Gripper1.on('result', function(result){
+						console.log('Completed program')
+						self.program.shift()
+						if (self.program.length == 0){
+							self.dictionary['q'] = true;
+						}
+						self.start(self.getNextAddress(instructionAddr));
+					});
+					goal_Gripper1.send();
+				} else {
+					var goal;
+					goal = this.getGoToGoal('waypoints.pop(0)', 0.25);
+					goal.on('result', function(result) {
+						console.log('Completed program')
+						self.program.shift()
+						if (self.program.length == 0){
+							self.dictionary['q'] = true;
+						}
+						self.start(self.getNextAddress(instructionAddr));
+					});
+					goal.send();
 				}
-				self.program = [];
-				this.start(this.getNextAddress(instructionAddr));
 
 			break;
 
@@ -993,21 +917,63 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'drawBin':
-				checkInstruction(instr, ['number'], instructionAddr);
-				var binW = 17*this.cw;
-				var binH = 13*this.ch;
-				switch (instr.number) {
-					case 1:
-						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);
-						this.ctx.strokeRect(62*this.cw, 40*this.ch, binW, binH);
-						break;
-					case 2:
-						this.ctx.strokeRect(83*this.cw, 33*this.cw, binW, binH);
-						break;
-				}
+			case 'drawDynamic':
 
-				this.start(this.getNextAddress(instructionAddr));
+				checkInstruction(instr, ['shape','topics'], instructionAddr);
+
+				for (var topic in instr.topics) {				// Loop through all topics.
+					var values = instr.topics[topic];
+					if (topic == 'position') {					// Check what type of topics it is.
+						this.position.subscribe(async function(message) {
+							if (instr.shape == 'bar') {
+								/** 
+								 *  The line below needs to be fixed.
+								 *  When multiple topics are fed, it clears previous topics.
+								 *  Not an issue for now.
+								 */
+								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+								self.ctx.font = Math.round(3*self.cw) + 'px Raleway';
+								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
+									var joint = values[i]
+									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
+									var x = instr.x_ratio[i]*self.cw;
+									var y = instr.y_ratio[i]*self.ch;
+									var width = instr.width_ratio[i]*self.cw;
+									var max_height = instr.max_height_ratio[i]*self.ch;
+									var height_percent;
+									if (joint == 'j6') {
+										height_percent = (eval('message.'+joint)+1.5*Math.PI)/(3*Math.PI);
+									} else {
+										height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
+									}
+									if (instr.hasOwnProperty('label')) {
+										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
+									} else{
+										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i]);
+									};
+								};
+							} else if (instr.shape == 'ball'){
+								// Placeholder, doing nothing for now.
+							};
+						});
+					} else if (topic == 'velocity'){
+						// placeholder for another topic. Also serves as an example of what a topic can be.
+					}
+				};
+
+				this.button_topic.subscribe(async function(message) {
+					if (VERBOSE) console.log('Received indication to advance');
+					for (topic in instr.topics){
+						eval('self.'+topic+'.unsubscribe();');
+						eval('self.'+topic+'.removeAllListeners();');
+					
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
+					self.displayOff();
+					self.start(self.getNextAddress(instructionAddr));
+					}
+				});
+
 				break;
 
 			case 'drawPosOrien':
@@ -1039,6 +1005,35 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
+			case 'drawShape':
+				checkInstruction(instr, ['shape'], instructionAddr);
+
+				if (instr.shape=='ball') {
+					if (instr.hasOwnProperty('clearRec')){this.ctx.clearRect(0,0,100*this.cw,100*this.ch);};
+					var x_ball = instr.x_ratio*this.cw;
+					var y_ball = instr.y_ratio*this.ch;
+					var r_ball = instr.r_ratio*this.ch;
+					if (instr.hasOwnProperty('label')) {
+						this.ctx.font = Math.round(instr.labelsize_ratio*this.cw) + 'px Raleway';
+						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle, instr.label);
+					} else{
+						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
+					}
+				} else if (instr.shape=='arc') {
+					canvas_container.style.display = 'initial';
+					arc3pt(this.ctx,instr.x1*this.cw,instr.y1*this.ch,instr.x2*this.cw,instr.y2*this.ch,instr.x3*this.cw,instr.y3*this.ch,instr.ccw);
+				} else if (instr.shape=='bar') {
+					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
+				} else if (instr.shape=='rectangle') {
+					if (instr.hasOwnProperty('label')){
+						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate, instr.label)
+					} else {
+						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate)
+					}
+				}
+				this.start(self.getNextAddress(instructionAddr));
+
+				break;
 
 			case 'encode':
 				self.displayOff();
@@ -1416,16 +1411,17 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'programming_choices':
 				this.displayOff();
                 canvas_container.style.display = 'initial';
-                var multi_choice_url = DIR + 'images/button_box.JPG';
+                var multi_choice_url = DIR + 'images/new_button_box.JPG';
 				var arrow_url = DIR + 'image/Arrow.png';
 				var program_url = DIR + 'images/program_rect.png';
 
-                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode'], multi_choice_url);
+                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode', 'Remove Choice', 'Done'], multi_choice_url);
 
 				this.button_topic.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
                 	value = parseInt(message.data)
 					if (value == 1) {
+						console.log(self.program)
 						self.button_topic.unsubscribe();
 						self.button_topic.removeAllListeners();
 						self.displayOff(true);
@@ -1437,7 +1433,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: false}
 						});
 						goal_Gripper.on('result', function(result){
-							self.ctx.clearRect(0,0,12,100*this.ch);
+							self.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal_Gripper.send();
@@ -1448,7 +1444,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: true}
 						});
 						goal_Gripper.on('result', function(result){
-							self.ctx.clearRect(0,0,12,100*this.ch);
+							self.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal_Gripper.send();
@@ -1470,14 +1466,13 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							}
 						});
 						goal.on('result', function(result) {
-							self.ctx.clearRect(0,0,12,100*this.ch);
+							self.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 							display_program(m.ctx, 10, 100, self.program, program_url)
 						});
 						goal.send();
 					} else if (value == -1){
 						self.program.pop()
-						self.ctx.clearRect(0,0,12,100*this.ch);
-						display_program(m.ctx, 300, 400, self.program)
+						display_program(m.ctx, 10, 100, self.program)
 					}
 				});
 

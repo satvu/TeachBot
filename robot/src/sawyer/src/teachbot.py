@@ -381,7 +381,7 @@ class Module():
 		'''
 
 	def display_camera_callback(self, img_data):
-		rospy.sleep(0.5)
+		rospy.sleep(0.76)
 		bridge = CvBridge()
 		try:
 			cv_image = bridge.imgmsg_to_cv2(img_data, 'bgr8')
@@ -431,7 +431,7 @@ class Module():
 
 		try:
 			distance = ((centerBin[0]-centerApril[0])**2+(centerBin[1]-centerApril[1])**2)**0.5
-			if distance < 80:
+			if distance < 90:
 				self.box_in_bin_topic.publish(True)
 				self.command_complete_topic.publish()
 				rospy.loginfo('Box is in bin')
