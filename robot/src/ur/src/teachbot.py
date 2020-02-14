@@ -40,8 +40,14 @@ class Module():
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
 
-        # Publish to browser so you know something is complete
+        # Subscribed Topics
+        rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
+
+        # Publish topics 
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
+        self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
+        self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
+        self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
 
         # Global Vars
         self.audio_duration = 0
@@ -56,6 +62,27 @@ class Module():
     def rx_audio_duration(self,data):
         self.audio_duration = data.audio_duration
         return True
+
+    '''
+    Read information from joint states, parse into position, velocity, and effort, then 
+    forward the information by publishing it.
+    '''
+    def forwardJointState(self, data):
+        position = JointInfo()
+        velocity = JointInfo()
+        effort = JointInfo()
+        for j in range(Module.JOINTS):
+            setattr(position, 'j'+str(j), data.position[j])
+            setattr(velocity, 'j'+str(j), data.velocity[j])
+            setattr(effort, 'j'+str(j), data.effort[j])
+            # TODO: Ask about the control variable that is in Sawyer (is that needed here?)
+        rospy.loginfo(position)
+        rospy.loginfo(velocity)
+        rospy.loginfo(effort)
+        self.position_topic.publish(position)
+        self.velocity_topic.publish(velocity)
+        self.effort_topic.publish(effort)
+
     '''
     When the subscriber to "GoToJointAngles" receives the name of a constant from the browser,
     it is evaluated in this function and parsed into a "FollowTrajectoryGoal" object and sent to the
