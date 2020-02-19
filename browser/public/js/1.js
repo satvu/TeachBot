@@ -10,8 +10,8 @@ var m = new Module(module_num, main, [image, animator, canvas_obj]);
 /**************************
  *   Main Functionality   *
  **************************/
-var start_seq = '2dPosition';
-var start_location = 22;
+var start_seq = 'intro';
+var start_location = 0;
 async function main() {
     m.displayOff();
     m.set_graphic_mode({mode:'image'});
