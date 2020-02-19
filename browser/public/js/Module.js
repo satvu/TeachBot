@@ -111,6 +111,12 @@ function Module(module_num, main, content_elements) {
 		serviceType: ARDUINO + '/ButtonInfo'
 	});
 	ButtonReceiverSrv.advertise(this.buttonCallback);
+	var PlayAudioSrv = new ROSLIB.Service({
+		ros: ros,
+		name: '/teachbot/PlayAudio',
+		messageType: ROBOT + '/PlayAudio'
+	});
+	PlayAudioSrv.advertise(this.playAudioCallback);
 
 	// Service Clients
 	this.SetRobotModeSrv = new ROSLIB.Service({
@@ -183,7 +189,7 @@ function Module(module_num, main, content_elements) {
 
 	// Initialize dictionary
 	this.dictionary = {};
-	this.getEndpoint();
+	//this.getEndpoint();
 
 	/*********************
 	 *   HTML Elements   *
@@ -418,7 +424,7 @@ Module.prototype.pub_angle = function(angle) {
 
 	this.joint_angle.publish(req);
 }
-
+/*
 Module.prototype.getEndpoint = function(){
 	this.endpoint.subscribe(function(message) { 
 		self.dictionary['position_x'] = message.position.x;
@@ -431,7 +437,7 @@ Module.prototype.getEndpoint = function(){
 		//console.log(self.dictionary)	
 	});
 }
-
+*/
 /**
  * Whether all page resources are loaded.
  * 
@@ -497,6 +503,19 @@ Module.prototype.devRxCallback = function(req, resp) {
 	resp['success'] = true;
     resp['message'] = 'Set successfully';
     return true;
+}
+
+/**
+ *
+ */
+Module.prototype.playAudioCallback = function(req, resp) {
+	player.src = DIR + 'audio/' + req.filename;
+	let audio = new Audio();
+	audio.addEventListener('canplaythrough', function() {
+		player.play();
+	}, false);
+	audio.src = player.src;
+	return true;
 }
 
 /**
@@ -693,14 +712,14 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				goal_AdjustPoseTo.send()
 
 				break;
-
+/*
 			case 'initializeDisplay':
 				this.displayOff();
 				canvas_container.style.display = 'initial';
 				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 				this.start(self.getNextAddress(instructionAddr));
 				break;
-
+*/
 			case 'draw':
 				this.draw(instr, instructionAddr);
 				break;
@@ -1068,12 +1087,8 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-
 			case 'encode':
-				window.cancelAnimationFrame(this.canvas_frame_req);
-				self.displayOff();
-				canvas_container.style.display = 'initial';
-				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+				this.set_graphic_mode({mode: 'canvas', custom: true}, instructionAddr);
 				var encoder_moving_part_url = DIR + 'images/moving_part.png';
 				var encoder_still_part_url = DIR + 'images/still_part.png';
 				var encoder_motor_url = DIR + 'images/motor_body.png';
@@ -1085,10 +1100,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'stopEncode':
-			// this is a temporary command to separate clearInterval from drawing command.
-			// It needs to be deleted eventually.
+				// TODO: This is a temporary command to separate clearInterval from drawing command. It needs to be deleted eventually.
 				clearInterval(encoder);
 				this.start(self.getNextAddress(instructionAddr));
+
 				break;
 
 			case 'gripper':
@@ -1180,26 +1195,10 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 			case 'wait':
 				this.wait(instr, instructionAddr).then((msg) => {
+					if (VERBOSE) console.log(`Done waiting.`)
 					this.start(self.getNextAddress(instructionAddr));
 				});
-				
-				/*
-				var goal = new ROSLIB.Goal({
-					actionClient: this.WaitAct,
-					goalMessage:{ 
-						what: instr.what,
-						timeout: instr.timeout 
-					}
-				});
 
-				goal.on('result', result => {
-					if (instr.hasOwnProperty('store_answer_in')) {
-							self.dictionary[instr.store_answer_in] = result.success;
-						}
-					self.start(self.getNextAddress(instructionAddr));
-				});
-				goal.send();
-				*/
 				break;
 
 			/*case 'joint_impedance':
@@ -1279,7 +1278,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'log':
 				checkInstruction(instr, ['message'], instructionAddr);
 
-				console.log(instr.message);
+				console.log(this.hashTokeyVal(instr.message));
 
 				this.start(this.getNextAddress(instructionAddr));
 				break;
@@ -1427,7 +1426,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 
 				break;
-
+/*
 			case "refresh":
 				m.displayOff(true);
 
@@ -1447,7 +1446,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 
 				break;
-
+*/
 			case 'numeric_input':
 				this.numeric_input(instr, instructionAddr);
 				
@@ -1476,7 +1475,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-
 			case 'show_camera':
 
 				var cv_image_url = DIR + 'images/cv_image.png';
@@ -1492,7 +1490,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				cv_image.src = cv_image_url;
 
 				break;
-
+/*
 			case 'update':
 
 				this.getEndpoint()
@@ -1500,7 +1498,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 
 				break; 
-
+*/
 			case 'while':
 				checkInstruction(instr, ['conditional'], instructionAddr);
 		

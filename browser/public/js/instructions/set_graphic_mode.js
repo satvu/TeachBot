@@ -40,9 +40,19 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 				this.drawings = [];
 			}
 
-			this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
-				self.drawCanvas(timestamp);
-			});
+			if (instr.hasOwnProperty('custom')) {
+				if (!instr.custom) {
+					this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+					this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
+						self.drawCanvas(timestamp);
+					});
+				}
+			} else {
+				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
+				this.canvas_frame_req = window.requestAnimationFrame(function(timestamp) {
+					self.drawCanvas(timestamp);
+				});
+			}
 
 			break;
 
@@ -103,6 +113,19 @@ Module.prototype.drawCanvas = function(timestamp) {
 
 				arc3pt(self.ctx, x1, y1, x2, y2, x3, y3, ccw);
 
+				break;
+				
+			case 'rectangle':
+				var x = eval(self.hashTokeyVal(obj.x))*self.cw;
+				var y = eval(self.hashTokeyVal(obj.y))*self.ch;
+				var width = eval(self.hashTokeyVal(obj.width))*self.cw;
+				var height = eval(self.hashTokeyVal(obj.height))*self.ch;
+				if (obj.hasOwnProperty('rotate')) {
+					var rotate = eval(self.hashTokeyVal(obj.rotate));
+					draw_rectangle(self.ctx, x, y, width, height, rotate);
+				} else {
+					draw_rectangle(self.ctx, x, y, width, height);
+				}
 				break;
 		}
 	});
