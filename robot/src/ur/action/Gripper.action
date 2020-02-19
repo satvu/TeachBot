@@ -1,0 +1,15 @@
+# .action file for manipulating the gripper
+
+# goal definition
+bool grip
+---
+
+# result definition
+bool is_done
+---
+
+# feedback definition
+# currently unused
+
+int32 feedback
+

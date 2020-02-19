@@ -1,20 +1,18 @@
 'use strict'
 
-const module_num = 1;         //The module number
+const module_num = 42;         //The module number
 
 /*******************************
  *       Construct Module      *
  *******************************/
-var m = new Module(module_num, main, [image, animator, canvas_obj]);
+var m = new Module(module_num, main, [image,canvas_container]);
 
 /**************************
  *   Main Functionality   *
  **************************/
 var start_seq = 'intro';
-var start_location = 0;
-
 async function main() {
     m.displayOff();
-    m.set_graphic_mode({mode:'image'});
-    m.start([start_seq,start_location]);
+    image.style.display = 'initial';
+    m.start([start_seq,0]);
 }

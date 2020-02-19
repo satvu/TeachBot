@@ -1,9 +1,10 @@
 // Constants
 const DIR = 'https://localhost:8000/';    // Directory containing resources
-const JOINTS = 7;                         // Numer of joints in Sawyer arm
+const JOINTS = 6;                         // Numer of joints in Sawyer arm
 const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
-const ROBOT = 'sawyer';
+// const ROBOT = 'sawyer';
+const ROBOT = 'ur';
 const ARDUINO = 'button_box';
 
 /**
