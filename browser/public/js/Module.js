@@ -1,10 +1,10 @@
 // Constants
 const DIR = 'https://localhost:8000/';    // Directory containing resources
-const JOINTS = 6;                         // Numer of joints in Sawyer arm
+const JOINTS = 7;                         // Numer of joints in Sawyer arm
 const VERBOSE = true;                     // Whether or not to print everything
 const BUTTON = {'back': 0, 'show': 1, 'circle': 2, 'square': 3, 'triangle': 4};
 // const ROBOT = 'sawyer';
-const ROBOT = 'ur';
+const ROBOT = 'sawyer';
 const ARDUINO = 'button_box';
 
 /**
@@ -720,45 +720,12 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 				this.start(self.getNextAddress(instructionAddr));
 				break;
-<<<<<<< HEAD
 
-=======
 */
 			case 'draw':
 				this.draw(instr, instructionAddr);
 				break;
-/*
-			case 'drawShape':
-				checkInstruction(instr, ['shape'], instructionAddr);
 
-				if (instr.shape=='ball') {
-					if (instr.hasOwnProperty('clearRec')){this.ctx.clearRect(0,0,100*this.cw,100*this.ch);};
-					var x_ball = instr.x_ratio*this.cw;
-					var y_ball = instr.y_ratio*this.ch;
-					var r_ball = instr.r_ratio*this.ch;
-					if (instr.hasOwnProperty('label')) {
-						this.ctx.font = Math.round(instr.labelsize_ratio*this.cw) + 'px Raleway';
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle, instr.label);
-					} else{
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
-					}
-				} else if (instr.shape=='arc') {
-					canvas_container.style.display = 'initial';
-					arc3pt(this.ctx,instr.x1*this.cw,instr.y1*this.ch,instr.x2*this.cw,instr.y2*this.ch,instr.x3*this.cw,instr.y3*this.ch,instr.ccw);
-				} else if (instr.shape=='bar') {
-					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
-				} else if (instr.shape=='rectangle') {
-					if (instr.hasOwnProperty('label')){
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate, instr.label)
-					} else {
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate)
-					}
-				}
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
-*/
->>>>>>> master
 			case 'LOG':
 				console.log(Object.keys(instr.aDict))
 				for (var key in (instr.aDict)) {
@@ -768,67 +735,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-<<<<<<< HEAD
-=======
-			case 'draw_dynamic':
-				
-
-				for (var topic in instr.topics) {				// Loop through all topics.
-					var values = instr.topics[topic];
-					if (topic == 'position') {					// Check what type of topics it is.
-						this.position.subscribe(async function(message) {
-							if (instr.shape == 'bar') {
-								/** 
-								 *  The line below needs to be fixed.
-								 *  When multiple topics are fed, it clears previous topics.
-								 *  Not an issue for now.
-								 */
-								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-								self.ctx.font = Math.round(3*self.cw) + 'px Raleway';
-								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
-									var joint = values[i]
-									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
-									var x = instr.x_ratio[i]*self.cw;
-									var y = instr.y_ratio[i]*self.ch;
-									var width = instr.width_ratio[i]*self.cw;
-									var max_height = instr.max_height_ratio[i]*self.ch;
-									var height_percent;
-									if (joint == 'j6') {
-										height_percent = (eval('message.'+joint)+1.5*Math.PI)/(3*Math.PI);
-									} else {
-										height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
-									}
-									if (instr.hasOwnProperty('label')) {
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
-									} else{
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i]);
-									};
-								};
-							} else if (instr.shape == 'ball'){
-								// Placeholder, doing nothing for now.
-							};
-						});
-					} else if (topic == 'velocity'){
-						// placeholder for another topic. Also serves as an example of what a topic can be.
-					}
-				};
-
-				this.button_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received indication to advance');
-					for (topic in instr.topics){
-						eval('self.'+topic+'.unsubscribe();');
-						eval('self.'+topic+'.removeAllListeners();');
-					
-					self.button_topic.unsubscribe();
-					self.button_topic.removeAllListeners();
-					self.displayOff();
-					self.start(self.getNextAddress(instructionAddr));
-					}
-				});
-
-				break;
-
->>>>>>> master
 			case 'buttons':
 				var goal_ButtonPress = new ROSLIB.Goal({
 					actionClient: this.ButtonPressAct,
@@ -1070,50 +976,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 
 				break;
-
-			case 'drawDynamic':
-
-				checkInstruction(instr, ['shape','topics'], instructionAddr);
-
-				for (var topic in instr.topics) {				// Loop through all topics.
-					var values = instr.topics[topic];
-					if (topic == 'position') {					// Check what type of topics it is.
-						this.position.subscribe(async function(message) {
-							if (instr.shape == 'bar') {
-								/** 
-								 *  The line below needs to be fixed.
-								 *  When multiple topics are fed, it clears previous topics.
-								 *  Not an issue for now.
-								 */
-								self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-								self.ctx.font = Math.round(3*self.cw) + 'px Raleway';
-								for (let i=0;i<values.length;i++){		// Loop through every element and update the graph
-									var joint = values[i]
-									if (VERBOSE) console.log('Received: ' + joint + ': ' + eval('message.'+joint));
-									var x = instr.x_ratio[i]*self.cw;
-									var y = instr.y_ratio[i]*self.ch;
-									var width = instr.width_ratio[i]*self.cw;
-									var max_height = instr.max_height_ratio[i]*self.ch;
-									var height_percent;
-									if (joint == 'j6') {
-										height_percent = (eval('message.'+joint)+1.5*Math.PI)/(3*Math.PI);
-									} else {
-										height_percent = (eval('message.'+joint)+Math.PI)/(2*Math.PI);
-									}
-									if (instr.hasOwnProperty('label')) {
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i], instr.label[i]);
-									} else{
-										draw_bar_new(self.ctx, x, y, width, max_height, height_percent, instr.fillStyle[i]);
-									};
-								};
-							} else if (instr.shape == 'ball'){
-								// Placeholder, doing nothing for now.
-							};
-						});
-					} else if (topic == 'velocity'){
-						// placeholder for another topic. Also serves as an example of what a topic can be.
-					}
-				};
 
 				this.button_topic.subscribe(async function(message) {
 					if (VERBOSE) console.log('Received indication to advance');
