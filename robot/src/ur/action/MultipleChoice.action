@@ -1,0 +1,10 @@
+## Asks a multiple choice question and records the answer.
+
+## Goal
+bool on
+---
+## Result: the selected answer
+int32 answer
+---
+## Feedback
+bool feedback

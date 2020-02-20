@@ -24,12 +24,8 @@ catkin_python_setup()
 
 add_message_files(
   FILES
-  adjustPoseTo.msg
   JointInfo.msg
-  JointImpedance.msg
   EndpointInfo.msg
-  GoToCartesianPose.msg
-  adjustPoseBy.msg
   Image.msg
 )
 
@@ -37,6 +33,8 @@ add_service_files(
   FILES
   AudioDuration.srv
   DevMode.srv
+  PlayAudio.srv
+  SetRobotMode.srv
   ScrollWheelSubscription.srv
   CuffWays.srv
 )
@@ -46,8 +44,6 @@ add_action_files(
   FILES
   CuffInteraction.action
   GoToJointAngles.action
-  InteractionControl.action
-  JointMove.action
   GoToCartesianPose.action
   Gripper.action
   MultipleChoice.action
@@ -86,7 +82,7 @@ catkin_package(
   message_runtime
   tf
   DEPENDS
-  apriltag
+  #apriltag
 )
 
 install(
