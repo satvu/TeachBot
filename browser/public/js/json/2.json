@@ -1090,6 +1090,12 @@
 				"delay": true
 			},
 			{
+				"//":"5: To enter free mode, press the yellow button. Then, to set a waypoint, press any button on the box.",
+				"type":"play",
+				"audio_index":4,
+				"delay": true
+			},
+			{
 				"type":"set",
 				"key":"p",
 				"val":false
@@ -1102,9 +1108,9 @@
 						"type":"programming_choices"
 					},
 					{
-						"//":"5: Please stand back so I can reset my position. ",
+						"//":"6: Please stand back so I can reset my position. ",
 						"type":"play",
-						"audio_index":4,
+						"audio_index":5,
 						"delay": true
 					},
 					{
@@ -1138,18 +1144,18 @@
 						"joint_angles":"above_fourth_box_joint_arg"
 					},
 					{
-						"//":"6: Can you please put Box 2 in its original position? Press any button on the box once you've done so. ",
+						"//":"7: Can you please put Box 2 in its original position? Press any button on the box once you've done so. ",
 						"type":"play",
-						"audio_index":5,
+						"audio_index":6,
 						"delay": false
 					},
 					{
 						"type":"pressed_button"
 					},
 					{
-						"//":"7: I am going to run through program you set up for me.",
+						"//":"8: I am going to run through program you set up for me.",
 						"type":"play",
-						"audio_index":6,
+						"audio_index":7,
 						"delay": true
 					},
 					{
@@ -1171,9 +1177,9 @@
 						"joint_angles":"camera_pos2"
 					},
 					{
-						"//":"8: Let's see if you successfully put the box into the bin.",
+						"//":"9: Let's see if you successfully put the box into the bin.",
 						"type":"play",
-						"audio_index":7,
+						"audio_index":8,
 						"delay":true
 					},
 					{
@@ -1195,9 +1201,9 @@
 						],
 						"if_false":[
 							{
-								"//":"10: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
+								"//":"11: Ooops! Not quite. Please put box 2 back into its designated position and try again. When you're ready, press any button on the box.",
 								"type":"play",
-								"audio_index":9,
+								"audio_index":10,
 								"delay":true
 							},
 							{
@@ -1212,9 +1218,9 @@
 				]
 			},
 			{
-				"//":"9:Great job! You are a programming expert!",
+				"//":"10:Great job! You are a programming expert!",
 				"type":"play",
-				"audio_index":8,
+				"audio_index":9,
 				"delay":true
 			},
 			{
