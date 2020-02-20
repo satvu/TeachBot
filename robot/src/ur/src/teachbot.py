@@ -20,8 +20,13 @@ from ur.srv import *
 
 from geometry_msgs.msg import WrenchStamped
 
+# joint names defined by UR in the correct order 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
+# joint names using 'right_j0' and 'right_j1' for consistency across packages and easy string construction in functions 
+JOINT_CONTROL_NAMES = ['right_j0', 'right_j1', 'right_j2', 'right_j3', 'right_j4', 'right_j5']
+
 class Module():
     JOINTS = 6
 
@@ -29,6 +34,31 @@ class Module():
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
+
+        # Global Vars
+		self.audio_duration = 0
+		self.finished = False
+		self.devMode = False
+		self.allowCuffInteraction = False
+		self.modeTimer = None
+
+        # Custom Control Variables --> used in Admittance Control
+		self.control = {
+			'i': 0, # index we are on out of the 15 values (0-14)
+			'order': 15, # how many we are keeping for filtering
+			'effort': [],			# Structured self.control['effort'][tap #, e.g. i][joint, e.g. 'right_j0']
+			'position': [],
+			'velocity': [],
+		}
+
+        # Create empty structures in self.control to match with above comments 
+        zeroVec = dict()
+		for joint in JOINT_CONTROL_NAMES:
+			zeroVec[joint] = 0.0
+		for i in range(self.control['order']):
+			self.control['effort'].append(zeroVec.copy())
+			self.control['position'].append(zeroVec.copy())
+			self.control['velocity'].append(zeroVec.copy())
 
         # Action Servers
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
@@ -49,13 +79,6 @@ class Module():
         self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
         self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
 
-        # Global Vars
-        self.audio_duration = 0
-        self.finished = False
-        self.startPos = 0
-        self.devMode = False
-        self.seqArr = []
-
         rospy.loginfo('TeachBot is initialized and ready to go.')
 
 
@@ -75,10 +98,17 @@ class Module():
             setattr(position, 'j'+str(j), data.position[j])
             setattr(velocity, 'j'+str(j), data.velocity[j])
             setattr(effort, 'j'+str(j), data.effort[j])
-            # TODO: Ask about the control variable that is in Sawyer (is that needed here?)
-        rospy.loginfo(position)
-        rospy.loginfo(velocity)
-        rospy.loginfo(effort)
+
+            # Update self.control which stores joint states to be used by admittance control + other functions
+            # position, velocity, and effort keep 15 values (for filtering later), so set the self.control['i'] index's j'th point to this value
+			self.control['position'][self.control['i']]['right_j'+str(j)] = data.position[j] 
+			self.control['velocity'][self.control['i']]['right_j'+str(j)] = data.velocity[j]
+			self.control['effort'][self.control['i']]['right_j'+str(j)] = data.effort[j]
+
+        # since we are trying to keep only 15 values for filtering, +1 if i is less than 15 and reset to 0 otherwise 
+		self.control['i'] = self.control['i']+1 if self.control['i']+1<self.control['order'] else 0
+
+        # Publish joint state information to the browser 
         self.position_topic.publish(position)
         self.velocity_topic.publish(velocity)
         self.effort_topic.publish(effort)
@@ -109,7 +139,16 @@ class Module():
         result.success = True
         self.GoToJointAnglesAct.set_succeeded(result)
 
+    '''
+    Uses the velocity interface of UR to move the robot arm. Primarily used by admittance control. 
+    '''
+    def cb_VelocityControl(self, goal):
+        pass 
 
+    '''
+    Helper function to create a JointTrajectory message, which is used to interact with the ROS driver and give the arm commands
+    on how/where to move. 
+    '''
     def create_traj_goal(self, array):
         traj_msg = JointTrajectory()
         traj_msg.joint_names = JOINT_NAMES
@@ -121,6 +160,94 @@ class Module():
         traj_msg.points = [jointPositions_msg,]
 
         return traj_msg
+    
+    '''
+    Set the robot's mode of movement
+    '''
+    def cb_SetRobotMode(self, req):
+		if self.VERBOSE: rospy.loginfo('Entering ' + req.mode + ' mode.')
+
+		if not (self.modeTimer is None):
+			self.modeTimer.shutdown()
+
+		if req.mode == 'position':
+            # exit whatever mode it was on (probably not a way to do this UR, can skip this step?)
+			self.limb.exit_control_mode()
+            # go to the joint_angles it is currently already at 
+			self.limb.go_to_joint_angles(self.limb.joint_angles())
+
+		elif req.mode == 'admittance ctrl':
+			# Set command timeout to be much greater than the command period
+			self.limb.set_command_timeout(2)
+
+			# Initialize Joints Dict
+			joints = {};
+			for j in req.joints:
+				joints['right_j'+str(j)] = {}
+
+			# Set min_thresh specs
+			if len(req.min_thresh)!=0:
+				for i,j in enumerate(req.joints):
+					joints['right_j'+str(j)]['min_thresh'] = req.min_thresh[i]
+			else:
+				for j in joints.keys():
+					joints[j]['min_thresh'] = 0
+
+			# Set bias specs
+			if len(req.bias)!=0:
+				for i,j in enumerate(req.joints):
+					joints['right_j'+str(j)]['bias'] = req.bias[i]
+			else:
+				for j in joints.keys():
+					if j==shoulder:
+						joints[j]['bias'] = BIAS_SHOULDER
+					elif j==elbow:
+						joints[j]['bias'] = BIAS_ELBOW
+					elif j==wrist:
+						joints[j]['bias'] = BIAS_WRIST
+					else:
+						joints[j]['bias'] = 0
+
+			# Set F2V specs
+			if len(req.F2V)!=0:
+				for i,j in enumerate(req.joints):
+					joints['right_j'+str(j)]['F2V'] = req.F2V[i]
+			else:
+				for j in joints.keys():
+					joints[j]['F2V'] = self.FORCE2VELOCITY[j]
+
+			self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
+
+
+		else:
+			rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
+
+		return True
+
+    def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
+        # is there a version of this in UR?
+		self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
+        # Set publish rate TODO: change from Sawyer to the UR version if it exists --> this is something set to the robot
+		rospy.Publisher('/robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)	
+
+		# Filter effort and convert into velocity
+		velocities = self.limb.joint_velocities() # TODO: replace this because UR can't immediately get the velocity :/ 
+        
+		for joint in JOINT_CONTROL_NAMES:
+			if joint in joints.keys(): # this is inside joints which is passed in through action server, the dict only gives joints to control, others stay immobile
+				allForces = [self.control['effort'][i][joint] for i in range(self.control['order'])] # gather the effort that was stored
+				filteredForce = sum(allForces)/self.control['order'] # filter the effort
+				filteredForce = filteredForce + joints[joint]['bias'] # this is from service
+				if abs(filteredForce) < joints[joint]['min_thresh']: # this is from service 
+					velocities[joint] = 0
+				else:
+					velocities[joint] = -joints[joint]['F2V']*filteredForce # this is from service
+			else:
+				velocities[joint] = 0
+        
+        # use the interface for velocity control on UR
+		self.cb_VelocityControl(velocities)
+
 
 
 if __name__ == '__main__':
