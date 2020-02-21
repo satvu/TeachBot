@@ -782,6 +782,9 @@ class Module():
 		if req.mode == 'position':
 			self.limb.exit_control_mode()
 			self.limb.go_to_joint_angles(self.limb.joint_angles())
+			if req.ways:
+				rospy.loginfo('Setting waypoint')
+				waypoints.append(self.limb.joint_angles())
 
 		elif req.mode == 'admittance ctrl':
 			# Set command timeout to be much greater than the command period

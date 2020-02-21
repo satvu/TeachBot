@@ -38,6 +38,7 @@ function Module(module_num, main, content_elements) {
 	this.canvas_frame_req;													// Animation frame request. See: set_graphic_mode().
 	this.button = 'none';
 	this.program = [];
+	this.free_mode = false
 	
 	// Initialize self to module for use in event callbacks
 	self = this;
@@ -1338,67 +1339,67 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
                 var multi_choice_url = DIR + 'images/new_button_box.JPG';
 				var arrow_url = DIR + 'image/Arrow.png';
 				var program_url = DIR + 'images/program_rect.png';
-				var free_mode = false
+				this.free_mode = false
 
-                display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode', 'Remove Choice', 'Done'], multi_choice_url);
+                display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url);
 
 				this.button_topic.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
                 	value = parseInt(message.data)
-					if (value == 1 && free_mode = false) {
+                	display_program(m.ctx, 10, 100, self.program);
+					if (value == 5 && self.free_mode == false) {
 						console.log(self.program)
 						self.button_topic.unsubscribe();
 						self.button_topic.removeAllListeners();
 						self.displayOff(true);
 						self.start(self.getNextAddress(instructionAddr));
-					} else if (value == 2 && free_mode = false){
+					} else if (value == 2 && self.free_mode == false){
 						self.program.push('Open Gripper')
 						var goal_Gripper = new ROSLIB.Goal({
 							actionClient: self.GripperAct,
 							goalMessage:{grip: false}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program, program_url)
+							display_program(m.ctx, 10, 100, self.program)
 						});
 						goal_Gripper.send();
-					} else if (value == 3 && free_mode = false){
+					} else if (value == 3 && self.free_mode == false){
 						self.program.push('Close Gripper')
 						var goal_Gripper = new ROSLIB.Goal({
 							actionClient: self.GripperAct,
 							goalMessage:{grip: true}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program, program_url)
+							display_program(m.ctx, 10, 100, self.program)
 						});
 						goal_Gripper.send();
-					} else if (value == 4 && free_mode == false){
+					} else if (value == 4 && self.free_mode == false){
+						console.log('entering free mode')
 						self.program.push('Waypoint')
-						var goal = new ROSLIB.Goal({
-							actionClient: self.InteractionControlAct,
-							goalMessage: {
-								position_only: false,
-								position_x: true,
-								position_y: true,
-								position_z: true,
-								orientation_x: true,
-								orientation_y: true,
-								orientation_z: true,
-								in_end_point_frame: false,
-								PASS: true,
-								ways: true
-							}
-						});
-						free_mode = true
+						self.set_robot_mode({
+							'mode':'interaction ctrl', 
+							'position_only':false, 
+							'position_x': true,
+							'position_y': true,
+							'position_z': true,
+							'orientation_x': true,
+							'orientation_y': true,
+							'orientation_z': true,
+							'in_end_point_frame': false}, instructionAddr);
+					
 						self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
-						goal.on('result', function(result) {
-							free_mode = false
-							display_program(m.ctx, 10, 100, self.program, program_url)
-							display_choices(m.ctx, ['Open Gripper','Close Gripper','Set Waypoint', 'Exit Free Mode', 'Remove Choice', 'Done'], multi_choice_url);
-						});
-						goal.send();
-					} else if (value == -1 && free_mode == false){
+						self.free_mode = true
+					} else if (value == -1 && self.free_mode == false){
 						self.program.pop()
 						display_program(m.ctx, 10, 100, self.program)
+					} else if (self.free_mode == true){
+						console.log('entering position mode')
+						self.free_mode = false
+						display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url);
+						self.set_robot_mode({
+							'mode':'position', 
+							'ways':true}, instructionAddr);
+						display_program(m.ctx, 10, 100, self.program);
 					}
 				});
 
@@ -1424,7 +1425,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				});
 
 				break;
-/*
+
 			case "refresh":
 				m.displayOff(true);
 
@@ -1444,7 +1445,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 
 				break;
-*/
+
 			case 'numeric_input':
 				this.numeric_input(instr, instructionAddr);
 				

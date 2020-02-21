@@ -1093,7 +1093,7 @@
 				"//":"5: To enter free mode, press the yellow button. Then, to set a waypoint, press any button on the box.",
 				"type":"play",
 				"audio_index":4,
-				"delay": true
+				"delay": false
 			},
 			{
 				"type":"set",
