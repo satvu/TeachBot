@@ -11,6 +11,7 @@ from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from controller_manager.msg import SwitchControllerAction, LoadControllerAction
 import actionlib
 import sensor_msgs
 import threading
@@ -69,6 +70,8 @@ class Module():
 
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self.velocity_traj_client = actionlib.SimpleActionClient('/scaled_vel_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self.switch_controller = actionlib.SimpleActionClient('/controller_manager/switch_controller', SwitchControllerAction)
 
         # Subscribed Topics
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)

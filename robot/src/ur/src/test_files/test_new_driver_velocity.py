@@ -13,8 +13,8 @@ SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
 ROTATE = [0, -3.14, 1.0, -3.14, -1.57, 0]
 ZERO = [0, -1.57, 0, -1.57, 0, 0]
 VEL_0 = [1.652628802228719e-10, 4.42951238155365e-10,2.825678568333387e-10, 4.566105365753174e-10, 4.458395600318909e-10, .29]
-VEL_ROTATE_1 = [0, 0, 2e-9, 0, 0, 0]
-VEL_ROTATE_2 = [0, 0, 1, 0, 0, 0]
+VEL_ROTATE_1 = [0, 0, 1.0, 0, 0, 0]
+VEL_ROTATE_2 = [0, 0, -1.0, 0, 0, 0]
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
@@ -38,11 +38,11 @@ class VelocityClient:
 
         jointPositions_msg = JointTrajectoryPoint()
 
-        # jointPositions_msg.positions = ROTATE
-        # jointPositions_msg.velocities = VEL_ROTATE_1
+        jointPositions_msg.positions = ROTATE
+        jointPositions_msg.velocities = VEL_ROTATE_1
 
         # jointPositions_msg.positions = SCARA
-        jointPositions_msg.velocities = VEL_ROTATE_2
+        # jointPositions_msg.velocities = VEL_ROTATE_2
 
         jointPositions_msg.accelerations = [0, 0, 0, 0, 0, 0]
         jointPositions_msg.time_from_start = rospy.Duration(3)
