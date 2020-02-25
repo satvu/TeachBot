@@ -915,59 +915,84 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			break;
 
 			case 'cuff_interaction':
-				checkInstruction(instr, ['terminatingCondition', 'ways'], instructionAddr);
+				checkInstruction(instr, ['ways'], instructionAddr);
 
 				var orient_bw_url = DIR + 'images/orientation_bw.png';
 				var orient_color_url = DIR + 'images/orientation_color.png';
 				var position_bw_url = DIR + 'images/position_bw.png';
 				var position_color_url = DIR + 'images/position_color.png';
 
-				var goal_pos = new ROSLIB.Goal({
-				actionClient: self.InteractionControlAct,
-				goalMessage: {
-					position_only: false,
-					position_x: true,
-					position_y: true,
-					position_z: false,
-					orientation_x: false,
-					orientation_y: false,
-					orientation_z: false,
-					in_end_point_frame: false,
-					PASS: true,
-					ways: false
-				}
-				});
+				// var goal_pos = new ROSLIB.Goal({
+				// actionClient: self.InteractionControlAct,
+				// goalMessage: {
+				// 	position_only: false,
+				// 	position_x: true,
+				// 	position_y: true,
+				// 	position_z: false,
+				// 	orientation_x: false,
+				// 	orientation_y: false,
+				// 	orientation_z: false,
+				// 	in_end_point_frame: false,
+				// 	PASS: true,
+				// 	ways: false
+				// }
+				// });
 
-				var goal_orient = new ROSLIB.Goal({
-					actionClient: self.InteractionControlAct,
-					goalMessage: {
-						position_only: false,
-						position_x: false,
-						position_y: false,
-						position_z: false,
-						orientation_x: false,
-						orientation_y: false,
-						orientation_z: true,
-						in_end_point_frame: true,
-						PASS: true,
-						ways: false
-					}
-				});
+				// var goal_orient = new ROSLIB.Goal({
+				// 	actionClient: self.InteractionControlAct,
+				// 	goalMessage: {
+				// 		position_only: false,
+				// 		position_x: false,
+				// 		position_y: false,
+				// 		position_z: false,
+				// 		orientation_x: false,
+				// 		orientation_y: false,
+				// 		orientation_z: true,
+				// 		in_end_point_frame: true,
+				// 		PASS: true,
+				// 		ways: false
+				// 	}
+				// });
 
 				this.button_topic.subscribe(async function(message) {
 					var value = parseInt(message.data)
 					if (value == 6){
 						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'pos');
 						if (VERBOSE) console.log('Entering position mode');	
-						goal_pos.send()
+						self.set_robot_mode({
+							'mode':'interaction ctrl', 
+							'position_only':false, 
+							'position_x': true,
+							'position_y': true,
+							'position_z': false,
+							'orientation_x': false,
+							'orientation_y': false,
+							'orientation_z': false,
+							'in_end_point_frame': false}, instructionAddr);
 					} else if (value == 7){
 						draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url,'orien');
 						if (VERBOSE) console.log('Entering orientation mode');	
-						goal_orient.send()
+						self.set_robot_mode({
+							'mode':'interaction ctrl', 
+							'position_only':false, 
+							'position_x': false,
+							'position_y': false,
+							'position_z': false,
+							'orientation_x': false,
+							'orientation_y': false,
+							'orientation_z': true,
+							'in_end_point_frame': true}, instructionAddr);
 					} else{
 						if (VERBOSE) console.log('Received indication to advance');	
+					
 						if (instr.ways == true) {
-							self.CuffWaysSrv.callService(new ROSLIB.ServiceRequest({request: true}), result => {return})
+							// self.CuffWaysSrv.callService(new ROSLIB.ServiceRequest({request: true}), result => {return})
+							self.set_robot_mode({
+							'mode':'position', 
+							'ways':true}, instructionAddr);
+						} else {
+							self.set_robot_mode({
+							'mode':'position'}, instructionAddr);
 						}
 						self.ctx.clearRect(3, 300, 403, 1100)		
 						self.button_topic.unsubscribe();
@@ -1248,15 +1273,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'multiple_choice':
-				var currentGraphicMode = this.graphic_mode;
-				// TODO: this.set_graphic_mode({"mode":"multiple_choice"}, instructionAddr);
-				this.displayOff();
-				canvas_container.style.display = 'initial';
-				var multi_choice_url = DIR + 'images/button_box.JPG';
-				var arrow_url = DIR + 'image/Arrow.png';
-
-				display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders'], multi_choice_url);
+			case 'multiple_choice_action':
 
 				var goal_ButtonPress = new ROSLIB.Goal({
 					actionClient: this.ButtonPressAct,
@@ -1304,17 +1321,17 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			case 'pos_orient':
-				var orient_bw_url = DIR + 'images/orientation_bw.png';
-				var orient_color_url = DIR + 'images/orientation_color.png';
-				var position_bw_url = DIR + 'images/position_bw.png';
-				var position_color_url = DIR + 'images/position_color.png';
+			// case 'pos_orient':
+			// 	var orient_bw_url = DIR + 'images/orientation_bw.png';
+			// 	var orient_color_url = DIR + 'images/orientation_color.png';
+			// 	var position_bw_url = DIR + 'images/position_bw.png';
+			// 	var position_color_url = DIR + 'images/position_color.png';
 
-				draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+			// 	draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
 
-				this.start(this.getNextAddress(instructionAddr));
+			// 	this.start(this.getNextAddress(instructionAddr));
 
-				break;
+			// 	break;
 
 			case 'pressed_button':
 				this.button_topic.subscribe(async function(message) {
@@ -1337,7 +1354,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.displayOff();
                 canvas_container.style.display = 'initial';
                 var multi_choice_url = DIR + 'images/new_button_box.JPG';
-				var arrow_url = DIR + 'image/Arrow.png';
 				var program_url = DIR + 'images/program_rect.png';
 				this.free_mode = false
 
@@ -1346,7 +1362,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.button_topic.subscribe(async function(message) {
                 	if (VERBOSE) console.log('Pressed: ' + message.data);
                 	value = parseInt(message.data)
-                	display_program(m.ctx, 10, 100, self.program);
 					if (value == 5 && self.free_mode == false) {
 						console.log(self.program)
 						self.button_topic.unsubscribe();
@@ -1360,7 +1375,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: false}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program)
+							display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url, code=true, self.program, 10, 80);
 						});
 						goal_Gripper.send();
 					} else if (value == 3 && self.free_mode == false){
@@ -1370,7 +1385,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							goalMessage:{grip: true}
 						});
 						goal_Gripper.on('result', function(result){
-							display_program(m.ctx, 10, 100, self.program)
+							display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url, code=true, self.program, 10, 80);
 						});
 						goal_Gripper.send();
 					} else if (value == 4 && self.free_mode == false){
@@ -1388,43 +1403,43 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 							'in_end_point_frame': false}, instructionAddr);
 					
 						self.ctx.clearRect(0,0,100*self.cw,100*self.ch);
+						canvas_container.style.display = 'initial';
 						self.free_mode = true
 					} else if (value == -1 && self.free_mode == false){
 						self.program.pop()
-						display_program(m.ctx, 10, 100, self.program)
+						display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url, code=true, self.program, 10, 80);
 					} else if (self.free_mode == true){
 						console.log('entering position mode')
-						self.free_mode = false
-						display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url);
+						display_choices(m.ctx, ['Open Gripper','Close Gripper','Free Mode', 'Done', 'Remove Choice'], multi_choice_url, code=true, self.program, 10, 80);
 						self.set_robot_mode({
 							'mode':'position', 
 							'ways':true}, instructionAddr);
-						display_program(m.ctx, 10, 100, self.program);
+						self.free_mode = false
 					}
 				});
 
 				break;
 
-			case 'projection':
-				this.displayOff();
-				canvas_container.style.display = 'initial';
+			// case 'projection':
+			// 	this.displayOff();
+			// 	canvas_container.style.display = 'initial';
 
-				this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log(message.j1);
-					draw_goal(self.ctx, 100, message.j1*400+100)
-				});
+			// 	this.position.subscribe(async function(message) {
+			// 		if (VERBOSE) console.log(message.j1);
+			// 		draw_goal(self.ctx, 100, message.j1*400+100)
+			// 	});
 
-				this.button_topic.subscribe(async function(message) {
-					if (VERBOSE) console.log('Received indication to advance');
-					self.position.unsubscribe();
-					self.position.removeAllListeners();
-					self.button_topic.unsubscribe();
-					self.button_topic.removeAllListeners();
-					self.displayOff();
-					self.start(self.getNextAddress(instructionAddr));
-				});
+			// 	this.button_topic.subscribe(async function(message) {
+			// 		if (VERBOSE) console.log('Received indication to advance');
+			// 		self.position.unsubscribe();
+			// 		self.position.removeAllListeners();
+			// 		self.button_topic.unsubscribe();
+			// 		self.button_topic.removeAllListeners();
+			// 		self.displayOff();
+			// 		self.start(self.getNextAddress(instructionAddr));
+			// 	});
 
-				break;
+			// 	break;
 
 			case "refresh":
 				m.displayOff(true);

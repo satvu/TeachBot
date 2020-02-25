@@ -34,6 +34,34 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			
 			break;
 
+		case 'camerabw_graphic':
+				canvas_obj.style.display = 'initial';
+				var cv_image_url = DIR + 'images/cv_1.png';
+				var bw_image = new Image();
+
+				bw_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(bw_image, 300, 10, self.ctx.canvas.width*.7, self.ctx.canvas.height)
+				};
+
+				bw_image.src = cv_image_url;
+
+				break;
+
+		case 'camera_color_graphic':
+				canvas_obj.style.display = 'initial';
+				var cv_image_url = DIR + 'images/cv_2.png';
+				var color_image = new Image();
+
+				color_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(color_image, 300, 10, self.ctx.canvas.width*.7, self.ctx.canvas.height)
+				};
+
+				color_image.src = cv_image_url;
+
+				break;
+
 		case 'canvas':
 			canvas_obj.style.display = 'initial';
 			if (instr.hasOwnProperty('clear') && instr.clear) {
@@ -58,7 +86,7 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 
 		case 'multiple choice':
 			canvas_obj.style.display = 'initial';
-			display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], DIR + 'images/sized_cuff.png');
+			display_choices(m.ctx, ['Motors','Buttons','Cameras','Encoders','Wheels'], DIR + 'images/new_button_box.JPG');
 
 			break;
 
@@ -69,6 +97,41 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			//canvas_obj.width = canvas_obj.width;
 
 			break;
+
+		case 'pos_orient':
+			canvas_obj.style.display = 'initial';
+			var orient_bw_url = DIR + 'images/orientation_bw.png';
+			var orient_color_url = DIR + 'images/orientation_color.png';
+			var position_bw_url = DIR + 'images/position_bw.png';
+			var position_color_url = DIR + 'images/position_color.png';
+
+			draw_pos_orien(m.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+
+			break;
+
+		case 'projection':
+			canvas_container.style.display = 'initial';
+
+			this.position.subscribe(async function(message) {
+					if (VERBOSE) console.log(message.j1);
+					draw_goal(self.ctx, 100, message.j1*400+100)
+				});
+
+			break;
+
+		case 'show_camera':
+
+				var cv_image_url = DIR + 'images/cv_image.png';
+				var cv_image = new Image();
+
+				cv_image.onload = function() {
+					console.log('Displaying camera')
+		            self.ctx.drawImage(cv_image, 300, 10, self.ctx.canvas.width*.75, self.ctx.canvas.height*.95)
+				};
+
+				cv_image.src = cv_image_url;
+
+				break;
 
 		default:
 			throw `Graphic mode ${instr.mode} is not supported.`;
