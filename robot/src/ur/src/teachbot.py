@@ -77,11 +77,15 @@ class Module():
         # Subscribed Topics
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
 
-        # Publish topics 
+        # Publish topics to Browser
         self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
         self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
         self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
         self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
+
+        # Publish topics to UR
+        self.publish_velocity = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray, queue_size=1)
+
 
         rospy.loginfo('TeachBot is initialized and ready to go.')
 
@@ -175,17 +179,28 @@ class Module():
 			self.modeTimer.shutdown()
 
 		if req.mode == 'position':
-            # exit whatever mode it was on (probably not a way to do this UR, can skip this step?)
-			self.limb.exit_control_mode()
-            # go to the joint_angles it is currently already at 
-			self.limb.go_to_joint_angles(self.limb.joint_angles())
+            # stop the robot if in group velocity??? 
+            # does switching the controller stop the other one? 
+            # velocity_msg = Float64MultiArray()
+            # velocity_msg.data = [0, -.5, 0, 0, 0, 0]
+            # self.publish_velocity.publish(velocity_msg)
+
+            # Switch to the position controller 
+            self.switch_controller.wait_for_server()
+            switch_msg = SwitchControllerGoal()
+            switch_msg.stop_controllers = ['joint_group_vel_controller']
+            switch_msg.start_controllers = ['scaled_pos_traj_controller']
+            switch_msg.strictness = 2
+            self.switch_controller.send_goal(switch_msg)
+            self.switch_controller.wait_for_result()
+
 
 		elif req.mode == 'admittance ctrl':
 			# Set command timeout to be much greater than the command period
 			self.limb.set_command_timeout(2)
 
 			# Initialize Joints Dict
-			joints = {};
+			joints = {}
 			for j in req.joints:
 				joints['right_j'+str(j)] = {}
 
@@ -219,6 +234,15 @@ class Module():
 			else:
 				for j in joints.keys():
 					joints[j]['F2V'] = self.FORCE2VELOCITY[j]
+            
+            # Switch to the joint group velocity controller 
+            self.switch_controller.wait_for_server()
+            switch_msg = SwitchControllerGoal()
+            switch_msg.stop_controllers = ['scaled_pos_traj_controller']
+            switch_msg.start_controllers = ['joint_group_vel_controller']
+            switch_msg.strictness = 2
+            self.switch_controller.send_goal(switch_msg)
+            self.switch_controller.wait_for_result()
 
 			self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
 
