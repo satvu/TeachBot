@@ -17,6 +17,7 @@ import sensor_msgs
 import threading
 
 from ur.msg import *
+from ur.action import *
 from ur.srv import *
 
 from geometry_msgs.msg import WrenchStamped
