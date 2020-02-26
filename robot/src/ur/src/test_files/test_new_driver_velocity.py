@@ -9,6 +9,8 @@ from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 import actionlib
 
+from ur.msg import *
+
 SCARA = [0, -3.14, 0, -3.14, -1.57, 0]
 ROTATE = [0, -3.14, 1.0, -3.14, -1.57, 0]
 ZERO = [0, -1.57, 0, -1.57, 0, 0]
@@ -21,10 +23,24 @@ JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
 class VelocityClient:
 
     def __init__(self):
-        rospy.Subscriber('/joint_states', JointState, self.send_command)
 
-        self.client = actionlib.SimpleActionClient('/scaled_vel_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        # sending command to the scaled vel trajectory
+        # rospy.Subscriber('/joint_states', JointState, self.send_command)
+        # self.client = actionlib.SimpleActionClient('/scaled_vel_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+
+        # sending to group vel trajectory
+        rospy.Subscriber('/joint_states', JointState, self.send_velocities)
+        self.client = actionlib.SimpleActionClient('/joint_group_vel_controller/command', )
+
                 
+    def send_velocities(self, joints):
+        print 'press enter'
+        pause = raw_input()
+        self.client.wait_for_server()
+
+        self.client.send_goal([.01, .01, .01, .01, .01, .01])
+        self.client.wait_for_result()
+
     def send_command(self, joints):
         print 'press enter'
         pause = raw_input()
