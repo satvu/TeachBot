@@ -1470,8 +1470,9 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				break;
 
 			case 'set_robot_mode':
-				this.set_robot_mode(instr, instructionAddr);
-				this.start(this.getNextAddress(instructionAddr));
+				this.set_robot_mode(instr, instructionAddr).then((msg)=>{
+					this.start(this.getNextAddress(instructionAddr));
+				});
 				break;
 
 			case 'show_camera':
