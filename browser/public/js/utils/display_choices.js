@@ -101,7 +101,7 @@ function display_choices(ctx_in, choices_arr, multi_choice_url, code=false, prog
                 ctx_in.stroke();
             }
         }
-
+        ctx_in.lineWidth = 2;
     }
     imgb.src = multi_choice_url;
 

@@ -714,15 +714,7 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				goal_AdjustPoseTo.send()
 
 				break;
-/*
-			case 'initializeDisplay':
-				this.displayOff();
-				canvas_container.style.display = 'initial';
-				this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
-				this.start(self.getNextAddress(instructionAddr));
-				break;
 
-*/
 			case 'draw':
 				this.draw(instr, instructionAddr);
 				break;
@@ -922,38 +914,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				var position_bw_url = DIR + 'images/position_bw.png';
 				var position_color_url = DIR + 'images/position_color.png';
 
-				// var goal_pos = new ROSLIB.Goal({
-				// actionClient: self.InteractionControlAct,
-				// goalMessage: {
-				// 	position_only: false,
-				// 	position_x: true,
-				// 	position_y: true,
-				// 	position_z: false,
-				// 	orientation_x: false,
-				// 	orientation_y: false,
-				// 	orientation_z: false,
-				// 	in_end_point_frame: false,
-				// 	PASS: true,
-				// 	ways: false
-				// }
-				// });
-
-				// var goal_orient = new ROSLIB.Goal({
-				// 	actionClient: self.InteractionControlAct,
-				// 	goalMessage: {
-				// 		position_only: false,
-				// 		position_x: false,
-				// 		position_y: false,
-				// 		position_z: false,
-				// 		orientation_x: false,
-				// 		orientation_y: false,
-				// 		orientation_z: true,
-				// 		in_end_point_frame: true,
-				// 		PASS: true,
-				// 		ways: false
-				// 	}
-				// });
-
 				this.button_topic.subscribe(async function(message) {
 					var value = parseInt(message.data)
 					if (value == 6){
@@ -1030,52 +990,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			case 'drawRamp':
-				checkInstruction(instr, ['number'], instructionAddr);
-				console.log('Drawing ramp')
-				var binW = 21*this.cw;
-				var binH = 19*this.ch;
-				switch (instr.number) {
-					case 1:
-						// this.ctx.strokeRect(56*this.cw, 40*this.ch, binW, binH);
-						this.ctx.rotate(-0.48)
-						this.ctx.strokeRect(18*this.cw, 60*this.ch, binH, binW);
-						this.ctx.rotate(0.48)
-						break;
-				}
-
-				this.start(this.getNextAddress(instructionAddr));
-				break;
-
-			case 'drawShape':
-				checkInstruction(instr, ['shape'], instructionAddr);
-
-				if (instr.shape=='ball') {
-					if (instr.hasOwnProperty('clearRec')){this.ctx.clearRect(0,0,100*this.cw,100*this.ch);};
-					var x_ball = instr.x_ratio*this.cw;
-					var y_ball = instr.y_ratio*this.ch;
-					var r_ball = instr.r_ratio*this.ch;
-					if (instr.hasOwnProperty('label')) {
-						this.ctx.font = Math.round(instr.labelsize_ratio*this.cw) + 'px Raleway';
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle, instr.label);
-					} else{
-						draw_ball(this.ctx, x_ball, y_ball, r_ball, instr.fillStyle);
-					}
-				} else if (instr.shape=='arc') {
-					canvas_container.style.display = 'initial';
-					arc3pt(this.ctx,instr.x1*this.cw,instr.y1*this.ch,instr.x2*this.cw,instr.y2*this.ch,instr.x3*this.cw,instr.y3*this.ch,instr.ccw);
-				} else if (instr.shape=='bar') {
-					draw_bar_new(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.width_ratio*this.cw, instr.max_height_ratio*this.ch, instr.height_percent, instr.fillStyle, instr.label);
-				} else if (instr.shape=='rectangle') {
-					if (instr.hasOwnProperty('label')){
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate, instr.label)
-					} else {
-						draw_rectangle(this.ctx, instr.x_ratio*this.cw, instr.y_ratio*this.ch, instr.w_ratio*this.cw, instr.h_ratio*this.ch, instr.rotate)
-					}
-				}
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;
 
 			case 'encode':
 				this.set_graphic_mode({mode: 'canvas', custom: true}, instructionAddr);
@@ -1191,22 +1105,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 
 				break;
 
-			/*case 'joint_impedance':
-				checkInstruction(instr, ["terminatingCondition","tics"], instructionAddr);
-
-				var goal = new ROSLIB.Goal({
-					actionClient: this.JointImpedanceAct,
-					goalMessage: {
-						terminatingCondition: this.hashTokeyVal(instr.terminatingCondition),
-						tics: instr.tics
-					}
-				});
-				goal.send();
-
-				this.start(self.getNextAddress(instructionAddr));
-
-				break;*/
-
 			/*case 'joint_move':
 				checkInstruction(instr, ["joints","terminatingCondition","resetPOS","min_thresh","bias","listen"], instructionAddr);
 
@@ -1321,18 +1219,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 				this.start(this.getNextAddress(instructionAddr));
 				break;
 
-			// case 'pos_orient':
-			// 	var orient_bw_url = DIR + 'images/orientation_bw.png';
-			// 	var orient_color_url = DIR + 'images/orientation_color.png';
-			// 	var position_bw_url = DIR + 'images/position_bw.png';
-			// 	var position_color_url = DIR + 'images/position_color.png';
-
-			// 	draw_pos_orien(self.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
-
-			// 	this.start(this.getNextAddress(instructionAddr));
-
-			// 	break;
-
 			case 'pressed_button':
 				this.button_topic.subscribe(async function(message) {
 					if (VERBOSE) console.log('Pressed: ' + message.data);
@@ -1417,36 +1303,6 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 						self.free_mode = false
 					}
 				});
-
-				break;
-
-			// case 'projection':
-			// 	this.displayOff();
-			// 	canvas_container.style.display = 'initial';
-
-			// 	this.position.subscribe(async function(message) {
-			// 		if (VERBOSE) console.log(message.j1);
-			// 		draw_goal(self.ctx, 100, message.j1*400+100)
-			// 	});
-
-			// 	this.button_topic.subscribe(async function(message) {
-			// 		if (VERBOSE) console.log('Received indication to advance');
-			// 		self.position.unsubscribe();
-			// 		self.position.removeAllListeners();
-			// 		self.button_topic.unsubscribe();
-			// 		self.button_topic.removeAllListeners();
-			// 		self.displayOff();
-			// 		self.start(self.getNextAddress(instructionAddr));
-			// 	});
-
-			// 	break;
-
-			case "refresh":
-				m.displayOff(true);
-
-				image.style.display = 'initial';
-
-				this.start(this.getNextAddress(instructionAddr));
 
 				break;
 
