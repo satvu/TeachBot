@@ -5,62 +5,58 @@ import rospy, math
 import numpy as np
 import sys
 import roslib
-from ur_kinematics import *
 
 from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16, Empty
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
-from controller_manager.msg import SwitchControllerAction, LoadControllerAction
-import actionlib
+from controller_manager_msgs.srv import SwitchControllerRequest
 import sensor_msgs
 import threading
 
 from ur.msg import *
-from ur.action import *
 from ur.srv import *
 
 from geometry_msgs.msg import WrenchStamped
 
 # joint names defined by UR in the correct order 
-JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
-               'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
 # joint names using 'right_j0' and 'right_j1' for consistency across packages and easy string construction in functions 
 JOINT_CONTROL_NAMES = ['right_j0', 'right_j1', 'right_j2', 'right_j3', 'right_j4', 'right_j5']
 
 class Module():
     JOINTS = 6
-
+    FORCE2VELOCITY = {'right_j0': 0.06, 'right_j1': 0.06, 'right_j2': 0.4, 'right_j3': 0.2, 'right_j4': 1, 'right_j5': 0.9}
     def __init__(self):
         #Initialize node
         rospy.init_node('ur_comm_node', anonymous=True)
         self.VERBOSE = True
 
         # Global Vars
-		self.audio_duration = 0
-		self.finished = False
-		self.devMode = False
-		self.allowCuffInteraction = False
-		self.modeTimer = None
+        self.audio_duration = 0
+        self.finished = False
+        self.devMode = False
+        self.allowCuffInteraction = False
+        self.modeTimer = None
 
         # Custom Control Variables --> used in Admittance Control
-		self.control = {
-			'i': 0, # index we are on out of the 15 values (0-14)
-			'order': 15, # how many we are keeping for filtering
-			'effort': [],			# Structured self.control['effort'][tap #, e.g. i][joint, e.g. 'right_j0']
-			'position': [],
-			'velocity': [],
-		}
+        self.control = {
+            'i': 0, # index we are on out of the 15 values (0-14)
+            'order': 15, # how many we are keeping for filtering
+            'effort': [],			# Structured self.control['effort'][tap #, e.g. i][joint, e.g. 'right_j0']
+            'position': [],
+            'velocity': [],
+        }
 
         # Create empty structures in self.control to match with above comments 
         zeroVec = dict()
-		for joint in JOINT_CONTROL_NAMES:
-			zeroVec[joint] = 0.0
-		for i in range(self.control['order']):
-			self.control['effort'].append(zeroVec.copy())
-			self.control['position'].append(zeroVec.copy())
-			self.control['velocity'].append(zeroVec.copy())
+        for joint in JOINT_CONTROL_NAMES:
+            zeroVec[joint] = 0.0
+        for i in range(self.control['order']):
+            self.control['effort'].append(zeroVec.copy())
+            self.control['position'].append(zeroVec.copy())
+            self.control['velocity'].append(zeroVec.copy())
 
         # Action Servers
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
@@ -72,7 +68,7 @@ class Module():
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self.velocity_traj_client = actionlib.SimpleActionClient('/scaled_vel_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-        self.switch_controller = actionlib.SimpleActionClient('/controller_manager/switch_controller', SwitchControllerAction)
+        self.switch_controller = actionlib.SimpleActionClient('/controller_manager/switch_controller', SwitchControllerRequest)
 
         # Subscribed Topics
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
@@ -109,12 +105,12 @@ class Module():
 
             # Update self.control which stores joint states to be used by admittance control + other functions
             # position, velocity, and effort keep 15 values (for filtering later), so set the self.control['i'] index's j'th point to this value
-			self.control['position'][self.control['i']]['right_j'+str(j)] = data.position[j] 
-			self.control['velocity'][self.control['i']]['right_j'+str(j)] = data.velocity[j]
-			self.control['effort'][self.control['i']]['right_j'+str(j)] = data.effort[j]
+            self.control['position'][self.control['i']]['right_j'+str(j)] = data.position[j] 
+            self.control['velocity'][self.control['i']]['right_j'+str(j)] = data.velocity[j]
+            self.control['effort'][self.control['i']]['right_j'+str(j)] = data.effort[j]
 
         # since we are trying to keep only 15 values for filtering, +1 if i is less than 15 and reset to 0 otherwise 
-		self.control['i'] = self.control['i']+1 if self.control['i']+1<self.control['order'] else 0
+        self.control['i'] = self.control['i']+1 if self.control['i']+1<self.control['order'] else 0
 
         # Publish joint state information to the browser 
         self.position_topic.publish(position)
@@ -173,68 +169,51 @@ class Module():
     Set the robot's mode of movement
     '''
     def cb_SetRobotMode(self, req):
-		if self.VERBOSE: rospy.loginfo('Entering ' + req.mode + ' mode.')
+        if self.VERBOSE: rospy.loginfo('Entering ' + req.mode + ' mode.')
 
-		if not (self.modeTimer is None):
-			self.modeTimer.shutdown()
+        if not (self.modeTimer is None):
+            self.modeTimer.shutdown()
 
-		if req.mode == 'position':
-            # stop the robot if in group velocity??? 
-            # does switching the controller stop the other one? 
-            # velocity_msg = Float64MultiArray()
-            # velocity_msg.data = [0, -.5, 0, 0, 0, 0]
-            # self.publish_velocity.publish(velocity_msg)
-
+        if req.mode == 'position':
             # Switch to the position controller 
             self.switch_controller.wait_for_server()
-            switch_msg = SwitchControllerGoal()
+            switch_msg = SwitchControllerRequest()
             switch_msg.stop_controllers = ['joint_group_vel_controller']
             switch_msg.start_controllers = ['scaled_pos_traj_controller']
             switch_msg.strictness = 2
             self.switch_controller.send_goal(switch_msg)
             self.switch_controller.wait_for_result()
 
+        elif req.mode == 'admittance ctrl':
+            # Initialize Joints Dict
+            joints = {}
+            for j in req.joints:
+                joints['right_j'+str(j)] = {}
 
-		elif req.mode == 'admittance ctrl':
-			# Set command timeout to be much greater than the command period
-			self.limb.set_command_timeout(2)
+            # Set min_thresh specs
+            if len(req.min_thresh)!=0:
+                for i,j in enumerate(req.joints):
+                    joints['right_j'+str(j)]['min_thresh'] = req.min_thresh[i]
+            else:
+                for j in joints.keys():
+                    joints[j]['min_thresh'] = 0
 
-			# Initialize Joints Dict
-			joints = {}
-			for j in req.joints:
-				joints['right_j'+str(j)] = {}
+            # Set bias specs
+            if len(req.bias)!=0:
+                for i,j in enumerate(req.joints):
+                    joints['right_j'+str(j)]['bias'] = req.bias[i]
+            else:
+                for j in joints.keys():
+                    joints[j]['bias'] = 0
 
-			# Set min_thresh specs
-			if len(req.min_thresh)!=0:
-				for i,j in enumerate(req.joints):
-					joints['right_j'+str(j)]['min_thresh'] = req.min_thresh[i]
-			else:
-				for j in joints.keys():
-					joints[j]['min_thresh'] = 0
+            # Set F2V specs
+            if len(req.F2V)!=0:
+                for i,j in enumerate(req.joints):
+                    joints['right_j'+str(j)]['F2V'] = req.F2V[i]
+            else:
+                for j in joints.keys():
+                    joints[j]['F2V'] = self.FORCE2VELOCITY[j]
 
-			# Set bias specs
-			if len(req.bias)!=0:
-				for i,j in enumerate(req.joints):
-					joints['right_j'+str(j)]['bias'] = req.bias[i]
-			else:
-				for j in joints.keys():
-					if j==shoulder:
-						joints[j]['bias'] = BIAS_SHOULDER
-					elif j==elbow:
-						joints[j]['bias'] = BIAS_ELBOW
-					elif j==wrist:
-						joints[j]['bias'] = BIAS_WRIST
-					else:
-						joints[j]['bias'] = 0
-
-			# Set F2V specs
-			if len(req.F2V)!=0:
-				for i,j in enumerate(req.joints):
-					joints['right_j'+str(j)]['F2V'] = req.F2V[i]
-			else:
-				for j in joints.keys():
-					joints[j]['F2V'] = self.FORCE2VELOCITY[j]
-            
             # Switch to the joint group velocity controller 
             self.switch_controller.wait_for_server()
             switch_msg = SwitchControllerGoal()
@@ -244,37 +223,41 @@ class Module():
             self.switch_controller.send_goal(switch_msg)
             self.switch_controller.wait_for_result()
 
-			self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
+            self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
+        
+        else:
+            rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
 
-
-		else:
-			rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
-
-		return True
+        return True
 
     def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
-        # is there a version of this in UR?
-		self.joint_safety_check(lambda self : self.limb.go_to_joint_angles(resetPos), lambda self : None)
-        # Set publish rate TODO: change from Sawyer to the UR version if it exists --> this is something set to the robot
-		rospy.Publisher('/robot/joint_state_publish_rate',UInt16,queue_size=10).publish(rateNom)	
+        # new velocities to send to robot
+        velocities = {}
+        for j in len(joints.keys()):
+            joints['right_j'+str(j)] = 0
+        
+        for joint in JOINT_CONTROL_NAMES:
+            if joint in joints.keys(): # this is inside joints which is passed in through action server, the dict only gives joints to control, others stay immobile
+                allForces = [self.control['effort'][i][joint] for i in range(self.control['order'])] # gather the effort that was stored
+                filteredForce = sum(allForces)/self.control['order'] # filter the effort
+                filteredForce = filteredForce + joints[joint]['bias'] # this is from service
+                if abs(filteredForce) < joints[joint]['min_thresh']: # this is from service 
+                    velocities[joint] = 0
+                else:
+                    velocities[joint] = -joints[joint]['F2V']*filteredForce # this is from service
+            else:
+                velocities[joint] = 0
+        
+        # Publish velocities to UR
+        velocity_msg = Float64MultiArray()
 
-		# Filter effort and convert into velocity
-		velocities = self.limb.joint_velocities() # TODO: replace this because UR can't immediately get the velocity :/ 
-        
-		for joint in JOINT_CONTROL_NAMES:
-			if joint in joints.keys(): # this is inside joints which is passed in through action server, the dict only gives joints to control, others stay immobile
-				allForces = [self.control['effort'][i][joint] for i in range(self.control['order'])] # gather the effort that was stored
-				filteredForce = sum(allForces)/self.control['order'] # filter the effort
-				filteredForce = filteredForce + joints[joint]['bias'] # this is from service
-				if abs(filteredForce) < joints[joint]['min_thresh']: # this is from service 
-					velocities[joint] = 0
-				else:
-					velocities[joint] = -joints[joint]['F2V']*filteredForce # this is from service
-			else:
-				velocities[joint] = 0
-        
-        # use the interface for velocity control on UR
-		self.cb_VelocityControl(velocities)
+        velocity_data = []
+        for j in len(velocities.keys()):
+            velocity_data.append(velocities['right_j'+str(j)])
+
+        velocity_msg.data = velocity_data
+
+        self.publish_velocity.publish(velocity_msg)
 
 
 
