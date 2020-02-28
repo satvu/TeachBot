@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ## IMPORTS ##
 # Basic
-import rospy, math
+import rospy, math, actionlib
 import numpy as np
 import sys
 import roslib
@@ -10,7 +10,7 @@ from std_msgs.msg import Bool, String, Int32, Float64, Float64MultiArray, UInt16
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
-from controller_manager_msgs.srv import SwitchControllerRequest
+from controller_manager_msgs.srv import SwitchController
 import sensor_msgs
 import threading
 
@@ -63,12 +63,13 @@ class Module():
         
         # Service Servers
         rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
-
+       
+        # Action service proxy
+        switch_controller = rospy.ServiceProxy('/controller_manager/switch_controller', SwitchController)
 
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self.velocity_traj_client = actionlib.SimpleActionClient('/scaled_vel_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-        self.switch_controller = actionlib.SimpleActionClient('/controller_manager/switch_controller', SwitchControllerRequest)
 
         # Subscribed Topics
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
@@ -144,12 +145,6 @@ class Module():
         self.GoToJointAnglesAct.set_succeeded(result)
 
     '''
-    Uses the velocity interface of UR to move the robot arm. Primarily used by admittance control. 
-    '''
-    def cb_VelocityControl(self, goal):
-        pass 
-
-    '''
     Helper function to create a JointTrajectory message, which is used to interact with the ROS driver and give the arm commands
     on how/where to move. 
     '''
@@ -215,13 +210,8 @@ class Module():
                     joints[j]['F2V'] = self.FORCE2VELOCITY[j]
 
             # Switch to the joint group velocity controller 
-            self.switch_controller.wait_for_server()
-            switch_msg = SwitchControllerGoal()
-            switch_msg.stop_controllers = ['scaled_pos_traj_controller']
-            switch_msg.start_controllers = ['joint_group_vel_controller']
-            switch_msg.strictness = 2
-            self.switch_controller.send_goal(switch_msg)
-            self.switch_controller.wait_for_result()
+            ret = switch_controller(['scaled_pos_traj_controller'], 
+                                    ['joint_group_vel_controller'], 2) 
 
             self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
         
@@ -298,11 +288,11 @@ if __name__ == '__main__':
     # joint_dof_wrist = [-1.57, DSP,j2scara,0, 0.45,0]
     # joint_dof_up = [-1.57, DSP, j2scara,0,-j4max,0]
     # for now use the following so it goes through this section of the module but doesn't swing around like crazy
-    joint_dof_start = ZERO
-    joint_dof_shoulder = ZERO
-    joint_dof_elbow = ZERO
-    joint_dof_wrist = ZERO
-    joint_dof_up = ZERO
+    joint_dof_start = SCARA
+    joint_dof_shoulder = SCARA
+    joint_dof_elbow = SCARA
+    joint_dof_wrist = SCARA
+    joint_dof_up = SCARA
 
     m = Module()
 
