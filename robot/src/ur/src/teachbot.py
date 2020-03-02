@@ -63,9 +63,7 @@ class Module():
         
         # Service Servers
         rospy.Service('/teachbot/audio_duration', AudioDuration, self.rx_audio_duration)
-       
-        # Action service proxy
-        switch_controller = rospy.ServiceProxy('/controller_manager/switch_controller', SwitchController)
+        rospy.Service('/teachbot/set_robot_mode', SetRobotMode, self.cb_SetRobotMode)
 
         # Action Clients - Publish to robot
         self.joint_traj_client = actionlib.SimpleActionClient('/scaled_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -169,16 +167,19 @@ class Module():
         if not (self.modeTimer is None):
             self.modeTimer.shutdown()
 
-        if req.mode == 'position':
-            # Switch to the position controller 
-            self.switch_controller.wait_for_server()
-            switch_msg = SwitchControllerRequest()
-            switch_msg.stop_controllers = ['joint_group_vel_controller']
-            switch_msg.start_controllers = ['scaled_pos_traj_controller']
-            switch_msg.strictness = 2
-            self.switch_controller.send_goal(switch_msg)
-            self.switch_controller.wait_for_result()
+        if req.mode == 'position':          
+            rospy.wait_for_service('/controller_manager/switch_controller')
+            try:
+                switch_controller = rospy.ServiceProxy(
+                                    'controller_manager/switch_controller', SwitchController)
+                ret = switch_controller(['scaled_pos_traj_controller'], ['joint_group_vel_controller'], 2)
+                if ret.ok:
+                    rospy.loginfo("Switched to scaled pos traj controller")
+            except rospy.ServiceException, e:
+                print "Service call failed to switch to scaled_pos_traj_controller"
+                rospy.logerr("Service call failed to switch to scaled_pos_traj_controller")
 
+                       
         elif req.mode == 'admittance ctrl':
             # Initialize Joints Dict
             joints = {}
@@ -210,9 +211,18 @@ class Module():
                     joints[j]['F2V'] = self.FORCE2VELOCITY[j]
 
             # Switch to the joint group velocity controller 
-            ret = switch_controller(['scaled_pos_traj_controller'], 
-                                    ['joint_group_vel_controller'], 2) 
+            rospy.wait_for_service('/controller_manager/switch_controller')
+            try:
+                switch_controller = rospy.ServiceProxy(
+                                    'controller_manager/switch_controller', SwitchController)
+                ret = switch_controller(['joint_group_vel_controller'], ['scaled_pos_traj_controller'], 2)
+                if ret.ok:
+                    rospy.loginfo("Switched to joint_group_vel_controller")
+            except rospy.ServiceException, e:
+                print "Service call failed to switch to scaled_pos_traj_controller"
+                rospy.logerr("Service call failed to switch to joint_group_vel_controller")
 
+            
             self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
         
         else:
@@ -223,7 +233,7 @@ class Module():
     def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
         # new velocities to send to robot
         velocities = {}
-        for j in len(joints.keys()):
+        for j in range(len(joints.keys())):
             joints['right_j'+str(j)] = 0
         
         for joint in JOINT_CONTROL_NAMES:
