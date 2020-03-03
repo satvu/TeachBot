@@ -46,8 +46,18 @@ class Module():
             'order': 15, # how many we are keeping for filtering
             'effort': [],			# Structured self.control['effort'][tap #, e.g. i][joint, e.g. 'right_j0']
             'position': [],
-            'velocity': [],
+            'velocity': []
         }
+        
+        # Variables for forces-x --> used in Admittance control, UR specific
+        # Maybe later could include full wrench values?
+        self.forces = {
+            'i': 0, # index we are on out of the 15 values (0-14)
+            'order': 15, # how many we are keeping for filtering
+            'fx': [] # different from Sawyer, this gathers the wrench values, forces in x-direction
+        }
+        self.forces['fx'] = [0]*self.forces['order']
+        self.FORCE_STANDARDIZATION_CONSTANT = .1
 
         # Create empty structures in self.control to match with above comments 
         zeroVec = dict()
@@ -58,6 +68,15 @@ class Module():
             self.control['position'].append(zeroVec.copy())
             self.control['velocity'].append(zeroVec.copy())
 
+        # Publish topics to Browser
+        self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
+        self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
+        self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
+        self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
+
+        # Publish topics to UR
+        self.publish_velocity_to_robot = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray, queue_size=1)
+        
         # Action Servers
         self.GoToJointAnglesAct = actionlib.SimpleActionServer('/teachbot/GoToJointAngles', GoToJointAnglesAction, execute_cb=self.cb_GoToJointAngles, auto_start=True)
         
@@ -71,15 +90,7 @@ class Module():
 
         # Subscribed Topics
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
-
-        # Publish topics to Browser
-        self.command_complete_topic = rospy.Publisher('/command_complete', Empty, queue_size=1) #this is for the module/browser
-        self.position_topic = rospy.Publisher('/teachbot/position', JointInfo, queue_size=1)
-        self.velocity_topic = rospy.Publisher('/teachbot/velocity', JointInfo, queue_size=1)
-        self.effort_topic = rospy.Publisher('/teachbot/effort', JointInfo, queue_size=1)
-
-        # Publish topics to UR
-        self.publish_velocity = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray, queue_size=1)
+        rospy.Subscriber('/wrench', WrenchStamped, self.cb_filter_forces)
 
 
         rospy.loginfo('TeachBot is initialized and ready to go.')
@@ -115,7 +126,17 @@ class Module():
         self.position_topic.publish(position)
         self.velocity_topic.publish(velocity)
         self.effort_topic.publish(effort)
-
+    
+    '''
+    Used to help the forces acting on wrist_3_joint (the endpoint)
+    Stores data on the x-direction only as of right now, since that is what will be used for admittance ctrl (optimized to SCARA)
+    '''
+    def cb_filter_forces(self, data):
+        for j in range(self.forces['order']):
+            self.forces['fx'][self.forces['i']] = data.wrench.force.x
+        
+        self.forces['i'] = self.forces['i']+1 if self.forces['i']+1<self.forces['order'] else 0
+        
     '''
     When the subscriber to "GoToJointAngles" receives the name of a constant from the browser,
     it is evaluated in this function and parsed into a "FollowTrajectoryGoal" object and sent to the
@@ -234,17 +255,23 @@ class Module():
         # new velocities to send to robot
         velocities = {}
         for j in range(len(joints.keys())):
-            joints['right_j'+str(j)] = 0
+            velocities['right_j'+str(j)] = 0
         
         for joint in JOINT_CONTROL_NAMES:
             if joint in joints.keys(): # this is inside joints which is passed in through action server, the dict only gives joints to control, others stay immobile
-                allForces = [self.control['effort'][i][joint] for i in range(self.control['order'])] # gather the effort that was stored
-                filteredForce = sum(allForces)/self.control['order'] # filter the effort
+                allForces = [self.forces['fx'][i] for i in range(self.forces['order'])] # gather the effort that was stored
+                
+                filteredForce = sum(allForces)/self.forces['order'] # filter the effort
+                
                 filteredForce = filteredForce + joints[joint]['bias'] # this is from service
+                # the forces could be -27 to 27 so need to standardize it to be under min_thresh like Sawyer if too weak
+                filteredForce = filteredForce * self.FORCE_STANDARDIZATION_CONSTANT 
+
                 if abs(filteredForce) < joints[joint]['min_thresh']: # this is from service 
                     velocities[joint] = 0
                 else:
-                    velocities[joint] = -joints[joint]['F2V']*filteredForce # this is from service
+                    velocities[joint] = joints[joint]['F2V']*filteredForce # this is from service
+                    rospy.loginfo(str(velocities[joint]) + ' calculation')
             else:
                 velocities[joint] = 0
         
@@ -252,12 +279,12 @@ class Module():
         velocity_msg = Float64MultiArray()
 
         velocity_data = []
-        for j in len(velocities.keys()):
+        for j in range(len(velocities.keys())):
             velocity_data.append(velocities['right_j'+str(j)])
 
         velocity_msg.data = velocity_data
-
-        self.publish_velocity.publish(velocity_msg)
+        rospy.loginfo(velocity_data)
+        self.publish_velocity_to_robot.publish(velocity_msg)
 
 
 
