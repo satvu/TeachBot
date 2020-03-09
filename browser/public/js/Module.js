@@ -69,6 +69,7 @@ function Module(module_num, main, content_elements) {
 		name: '/teachbot/button',
 		messageType: 'std_msgs/String'
 	});
+	// this.button_topic.subscribe(self.buttontopicCallback)
 	this.command_complete = new ROSLIB.Topic({
 		// Deprecated, but still used by 'camera' and 'camera_off'
 		ros: ros,
@@ -231,6 +232,11 @@ function Module(module_num, main, content_elements) {
 }
 
 // Callbacks
+Module.prototype.buttontopicCallback = function(msg) {
+	var value = parseInt(msg.data)
+	console.log('Changing dict value')
+	self.dictionary['lastButton'] = value;
+}
 Module.prototype.positionCallback = function(msg) {
 	for (let j=0; j<Object.keys(msg).length; j++) {
 		self.dictionary[`JOINT_POSITION_${j}`] = msg[`j${j}`];
@@ -1338,6 +1344,11 @@ Module.prototype.start = async function(instructionAddr=['intro',0]) {
 			case 'set_graphic_mode':
 				this.set_graphic_mode(instr, instructionAddr);
 				this.start(this.getNextAddress(instructionAddr));
+				// this.set_graphic_mode(instr, instructionAddr).then((msg) => {
+				// 	if (VERBOSE) console.log(`Done setting graphics.`)
+				// 	this.start(self.getNextAddress(instructionAddr));
+				// });
+
 				break;
 
 			case 'set_robot_mode':

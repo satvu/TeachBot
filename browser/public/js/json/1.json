@@ -134,7 +134,7 @@
 				]
 			},
 			{
-				"//":"How many motors did you count?",
+				"//":"How many motors did you count? Use the white buttons on the button box next to you to go up or down in value. Then, press any colored button to submit your answer.",
 				"type":"play",
 				"audio_index":3,
 				"delay":false
@@ -429,7 +429,7 @@
 				"mode":"image"
 			},
 			{
-				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can reset my position. Again, use the white buttons on the box to change the number.",
+				"//":"Good! Now, before we go further, how many encoders do you think I have in my arm? Step back so I can reset my position. Again, use the white buttons on the box to change the number. Then, press any colored button to submit your answer.",
 				"type":"play",
 				"audio_index":8,
 				"delay":true
@@ -455,7 +455,7 @@
 				],
 				"if_false":[
 					{
-						"//":"Not quite. If I have one encoder for every motor, how many encoders do I have?",
+						"//":"Not quite. If I have one encoder for every motor, how many encoders do I have? Use the white buttons on the box to change the number. Then, press any colored button to submit your answer.",
 						"type":"play",
 						"audio_index":10,
 						"delay":true
@@ -722,6 +722,10 @@
 				"function":"#JOINT_POSITION_3<-2.2"
 			},
 			{
+				"type":"set_robot_mode",
+				"mode":"position"
+			},
+			{
 				"//":"I only needed to use one motor, but it was my elbow, not my wrist.",
 				"type":"play",
 				"audio_index":7,
@@ -844,28 +848,61 @@
 				"val":0.05
 			},
 			{
+				"type":"set",
+				"key":"lastButton",
+				"val":-3
+			},
+			{
 				"type":"while",
 				"conditional":"Math.abs(#ENDPOINT_POSITION_X-#x)>0.03 || Math.abs(#ENDPOINT_POSITION_Y-(#y))>0.03 || Math.abs(#ENDPOINT_POSITION_Z-#z)>0.03",
 				"instructions":[
 					{
-						"type":"joint_move",
-						"joints":"wrist",
-						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
-						"resetPOS":"joint_dot_3_init",
-						"min_thresh":"0.8",
-						"bias":"BIAS_WRIST",
-						"listen":true
+						"type":"set_robot_mode",
+						"mode":"admittance ctrl",
+						"joints":[5],
+						"resetPos":"joint_dot_3_init",
+						"min_thresh":[0.5]
 					},
 					{
-						"type":"joint_move",
-						"joints":"elbow",
-						"terminatingCondition":"lambda self : self.endpoints_equal(self.limb.endpoint_pose(),dot_3,0.05) or self.finished",
-						"resetPOS":"joint_dot_3_init",
-						"min_thresh":"0.8",
-						"bias":"BIAS_SHOULDER",
-						"listen":true
+						"type":"wait",
+						"for":"custom",
+						"function":"(Math.abs(#ENDPOINT_POSITION_X-#x)<0.03 && Math.abs(#ENDPOINT_POSITION_Y-(#y))<0.03 && Math.abs(#ENDPOINT_POSITION_Z-#z)<0.03) || (#lastButton >-2)"
+					},
+					{
+						"type":"set",
+						"key":"lastButton",
+						"val":-3
+					},
+					{
+						"type":"set_robot_mode",
+						"mode":"position"
+					},
+					{
+						"type":"set_robot_mode",
+						"mode":"admittance ctrl",
+						"joints":[3],
+						"resetPos":"joint_dot_3_init",
+						"min_thresh":[1.0]
+					},
+					{
+						"type":"wait",
+						"for":"custom",
+						"function":"(Math.abs(#ENDPOINT_POSITION_X-#x)<0.03 && Math.abs(#ENDPOINT_POSITION_Y-(#y))<0.03 && Math.abs(#ENDPOINT_POSITION_Z-#z)<0.03) || (#lastButton >-2)"
+					},
+					{
+						"type":"set",
+						"key":"lastButton",
+						"val":-3
+					},
+					{
+						"type":"set_robot_mode",
+						"mode":"position"
 					}
 				]
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position"
 			},
 			{
 				"//":"Great! Now let me try.",
@@ -1075,7 +1112,8 @@
 		"id":"feedback",
 		"instructions":[
 			{
-				"type": "initializeDisplay"
+				"type":"set_graphic_mode",
+				"mode":"image"
 			},
 			{
 				"type":"set_graphic_mode",
@@ -1199,7 +1237,7 @@
 				"width": 6,
 				"max_height": 40,
 				"height_percent": 0.3,
-				"fillStyle": "BlueViolet",
+				"fillStyle": ["BlueViolet"],
 				"label": "A"
 			},
 			{
@@ -1220,7 +1258,7 @@
 				"width": 6,
 				"max_height": 40,
 				"height_percent": 0.5,
-				"fillStyle": "#7c2629",
+				"fillStyle": ["#7c2629"],
 				"label": "B"
 			},
 			{
@@ -1241,7 +1279,7 @@
 				"width": 6,
 				"max_height": 40,
 				"height_percent": 0.6,
-				"fillStyle": "DarkGreen",
+				"fillStyle": ["DarkGreen"],
 				"label": "C"
 			},
 			{
@@ -1272,7 +1310,9 @@
 			},
 			{
 				"type":"wait",
-				"what":"effort",
+				"for":"total effort",
+				"to_be":"<",
+				"val":"10",
 				"timeout": 1000,
 				"store_answer_in":"wait_output"
 			},
@@ -1283,9 +1323,12 @@
 				"delay":false
 			},
 			{
-				"type":"joint_impedance",
-				"terminatingCondition":"lambda self: self.finished",
-				"tics":2
+				"type":"set_robot_mode",
+				"mode":"impedance ctrl",
+				"joints":[0,1,2,3,4,5,6],
+				"resetPos":"joint_push_down",
+				"V2F":[5,10,10,10,10,10,10],
+				"X2F":[160,150,150,150,150,150,150]
 			},
 			{
 				"type":"set_graphic_mode",
@@ -1294,6 +1337,11 @@
 			{
 				"type":"wait",
 				"for":"user input"
+			},
+			{
+				"type":"set_robot_mode",
+				"mode":"position",
+				"ways":false
 			},
 			{
 				"//":"Before, I was using the feedback from my encoders to go somewhere new. Now, I'm using feedback to stay in one place. What am I using to know when my arm is moving? Please stand back so I can reset my arm position.",
@@ -1307,7 +1355,7 @@
 			},
 			{
 				"type":"set_graphic_mode",
-				"mode":"multiple_choice"
+				"mode":"multiple choice"
 			},
 			{
 				"type":"multiple_choice_action",
@@ -1647,7 +1695,9 @@
 			},
 			{
 				"type":"wait",
-				"what": "effort",
+				"for": "total effort",
+				"to_be":"<",
+				"val":"10",
 				"timeout": 5,
 				"store_answer_in":"wait_output"
 			},
@@ -1671,7 +1721,9 @@
 					},
 					{
 						"type":"wait",
-						"what":"effort",
+						"for":"total effort",
+						"to_be":"<",
+						"val":"10",
 						"timeout": 5,
 						"store_answer_in":"wait_output"
 					},

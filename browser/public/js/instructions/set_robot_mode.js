@@ -17,10 +17,6 @@ Module.prototype.set_robot_mode = function(instr, instructionAddr) {
 	var req = {mode: instr.mode};
 	switch (instr.mode) {
 		case 'position':
-			// console.log('here');
-			// ['ways'].forEach(function(attr, i) {
-			// 	if (instr.hasOwnProperty(attr)) req[attr] = instr[attr];
-			// });
 			['ways'].forEach(function(attr, i) {
 				if (instr.hasOwnProperty(attr)) req[attr] = instr[attr];
 			});

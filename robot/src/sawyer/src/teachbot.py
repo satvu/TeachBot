@@ -840,7 +840,7 @@ class Module():
 			# Set V2F and X2F specs
 			for joint in self.limb.joint_efforts().keys():
 				joints[joint]['V2F'] = 5 if joint==shoulder else 10
-				joints[joint]['X2F'] = 160 if joint==shoulder else 10
+				joints[joint]['X2F'] = 160 if joint==shoulder else 150
 			for i,j in enumerate(req.joints):
 				joints['right_j'+str(j)]['V2F'] = req.V2F[i]
 				joints['right_j'+str(j)]['X2F'] = req.X2F[i]

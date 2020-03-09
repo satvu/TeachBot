@@ -26,6 +26,7 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			}
 			image.style.display = 'initial';
 
+
 			break;
 
 		case 'video':
@@ -105,16 +106,24 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 			var position_bw_url = DIR + 'images/position_bw.png';
 			var position_color_url = DIR + 'images/position_color.png';
 
-			draw_pos_orien(m.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url)
+			draw_pos_orien(m.ctx,3,300,400,position_color_url,position_bw_url, orient_color_url, orient_bw_url);
 
 			break;
 
 		case 'projection':
-			canvas_container.style.display = 'initial';
+			canvas_obj.style.display = 'initial';
 
 			this.position.subscribe(async function(message) {
-					if (VERBOSE) console.log(message.j1);
+					// if (VERBOSE) console.log(message.j1);
 					draw_goal(self.ctx, 100, message.j1*400+100)
+				});
+
+			this.button_topic.subscribe(async function(message) {
+					console.log('here')
+					self.position.unsubscribe();
+					self.position.removeAllListeners();
+					self.button_topic.unsubscribe();
+					self.button_topic.removeAllListeners();
 				});
 
 			break;
@@ -136,9 +145,11 @@ Module.prototype.set_graphic_mode = function(instr, instructionAddr) {
 		default:
 			throw `Graphic mode ${instr.mode} is not supported.`;
 	}
+	
 };
 
 Module.prototype.drawCanvas = function(timestamp) {
+	canvas_obj.style.display = 'initial';
 	this.ctx.clearRect(0,0,100*this.cw,100*this.ch);
 
 	this.drawings.forEach(function(obj, ind) {
@@ -161,7 +172,7 @@ Module.prototype.drawCanvas = function(timestamp) {
 				var height_percent = eval(self.hashTokeyVal(obj.height_percent));
 				var fillStyle = eval(self.hashTokeyVal(obj.fillStyle));
 
-				draw_bar_new(self.ctx, x, y, width, max_height, height_percent, fillStyle, obj.label, obj.label_align);
+				draw_bar_new(m.ctx, x, y, width, max_height, height_percent, fillStyle, obj.label, obj.label_align);
 
 				break;
 
@@ -189,6 +200,7 @@ Module.prototype.drawCanvas = function(timestamp) {
 				} else {
 					draw_rectangle(self.ctx, x, y, width, height);
 				}
+
 				break;
 		}
 	});
