@@ -92,7 +92,6 @@ class Module():
         rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.forwardJointState)
         rospy.Subscriber('/wrench', WrenchStamped, self.cb_filter_forces)
 
-
         rospy.loginfo('TeachBot is initialized and ready to go.')
 
 
@@ -287,16 +286,25 @@ class Module():
 
         return True
     
+    '''
+    Impedance control of robot. Pushes back as you push it (spring and damper type movement).
+    '''
     def cb_ImpedanceCtrl(self, joints, resetPos, rateNom=50):
-
+        # get current angles 
         x = self.limb.joint_angles()
+        # get current velocities 
         v = self.limb.joint_velocities()
+        # get current efforts? no get current torque in wrench and do some math or something :/ 
         efforts = self.limb.joint_efforts()
         for joint in efforts.keys():
             efforts[joint] = joints[joint]['X2F']*(joints[joint]['x_ref']-x[joint]) + joints[joint]['V2F']*(joints[joint]['v_ref']-v[joint])
 
         self.limb.set_joint_torques(efforts)
 
+    '''
+    Admittance control of the robot (moves as you push wrist 3).
+    resetPos, rateNom, and tics are not used in UR but are used in Sawyer. TODO: Remove or keep?
+    '''
     def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
         # new velocities to send to robot
         velocities = {}
