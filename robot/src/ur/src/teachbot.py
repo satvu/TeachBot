@@ -197,7 +197,6 @@ class Module():
                 if ret.ok:
                     rospy.loginfo("Switched to scaled pos traj controller")
             except rospy.ServiceException, e:
-                print "Service call failed to switch to scaled_pos_traj_controller"
                 rospy.logerr("Service call failed to switch to scaled_pos_traj_controller")
 
                        
@@ -240,16 +239,63 @@ class Module():
                 if ret.ok:
                     rospy.loginfo("Switched to joint_group_vel_controller")
             except rospy.ServiceException, e:
-                print "Service call failed to switch to scaled_pos_traj_controller"
                 rospy.logerr("Service call failed to switch to joint_group_vel_controller")
 
             
             self.modeTimer = rospy.Timer(rospy.Duration(0.1), lambda event=None : self.cb_AdmittanceCtrl(joints, eval(req.resetPos)))
+            
+        elif req.mode == 'impedance ctrl':
+            # Set command timeout to be much greater than the command period
+            self.limb.set_command_timeout(2)
+
+            # Initialize Joints Dict
+            joints = {}
+            for joint in self.limb.joint_efforts().keys():
+                joints[joint] = {}
+
+            # Set V2F and X2F specs
+            for joint in self.limb.joint_efforts().keys():
+                joints[joint]['V2F'] = 5 if joint==shoulder else 10
+                joints[joint]['X2F'] = 160 if joint==shoulder else 150
+            for i,j in enumerate(req.joints):
+                joints['right_j'+str(j)]['V2F'] = req.V2F[i]
+                joints['right_j'+str(j)]['X2F'] = req.X2F[i]
+
+            # Set position and velocity reference points
+            x_ref = self.limb.joint_angles()
+            for joint in self.limb.joint_efforts().keys():
+                joints[joint]['x_ref'] = x_ref[joint]
+                joints[joint]['v_ref'] = 0
+
+            # Switch to the joint group velocity controller 
+            rospy.wait_for_service('/controller_manager/switch_controller')
+            try:
+                switch_controller = rospy.ServiceProxy(
+                                    'controller_manager/switch_controller', SwitchController)
+                ret = switch_controller(['joint_group_vel_controller'], ['scaled_pos_traj_controller'], 2)
+                if ret.ok:
+                    rospy.loginfo("Switched to joint_group_vel_controller")
+            except rospy.ServiceException, e:
+                rospy.logerr("Service call failed to switch to joint_group_vel_controller")
+
+
+            self.modeTimer = rospy.Timer(rospy.Duration(0.02), lambda event=None : self.cb_ImpedanceCtrl(joints, eval(req.resetPos)))
+        
         
         else:
             rospy.logerr('Robot mode ' + req.mode + ' is not a supported mode.')
 
         return True
+    
+    def cb_ImpedanceCtrl(self, joints, resetPos, rateNom=50):
+
+        x = self.limb.joint_angles()
+        v = self.limb.joint_velocities()
+        efforts = self.limb.joint_efforts()
+        for joint in efforts.keys():
+            efforts[joint] = joints[joint]['X2F']*(joints[joint]['x_ref']-x[joint]) + joints[joint]['V2F']*(joints[joint]['v_ref']-v[joint])
+
+        self.limb.set_joint_torques(efforts)
 
     def cb_AdmittanceCtrl(self, joints, resetPos, rateNom=10, tics=15):
         # new velocities to send to robot
