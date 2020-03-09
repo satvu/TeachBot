@@ -57,7 +57,7 @@ class Module():
             'fx': [] # different from Sawyer, this gathers the wrench values, forces in x-direction
         }
         self.forces['fx'] = [0]*self.forces['order']
-        self.FORCE_STANDARDIZATION_CONSTANT = .1
+        self.FORCE_STANDARDIZATION_CONSTANT = .2
 
         # Create empty structures in self.control to match with above comments 
         zeroVec = dict()
