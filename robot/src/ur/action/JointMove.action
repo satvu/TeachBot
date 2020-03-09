@@ -5,3 +5,7 @@ string pCMD
 string min_thresh
 string bias
 float32 tol
+---
+bool done
+---
+bool feedback

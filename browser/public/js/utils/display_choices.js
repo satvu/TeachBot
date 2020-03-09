@@ -8,11 +8,10 @@
  * @param {String[]}    multi_choice_url    Location of the background image showing the gripper cuff.
  */
 
-function display_choices(ctx_in, choices_arr, multi_choice_url, arrow_url) {
+function display_choices(ctx_in, choices_arr, multi_choice_url, code=false, program_arr = [], x= 0 ,y= 0) {
     let cw = ctx_in.canvas.width;
     console.log("displaying choices")
     var imgb = new Image();
-    var imgc = new Image();
 
     imgb.onload = function(){
         //the original image is 1920x889
@@ -82,6 +81,27 @@ function display_choices(ctx_in, choices_arr, multi_choice_url, arrow_url) {
         // ctx_in.fillStyle = "#cc0000";
         ctx_in.fill();
 
+        if (code){
+            ctx_in.clearRect(0,0,300,ctx_in.canvas.height); 
+            ctx_in.font = "40px Raleway";
+            ctx_in.textAlign = "left";
+            ctx_in.fillStyle = "#373737";
+            ctx_in.strokeStyle = '#333333';
+            ctx_in.lineWidth = 7;
+            var spacing = 75;
+
+            if (program_arr.length > 10){
+                spacing = spacing - 5*(program_arr.length-10);
+                var temp = 40-1*(program_arr.length-10)
+                ctx_in.font = temp.toString() + 'px Raleway';
+            }
+            for (let c=0; c<program_arr.length; c++){
+                ctx_in.fillText(program_arr[c], x, y+spacing*c); 
+                ctx_in.beginPath(); 
+                ctx_in.stroke();
+            }
+        }
+        ctx_in.lineWidth = 2;
     }
     imgb.src = multi_choice_url;
 

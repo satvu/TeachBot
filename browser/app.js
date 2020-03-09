@@ -59,6 +59,11 @@ app.get('/module2', function(req,res) {
 app.get('/module3', function(req,res) {
 	res.sendFile(path.join(__dirname + '/public/html/3.html'));
 });
+
+app.get('/urTest', function(req, res){
+  res.sendFile(path.join(__dirname + '/public/html/urTest.html'));
+});
+
 app.get('/table', function(req, res) {
   res.sendFile(path.join(__dirname + '/public/html/table.html'));
 });

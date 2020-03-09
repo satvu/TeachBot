@@ -1,0 +1,7 @@
+## Update audio duration.
+
+# Request: duration of current audio file
+float64 audio_duration
+---
+# Response
+bool done

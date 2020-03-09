@@ -62,4 +62,6 @@ teachbot_ws/src/intera_sdk
 teachbot_ws/src/sawyer_robot
 teachbot_ws/build
 teachbot_ws/devel
+robot/src/universal_robot
+robot/src/Universal_Robots_ROS_Driver
 robot/start.sh

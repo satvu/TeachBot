@@ -1,0 +1,16 @@
+# .action file for checking whether a box is picked up or not
+
+# goal definition
+
+bool check
+---
+
+# result definition
+bool is_picked
+---
+
+# feedback definition
+# currently unused
+
+int32 feedback
+

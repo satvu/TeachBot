@@ -1,4 +1,13 @@
+## Impedance control for joints
+
+## Goal
 #Custom message for joint_impedence_move function
 string terminatingCondition
 string rateNom
 int32 tics
+---
+## Result
+bool done
+---
+## Feedback
+bool feedback
